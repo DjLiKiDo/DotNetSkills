@@ -92,5 +92,3 @@ dotnet test tests/DotNetSkills.Domain.UnitTests
 **Phase 4**: Testing and CI/CD pipeline
 
 Refer to `doc/PRD.md` section 7 for detailed implementation phases and acceptance criteria.
-
-Refer to `doc/General Coding Principles.md` for coding standards and best practices.
