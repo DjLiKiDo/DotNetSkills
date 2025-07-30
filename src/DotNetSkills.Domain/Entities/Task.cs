@@ -1,5 +1,6 @@
 using DotNetSkills.Domain.Common;
 using DotNetSkills.Domain.Enums;
+using DotNetSkills.Domain.Events;
 using DotNetSkills.Domain.ValueObjects;
 
 namespace DotNetSkills.Domain.Entities;
@@ -61,7 +62,7 @@ public class Task : BaseEntity<TaskId>
         UpdateTimestamp();
     }
 
-    public void UpdateStatus(Enums.TaskStatus newStatus, UserRole updatedByRole)
+    public void UpdateStatus(Enums.TaskStatus newStatus, UserRole updatedByRole, UserId updatedBy)
     {
         if (!updatedByRole.CanManageTasks())
             throw new DomainException("Only developers and above can update task status.");
@@ -74,11 +75,24 @@ public class Task : BaseEntity<TaskId>
 
         var oldStatus = Status;
         Status = newStatus;
+        var updatedAt = DateTime.UtcNow;
 
         if (newStatus == Enums.TaskStatus.Done)
         {
-            CompletedAt = DateTime.UtcNow;
-            // TODO: Raise TaskCompletedDomainEvent
+            CompletedAt = updatedAt;
+            
+            RaiseDomainEvent(new TaskCompletedDomainEvent(
+                Id,
+                Title,
+                ProjectId,
+                AssignedToId,
+                AssignedTo?.FullName,
+                Priority,
+                EstimatedHours,
+                ActualHours,
+                updatedAt,
+                updatedBy
+            ));
         }
         else if (oldStatus == Enums.TaskStatus.Done)
         {
@@ -87,10 +101,19 @@ public class Task : BaseEntity<TaskId>
 
         UpdateTimestamp();
 
-        // TODO: Raise TaskStatusUpdatedDomainEvent
+        RaiseDomainEvent(new TaskStatusUpdatedDomainEvent(
+            Id,
+            Title,
+            ProjectId,
+            oldStatus,
+            newStatus,
+            AssignedToId,
+            updatedBy,
+            updatedAt
+        ));
     }
 
-    public void AssignTo(User user, UserRole assignedByRole)
+    public void AssignTo(User user, UserRole assignedByRole, UserId assignedBy)
     {
         if (!assignedByRole.CanManageTasks())
             throw new DomainException("Only developers and above can assign tasks.");
@@ -109,12 +132,23 @@ public class Task : BaseEntity<TaskId>
             previousAssignee.UnassignTask(Id);
 
         user.AssignTask(this);
+        var assignedAt = DateTime.UtcNow;
         UpdateTimestamp();
 
-        // TODO: Raise TaskAssignedDomainEvent
+        RaiseDomainEvent(new TaskAssignedDomainEvent(
+            Id,
+            Title,
+            ProjectId,
+            user.Id,
+            user.FullName,
+            previousAssignee?.Id,
+            previousAssignee?.FullName,
+            assignedBy,
+            assignedAt
+        ));
     }
 
-    public void Unassign(UserRole unassignedByRole)
+    public void Unassign(UserRole unassignedByRole, UserId unassignedBy)
     {
         if (!unassignedByRole.CanManageTasks())
             throw new DomainException("Only developers and above can unassign tasks.");
@@ -127,9 +161,18 @@ public class Task : BaseEntity<TaskId>
         AssignedTo = null;
 
         previousAssignee.UnassignTask(Id);
+        var unassignedAt = DateTime.UtcNow;
         UpdateTimestamp();
 
-        // TODO: Raise TaskUnassignedDomainEvent
+        RaiseDomainEvent(new TaskUnassignedDomainEvent(
+            Id,
+            Title,
+            ProjectId,
+            previousAssignee.Id,
+            previousAssignee.FullName,
+            unassignedBy,
+            unassignedAt
+        ));
     }
 
     public void RecordActualHours(decimal hours, UserRole recordedByRole)

@@ -1,5 +1,6 @@
 using DotNetSkills.Domain.Common;
 using DotNetSkills.Domain.Enums;
+using DotNetSkills.Domain.Events;
 using DotNetSkills.Domain.ValueObjects;
 
 namespace DotNetSkills.Domain.Entities;
@@ -36,7 +37,7 @@ public class Team : BaseEntity<TeamId>
         UpdateTimestamp();
     }
 
-    public void AddMember(User user, UserRole addedByRole)
+    public void AddMember(User user, UserRole addedByRole, UserId addedBy)
     {
         if (!addedByRole.CanManageTeams())
             throw new DomainException("Only project managers and administrators can add team members.");
@@ -47,16 +48,25 @@ public class Team : BaseEntity<TeamId>
         if (_members.Any(m => m.UserId == user.Id))
             throw new DomainException($"User {user.FullName} is already a member of this team.");
 
-        var teamMember = new TeamMember(user.Id, Id, DateTime.UtcNow);
+        var joinedAt = DateTime.UtcNow;
+        var teamMember = new TeamMember(user.Id, Id, joinedAt);
         _members.Add(teamMember);
         user.AddTeamMembership(teamMember);
         
         UpdateTimestamp();
 
-        // TODO: Raise TeamMemberAddedDomainEvent
+        RaiseDomainEvent(new TeamMemberAddedDomainEvent(
+            Id,
+            Name,
+            user.Id,
+            user.FullName,
+            user.Email.Value,
+            addedBy,
+            joinedAt
+        ));
     }
 
-    public void RemoveMember(UserId userId, UserRole removedByRole)
+    public void RemoveMember(UserId userId, UserRole removedByRole, UserId removedBy)
     {
         if (!removedByRole.CanManageTeams())
             throw new DomainException("Only project managers and administrators can remove team members.");
@@ -72,10 +82,22 @@ public class Team : BaseEntity<TeamId>
         if (hasActiveTasks)
             throw new DomainException("Cannot remove team member who has active tasks assigned.");
 
+        var membershipDuration = member.MembershipDuration;
+        var removedAt = DateTime.UtcNow;
+
         _members.Remove(member);
         UpdateTimestamp();
 
-        // TODO: Raise TeamMemberRemovedDomainEvent
+        RaiseDomainEvent(new TeamMemberRemovedDomainEvent(
+            Id,
+            Name,
+            member.UserId,
+            member.User.FullName,
+            member.User.Email.Value,
+            removedBy,
+            removedAt,
+            membershipDuration
+        ));
     }
 
     public void Deactivate(UserRole deactivatedByRole)

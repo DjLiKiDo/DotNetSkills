@@ -93,10 +93,10 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [x] **TASK-003.003**: Define `UserRole`, `TaskStatus`, `TaskPriority`, `TaskType`, `ProjectStatus` enums
   - Location: `src/DotNetSkills.Domain/ValueObjects/` and `src/DotNetSkills.Domain/Enums/`
 
-- [ ] **TASK-004**: Implement domain events
-  - [ ] **TASK-004.001**: Create `UserCreatedDomainEvent`, `TaskAssignedDomainEvent`, `TaskStatusUpdatedDomainEvent`
-  - [ ] **TASK-004.002**: Implement `TeamMemberAddedDomainEvent`, `TeamMemberRemovedDomainEvent`
-  - [ ] **TASK-004.003**: Define `ProjectStatusUpdatedDomainEvent`, `TaskCompletedDomainEvent`
+- [x] **TASK-004**: Implement domain events
+  - [x] **TASK-004.001**: Create `UserCreatedDomainEvent`, `TaskAssignedDomainEvent`, `TaskStatusUpdatedDomainEvent`
+  - [x] **TASK-004.002**: Implement `TeamMemberAddedDomainEvent`, `TeamMemberRemovedDomainEvent`
+  - [x] **TASK-004.003**: Define `ProjectStatusUpdatedDomainEvent`, `TaskCompletedDomainEvent`
   - Location: `src/DotNetSkills.Domain/Events/`
 
 #### Infrastructure Layer Setup

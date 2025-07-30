@@ -1,5 +1,6 @@
 using DotNetSkills.Domain.Common;
 using DotNetSkills.Domain.Enums;
+using DotNetSkills.Domain.Events;
 using DotNetSkills.Domain.ValueObjects;
 
 namespace DotNetSkills.Domain.Entities;
@@ -48,7 +49,7 @@ public class Project : BaseEntity<ProjectId>
         UpdateTimestamp();
     }
 
-    public void UpdateStatus(ProjectStatus newStatus, UserRole updatedByRole)
+    public void UpdateStatus(ProjectStatus newStatus, UserRole updatedByRole, UserId updatedBy)
     {
         if (!updatedByRole.CanManageProjects())
             throw new DomainException("Only project managers and administrators can update project status.");
@@ -61,12 +62,21 @@ public class Project : BaseEntity<ProjectId>
 
         var oldStatus = Status;
         Status = newStatus;
+        var updatedAt = DateTime.UtcNow;
         UpdateTimestamp();
 
-        // TODO: Raise ProjectStatusUpdatedDomainEvent
+        RaiseDomainEvent(new ProjectStatusUpdatedDomainEvent(
+            Id,
+            Name,
+            TeamId,
+            oldStatus,
+            newStatus,
+            updatedBy,
+            updatedAt
+        ));
     }
 
-    public void AssignToTeam(TeamId newTeamId, UserRole assignedByRole)
+    public void AssignToTeam(TeamId newTeamId, UserRole assignedByRole, UserId reassignedBy)
     {
         if (!assignedByRole.CanManageProjects())
             throw new DomainException("Only project managers and administrators can reassign projects to teams.");
@@ -77,10 +87,19 @@ public class Project : BaseEntity<ProjectId>
         if (Status.IsFinalized())
             throw new DomainException("Cannot reassign finalized projects to different teams.");
 
+        var previousTeamId = TeamId;
         TeamId = newTeamId;
+        var reassignedAt = DateTime.UtcNow;
         UpdateTimestamp();
 
-        // TODO: Raise ProjectReassignedDomainEvent
+        RaiseDomainEvent(new ProjectReassignedDomainEvent(
+            Id,
+            Name,
+            previousTeamId,
+            newTeamId,
+            reassignedBy,
+            reassignedAt
+        ));
     }
 
     public void AddTask(Task task)

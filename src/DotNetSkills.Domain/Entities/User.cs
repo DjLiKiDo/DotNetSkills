@@ -1,5 +1,6 @@
 using DotNetSkills.Domain.Common;
 using DotNetSkills.Domain.Enums;
+using DotNetSkills.Domain.Events;
 using DotNetSkills.Domain.ValueObjects;
 
 namespace DotNetSkills.Domain.Entities;
@@ -34,6 +35,23 @@ public class User : BaseEntity<UserId>
     public IReadOnlyList<Task> AssignedTasks => _assignedTasks.AsReadOnly();
 
     public string FullName => $"{FirstName} {LastName}";
+
+    public static User Create(UserId id, string firstName, string lastName, EmailAddress email, UserRole role, string passwordHash, UserId createdBy)
+    {
+        var user = new User(id, firstName, lastName, email, role, passwordHash);
+        
+        user.RaiseDomainEvent(new UserCreatedDomainEvent(
+            user.Id,
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            user.Role,
+            user.CreatedAt,
+            createdBy
+        ));
+
+        return user;
+    }
 
     public void UpdateProfile(string firstName, string lastName, EmailAddress email)
     {
