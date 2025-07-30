@@ -100,7 +100,7 @@ public class Team : BaseEntity<TeamId>
         ));
     }
 
-    public void Deactivate(UserRole deactivatedByRole)
+    public void Deactivate(UserRole deactivatedByRole, UserId deactivatedBy)
     {
         if (!deactivatedByRole.CanManageTeams())
             throw new DomainException("Only project managers and administrators can deactivate teams.");
@@ -112,12 +112,20 @@ public class Team : BaseEntity<TeamId>
             throw new DomainException("Cannot deactivate team with active projects.");
 
         IsActive = false;
+        var deactivatedAt = DateTime.UtcNow;
         UpdateTimestamp();
 
-        // TODO: Raise TeamDeactivatedDomainEvent
+        RaiseDomainEvent(new TeamDeactivatedDomainEvent(
+            Id,
+            Name,
+            Description,
+            MemberCount,
+            deactivatedBy,
+            deactivatedAt
+        ));
     }
 
-    public void Activate(UserRole activatedByRole)
+    public void Activate(UserRole activatedByRole, UserId activatedBy)
     {
         if (!activatedByRole.CanManageTeams())
             throw new DomainException("Only project managers and administrators can activate teams.");
@@ -126,9 +134,17 @@ public class Team : BaseEntity<TeamId>
             return;
 
         IsActive = true;
+        var activatedAt = DateTime.UtcNow;
         UpdateTimestamp();
 
-        // TODO: Raise TeamActivatedDomainEvent
+        RaiseDomainEvent(new TeamActivatedDomainEvent(
+            Id,
+            Name,
+            Description,
+            MemberCount,
+            activatedBy,
+            activatedAt
+        ));
     }
 
     public bool HasMember(UserId userId)

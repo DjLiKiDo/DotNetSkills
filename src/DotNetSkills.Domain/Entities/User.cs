@@ -61,7 +61,7 @@ public class User : BaseEntity<UserId>
         UpdateTimestamp();
     }
 
-    public void UpdateRole(UserRole newRole, UserRole requestedByRole)
+    public void UpdateRole(UserRole newRole, UserRole requestedByRole, UserId updatedBy)
     {
         if (!requestedByRole.CanManageUsers())
             throw new DomainException("Only administrators can update user roles.");
@@ -71,9 +71,19 @@ public class User : BaseEntity<UserId>
 
         var oldRole = Role;
         Role = newRole;
+        var updatedAt = DateTime.UtcNow;
         UpdateTimestamp();
 
-        // TODO: Raise UserRoleUpdatedDomainEvent
+        RaiseDomainEvent(new UserRoleUpdatedDomainEvent(
+            Id,
+            FirstName,
+            LastName,
+            Email,
+            oldRole,
+            newRole,
+            updatedBy,
+            updatedAt
+        ));
     }
 
     public void UpdatePassword(string newPasswordHash)
@@ -82,7 +92,7 @@ public class User : BaseEntity<UserId>
         UpdateTimestamp();
     }
 
-    public void Deactivate(UserRole requestedByRole)
+    public void Deactivate(UserRole requestedByRole, UserId deactivatedBy)
     {
         if (!requestedByRole.CanManageUsers())
             throw new DomainException("Only administrators can deactivate users.");
@@ -91,12 +101,21 @@ public class User : BaseEntity<UserId>
             return;
 
         IsActive = false;
+        var deactivatedAt = DateTime.UtcNow;
         UpdateTimestamp();
 
-        // TODO: Raise UserDeactivatedDomainEvent
+        RaiseDomainEvent(new UserDeactivatedDomainEvent(
+            Id,
+            FirstName,
+            LastName,
+            Email,
+            Role,
+            deactivatedBy,
+            deactivatedAt
+        ));
     }
 
-    public void Activate(UserRole requestedByRole)
+    public void Activate(UserRole requestedByRole, UserId activatedBy)
     {
         if (!requestedByRole.CanManageUsers())
             throw new DomainException("Only administrators can activate users.");
@@ -105,9 +124,18 @@ public class User : BaseEntity<UserId>
             return;
 
         IsActive = true;
+        var activatedAt = DateTime.UtcNow;
         UpdateTimestamp();
 
-        // TODO: Raise UserActivatedDomainEvent
+        RaiseDomainEvent(new UserActivatedDomainEvent(
+            Id,
+            FirstName,
+            LastName,
+            Email,
+            Role,
+            activatedBy,
+            activatedAt
+        ));
     }
 
     public void RecordLogin()
