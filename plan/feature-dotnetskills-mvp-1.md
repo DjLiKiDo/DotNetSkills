@@ -73,24 +73,24 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
 ### Phase 1: Foundation & Infrastructure (Week 1-2)
 
 #### Domain Layer Implementation
-- [ ] **TASK-001**: Create base entities and interfaces
-  - [ ] **TASK-001.001**: Implement `BaseEntity<TId>` with audit fields and domain events
-  - [ ] **TASK-001.002**: Create `IStronglyTypedId<T>` interface for type-safe identifiers
-  - [ ] **TASK-001.003**: Define `IDomainEvent` interface and event handling contracts
+- [x] **TASK-001**: Create base entities and interfaces
+  - [x] **TASK-001.001**: Implement `BaseEntity<TId>` with audit fields and domain events
+  - [x] **TASK-001.002**: Create `IStronglyTypedId<T>` interface for type-safe identifiers
+  - [x] **TASK-001.003**: Define `IDomainEvent` interface and event handling contracts
   - Location: `src/DotNetSkills.Domain/Common/`
 
-- [ ] **TASK-002**: Implement core domain entities
-  - [ ] **TASK-002.001**: Create `User` entity with role-based logic and team membership management
-  - [ ] **TASK-002.002**: Implement `Team` entity with member management and validation rules
-  - [ ] **TASK-002.003**: Develop `Project` entity with status management and team association
-  - [ ] **TASK-002.004**: Build `Task` entity with assignment, status transitions, and subtask support
-  - [ ] **TASK-002.005**: Create `TeamMember` join entity for user-team relationships
+- [x] **TASK-002**: Implement core domain entities
+  - [x] **TASK-002.001**: Create `User` entity with role-based logic and team membership management
+  - [x] **TASK-002.002**: Implement `Team` entity with member management and validation rules
+  - [x] **TASK-002.003**: Develop `Project` entity with status management and team association
+  - [x] **TASK-002.004**: Build `Task` entity with assignment, status transitions, and subtask support
+  - [x] **TASK-002.005**: Create `TeamMember` join entity for user-team relationships
   - Location: `src/DotNetSkills.Domain/Entities/`
 
-- [ ] **TASK-003**: Define value objects and enumerations
-  - [ ] **TASK-003.001**: Implement `UserId`, `TeamId`, `ProjectId`, `TaskId` strongly-typed identifiers
-  - [ ] **TASK-003.002**: Create `EmailAddress` value object with validation
-  - [ ] **TASK-003.003**: Define `UserRole`, `TaskStatus`, `TaskPriority`, `TaskType`, `ProjectStatus` enums
+- [x] **TASK-003**: Define value objects and enumerations
+  - [x] **TASK-003.001**: Implement `UserId`, `TeamId`, `ProjectId`, `TaskId` strongly-typed identifiers
+  - [x] **TASK-003.002**: Create `EmailAddress` value object with validation
+  - [x] **TASK-003.003**: Define `UserRole`, `TaskStatus`, `TaskPriority`, `TaskType`, `ProjectStatus` enums
   - Location: `src/DotNetSkills.Domain/ValueObjects/` and `src/DotNetSkills.Domain/Enums/`
 
 - [ ] **TASK-004**: Implement domain events
