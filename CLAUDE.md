@@ -117,7 +117,7 @@ Current project is in **planning phase**. Core implementation follows the plan i
 
 ## Key Files to Reference
 
-- `doc/DotNet Coding Principles.md`: Comprehensive coding standards and patterns
+- `.github/instructions/dotnet.instructions.md`: Comprehensive .NET development guidelines, coding standards, patterns and best practices
 - `plan/feature-dotnetskills-mvp-1.md`: Detailed MVP implementation plan
 - `.github/copilot-instructions.md`: AI agent development guidelines
 - `doc/prd.md`: Product requirements and business specifications
