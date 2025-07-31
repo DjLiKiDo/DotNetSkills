@@ -14,5 +14,5 @@ public sealed record UserDeactivatedDomainEvent(
     DateTime DeactivatedAt
 ) : IDomainEvent
 {
-    public DateTime OccurredOn { get; } = DateTime.UtcNow;
+    public DateTime OccurredOn { get; } = DateTimeService.UtcNow;
 }

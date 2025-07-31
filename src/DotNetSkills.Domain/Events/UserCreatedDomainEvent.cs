@@ -14,5 +14,5 @@ public sealed record UserCreatedDomainEvent(
     UserId CreatedBy
 ) : IDomainEvent
 {
-    public DateTime OccurredOn { get; } = DateTime.UtcNow;
+    public DateTime OccurredOn { get; } = DateTimeService.UtcNow;
 }

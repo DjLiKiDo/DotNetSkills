@@ -12,5 +12,5 @@ public sealed record ProjectReassignedDomainEvent(
     DateTime ReassignedAt
 ) : IDomainEvent
 {
-    public DateTime OccurredOn { get; } = DateTime.UtcNow;
+    public DateTime OccurredOn { get; } = DateTimeService.UtcNow;
 }

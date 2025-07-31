@@ -22,6 +22,9 @@ public static class UserRoleExtensions
     public static bool CanManageTasks(this UserRole role) =>
         role >= UserRole.Developer;
 
+    public static bool CanBeAssignedTasks(this UserRole role) =>
+        role >= UserRole.Developer;
+
     public static bool HasHigherOrEqualAuthorityThan(this UserRole role, UserRole otherRole) =>
         role >= otherRole;
 

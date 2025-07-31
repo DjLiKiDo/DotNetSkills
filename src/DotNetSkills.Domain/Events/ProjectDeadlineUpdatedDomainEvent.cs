@@ -13,5 +13,5 @@ public sealed record ProjectDeadlineUpdatedDomainEvent(
     DateTime ChangedAt
 ) : IDomainEvent
 {
-    public DateTime OccurredOn { get; } = DateTime.UtcNow;
+    public DateTime OccurredOn { get; } = DateTimeService.UtcNow;
 }

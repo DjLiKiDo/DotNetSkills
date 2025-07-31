@@ -12,5 +12,5 @@ public sealed record ValidationFailedDomainEvent(
     DateTime OccurredAt
 ) : IDomainEvent
 {
-    public DateTime OccurredOn { get; } = DateTime.UtcNow;
+    public DateTime OccurredOn { get; } = DateTimeService.UtcNow;
 }

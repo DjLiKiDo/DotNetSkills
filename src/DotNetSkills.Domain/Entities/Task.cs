@@ -1,6 +1,7 @@
 using DotNetSkills.Domain.Common;
 using DotNetSkills.Domain.Enums;
 using DotNetSkills.Domain.Events;
+using DotNetSkills.Domain.Services;
 using DotNetSkills.Domain.ValueObjects;
 
 namespace DotNetSkills.Domain.Entities;
@@ -48,7 +49,7 @@ public class Task : BaseEntity<TaskId>
     public bool HasSubtasks => _subtasks.Count > 0;
     public int SubtaskCount => _subtasks.Count;
     public int CompletedSubtaskCount => _subtasks.Count(st => st.Status.IsComplete());
-    public bool IsOverdue => DueDate.HasValue && DateTime.UtcNow > DueDate.Value && !Status.IsComplete();
+    public bool IsOverdue => DueDate.HasValue && GetCurrentTime() > DueDate.Value && !Status.IsComplete();
 
     public double SubtaskCompletionPercentage => SubtaskCount == 0 ? 100 : (double)CompletedSubtaskCount / SubtaskCount * 100;
 
@@ -61,7 +62,7 @@ public class Task : BaseEntity<TaskId>
         Priority = priority;
         EstimatedHours = ValidateEstimatedHours(estimatedHours);
         DueDate = dueDate;
-        var updatedAt = DateTime.UtcNow;
+        var updatedAt = GetCurrentTime();
         UpdateTimestamp();
 
         if (oldPriority != priority)
@@ -91,7 +92,7 @@ public class Task : BaseEntity<TaskId>
 
         var oldStatus = Status;
         Status = newStatus;
-        var updatedAt = DateTime.UtcNow;
+        var updatedAt = GetCurrentTime();
 
         if (newStatus == Enums.TaskStatus.Done)
         {
@@ -129,16 +130,26 @@ public class Task : BaseEntity<TaskId>
         ));
     }
 
-    public void AssignTo(User user, UserRole assignedByRole, UserId assignedBy)
+    public void AssignTo(User user, UserRole assignedByRole, UserId assignedBy, ITaskAssignmentService? assignmentService = null)
     {
         if (!assignedByRole.CanManageTasks())
             throw new DomainException("Only developers and above can assign tasks.");
 
-        if (!user.IsActive)
-            throw new DomainException("Cannot assign tasks to inactive users.");
+        if (assignmentService != null)
+        {
+            var validationResult = assignmentService.ValidateTaskAssignment(this, user);
+            if (!validationResult.IsValid)
+                throw new DomainException(validationResult.ErrorMessage!);
+        }
+        else
+        {
+            // Fallback to original validation logic
+            if (!user.IsActive)
+                throw new DomainException("Cannot assign tasks to inactive users.");
 
-        if (!user.CanAccessTeam(Project.TeamId))
-            throw new DomainException("Cannot assign task to user who is not a member of the project's team.");
+            if (!user.CanAccessTeam(Project.TeamId))
+                throw new DomainException("Cannot assign task to user who is not a member of the project's team.");
+        }
 
         var previousAssignee = AssignedTo;
         AssignedToId = user.Id;
@@ -148,7 +159,7 @@ public class Task : BaseEntity<TaskId>
             previousAssignee.UnassignTask(Id);
 
         user.AssignTask(this);
-        var assignedAt = DateTime.UtcNow;
+        var assignedAt = GetCurrentTime();
         UpdateTimestamp();
 
         RaiseDomainEvent(new TaskAssignedDomainEvent(
@@ -177,7 +188,7 @@ public class Task : BaseEntity<TaskId>
         AssignedTo = null;
 
         previousAssignee.UnassignTask(Id);
-        var unassignedAt = DateTime.UtcNow;
+        var unassignedAt = GetCurrentTime();
         UpdateTimestamp();
 
         RaiseDomainEvent(new TaskUnassignedDomainEvent(

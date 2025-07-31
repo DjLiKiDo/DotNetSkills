@@ -1,6 +1,7 @@
 using DotNetSkills.Domain.Common;
 using DotNetSkills.Domain.Enums;
 using DotNetSkills.Domain.Events;
+using DotNetSkills.Domain.Services;
 using DotNetSkills.Domain.ValueObjects;
 
 namespace DotNetSkills.Domain.Entities;
@@ -36,9 +37,13 @@ public class User : BaseEntity<UserId>
 
     public string FullName => $"{FirstName} {LastName}";
 
-    public static User Create(UserId id, string firstName, string lastName, EmailAddress email, UserRole role, string passwordHash, UserId createdBy)
+    public static User Create(UserId id, string firstName, string lastName, EmailAddress email, UserRole role, string passwordHash, UserId createdBy, IPasswordHashingService? passwordService = null)
     {
-        var user = new User(id, firstName, lastName, email, role, passwordHash);
+        var validatedPasswordHash = passwordService?.IsValidPasswordHash(passwordHash) == true 
+            ? passwordHash 
+            : ValidateAndSetPasswordHash(passwordHash);
+            
+        var user = new User(id, firstName, lastName, email, role, validatedPasswordHash);
         
         user.RaiseDomainEvent(new UserCreatedDomainEvent(
             user.Id,
@@ -71,7 +76,7 @@ public class User : BaseEntity<UserId>
 
         var oldRole = Role;
         Role = newRole;
-        var updatedAt = DateTime.UtcNow;
+        var updatedAt = GetCurrentTime();
         UpdateTimestamp();
 
         RaiseDomainEvent(new UserRoleUpdatedDomainEvent(
@@ -86,10 +91,14 @@ public class User : BaseEntity<UserId>
         ));
     }
 
-    public void UpdatePassword(string newPasswordHash, UserId changedBy)
+    public void UpdatePassword(string newPasswordHash, UserId changedBy, IPasswordHashingService? passwordService = null)
     {
-        PasswordHash = ValidateAndSetPasswordHash(newPasswordHash);
-        var changedAt = DateTime.UtcNow;
+        var validatedPasswordHash = passwordService?.IsValidPasswordHash(newPasswordHash) == true 
+            ? newPasswordHash 
+            : ValidateAndSetPasswordHash(newPasswordHash);
+            
+        PasswordHash = validatedPasswordHash;
+        var changedAt = GetCurrentTime();
         UpdateTimestamp();
 
         RaiseDomainEvent(new UserPasswordChangedDomainEvent(
@@ -111,7 +120,7 @@ public class User : BaseEntity<UserId>
             return;
 
         IsActive = false;
-        var deactivatedAt = DateTime.UtcNow;
+        var deactivatedAt = GetCurrentTime();
         UpdateTimestamp();
 
         RaiseDomainEvent(new UserDeactivatedDomainEvent(
@@ -134,7 +143,7 @@ public class User : BaseEntity<UserId>
             return;
 
         IsActive = true;
-        var activatedAt = DateTime.UtcNow;
+        var activatedAt = GetCurrentTime();
         UpdateTimestamp();
 
         RaiseDomainEvent(new UserActivatedDomainEvent(
@@ -150,7 +159,7 @@ public class User : BaseEntity<UserId>
 
     public void RecordLogin()
     {
-        LastLoginAt = DateTime.UtcNow;
+        LastLoginAt = GetCurrentTime();
         UpdateTimestamp();
     }
 

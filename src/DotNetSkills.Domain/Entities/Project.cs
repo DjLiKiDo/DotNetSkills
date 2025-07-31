@@ -38,7 +38,7 @@ public class Project : BaseEntity<ProjectId>
     
     public double CompletionPercentage => TotalTaskCount == 0 ? 0 : (double)CompletedTaskCount / TotalTaskCount * 100;
 
-    public bool IsOverdue => EndDate.HasValue && DateTime.UtcNow > EndDate.Value && !Status.IsFinalized();
+    public bool IsOverdue => EndDate.HasValue && GetCurrentTime() > EndDate.Value && !Status.IsFinalized();
 
     public void UpdateDetails(string name, string? description, UserId updatedBy, DateTime? startDate = null, DateTime? endDate = null)
     {
@@ -48,7 +48,7 @@ public class Project : BaseEntity<ProjectId>
         Description = description?.Trim();
         StartDate = startDate;
         EndDate = ValidateEndDate(startDate, endDate);
-        var updatedAt = DateTime.UtcNow;
+        var updatedAt = GetCurrentTime();
         UpdateTimestamp();
 
         if (oldEndDate != EndDate)
@@ -78,7 +78,7 @@ public class Project : BaseEntity<ProjectId>
 
         var oldStatus = Status;
         Status = newStatus;
-        var updatedAt = DateTime.UtcNow;
+        var updatedAt = GetCurrentTime();
         UpdateTimestamp();
 
         RaiseDomainEvent(new ProjectStatusUpdatedDomainEvent(
@@ -105,7 +105,7 @@ public class Project : BaseEntity<ProjectId>
 
         var previousTeamId = TeamId;
         TeamId = newTeamId;
-        var reassignedAt = DateTime.UtcNow;
+        var reassignedAt = GetCurrentTime();
         UpdateTimestamp();
 
         RaiseDomainEvent(new ProjectReassignedDomainEvent(

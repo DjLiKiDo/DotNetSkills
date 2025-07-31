@@ -48,7 +48,7 @@ public class Team : BaseEntity<TeamId>
         if (_members.Any(m => m.UserId == user.Id))
             throw new DomainException($"User {user.FullName} is already a member of this team.");
 
-        var joinedAt = DateTime.UtcNow;
+        var joinedAt = GetCurrentTime();
         var teamMember = new TeamMember(user.Id, Id, joinedAt);
         _members.Add(teamMember);
         user.AddTeamMembership(teamMember);
@@ -83,7 +83,7 @@ public class Team : BaseEntity<TeamId>
             throw new DomainException("Cannot remove team member who has active tasks assigned.");
 
         var membershipDuration = member.MembershipDuration;
-        var removedAt = DateTime.UtcNow;
+        var removedAt = GetCurrentTime();
 
         _members.Remove(member);
         UpdateTimestamp();
@@ -112,7 +112,7 @@ public class Team : BaseEntity<TeamId>
             throw new DomainException("Cannot deactivate team with active projects.");
 
         IsActive = false;
-        var deactivatedAt = DateTime.UtcNow;
+        var deactivatedAt = GetCurrentTime();
         UpdateTimestamp();
 
         RaiseDomainEvent(new TeamDeactivatedDomainEvent(
@@ -134,7 +134,7 @@ public class Team : BaseEntity<TeamId>
             return;
 
         IsActive = true;
-        var activatedAt = DateTime.UtcNow;
+        var activatedAt = GetCurrentTime();
         UpdateTimestamp();
 
         RaiseDomainEvent(new TeamActivatedDomainEvent(

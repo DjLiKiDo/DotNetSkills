@@ -13,5 +13,5 @@ public sealed record TaskUnassignedDomainEvent(
     DateTime UnassignedAt
 ) : IDomainEvent
 {
-    public DateTime OccurredOn { get; } = DateTime.UtcNow;
+    public DateTime OccurredOn { get; } = DateTimeService.UtcNow;
 }

@@ -14,5 +14,5 @@ public sealed record ProjectStatusUpdatedDomainEvent(
     DateTime UpdatedAt
 ) : IDomainEvent
 {
-    public DateTime OccurredOn { get; } = DateTime.UtcNow;
+    public DateTime OccurredOn { get; } = DateTimeService.UtcNow;
 }

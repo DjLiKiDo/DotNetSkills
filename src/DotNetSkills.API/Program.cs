@@ -1,10 +1,20 @@
+using DotNetSkills.Domain.Common;
+using DotNetSkills.Infrastructure.Common;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// Register time provider
+builder.Services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
+
 var app = builder.Build();
+
+// Initialize domain dependencies
+var dateTimeProvider = app.Services.GetRequiredService<IDateTimeProvider>();
+DateTimeService.SetProvider(dateTimeProvider);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

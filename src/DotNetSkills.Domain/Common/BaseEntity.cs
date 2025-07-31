@@ -5,17 +5,22 @@ public abstract class BaseEntity<TId> : IEquatable<BaseEntity<TId>>
 {
     private readonly List<IDomainEvent> _domainEvents = new();
 
+    public static DateTime GetCurrentTime()
+    {
+        return DateTimeService.UtcNow;
+    }
+
     protected BaseEntity(TId id)
     {
         Id = id;
-        CreatedAt = DateTime.UtcNow;
-        UpdatedAt = DateTime.UtcNow;
+        CreatedAt = DateTimeService.UtcNow;
+        UpdatedAt = DateTimeService.UtcNow;
     }
 
     protected BaseEntity() 
     {
-        CreatedAt = DateTime.UtcNow;
-        UpdatedAt = DateTime.UtcNow;
+        CreatedAt = DateTimeService.UtcNow;
+        UpdatedAt = DateTimeService.UtcNow;
     }
 
     public TId Id { get; protected set; } = default!;
@@ -36,7 +41,7 @@ public abstract class BaseEntity<TId> : IEquatable<BaseEntity<TId>>
 
     protected void UpdateTimestamp()
     {
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeService.UtcNow;
     }
 
     public virtual bool Equals(BaseEntity<TId>? other)
