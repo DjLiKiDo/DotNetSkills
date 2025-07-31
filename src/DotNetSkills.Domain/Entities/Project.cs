@@ -40,13 +40,29 @@ public class Project : BaseEntity<ProjectId>
 
     public bool IsOverdue => EndDate.HasValue && DateTime.UtcNow > EndDate.Value && !Status.IsFinalized();
 
-    public void UpdateDetails(string name, string? description, DateTime? startDate = null, DateTime? endDate = null)
+    public void UpdateDetails(string name, string? description, UserId updatedBy, DateTime? startDate = null, DateTime? endDate = null)
     {
+        var oldEndDate = EndDate;
+        
         Name = ValidateAndSetName(name);
         Description = description?.Trim();
         StartDate = startDate;
         EndDate = ValidateEndDate(startDate, endDate);
+        var updatedAt = DateTime.UtcNow;
         UpdateTimestamp();
+
+        if (oldEndDate != EndDate)
+        {
+            RaiseDomainEvent(new ProjectDeadlineUpdatedDomainEvent(
+                Id,
+                Name,
+                TeamId,
+                oldEndDate,
+                EndDate,
+                updatedBy,
+                updatedAt
+            ));
+        }
     }
 
     public void UpdateStatus(ProjectStatus newStatus, UserRole updatedByRole, UserId updatedBy)
@@ -194,11 +210,11 @@ public class Project : BaseEntity<ProjectId>
         if (string.IsNullOrWhiteSpace(name))
             throw new DomainException("Project name is required.");
 
-        if (name.Length < 2)
-            throw new DomainException("Project name must be at least 2 characters long.");
+        if (name.Length < DomainConstants.Project.MinNameLength)
+            throw new DomainException($"Project name must be at least {DomainConstants.Project.MinNameLength} characters long.");
 
-        if (name.Length > 200)
-            throw new DomainException("Project name cannot exceed 200 characters.");
+        if (name.Length > DomainConstants.Project.MaxNameLength)
+            throw new DomainException($"Project name cannot exceed {DomainConstants.Project.MaxNameLength} characters.");
 
         return name.Trim();
     }

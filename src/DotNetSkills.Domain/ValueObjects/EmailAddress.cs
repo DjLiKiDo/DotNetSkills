@@ -22,8 +22,8 @@ public readonly record struct EmailAddress
         if (!EmailRegex.IsMatch(normalizedValue))
             throw new DomainException("Invalid email address format.");
 
-        if (normalizedValue.Length > 254) // RFC 5321 limit
-            throw new DomainException("Email address cannot exceed 254 characters.");
+        if (normalizedValue.Length > DomainConstants.Email.MaxEmailLength)
+            throw new DomainException($"Email address cannot exceed {DomainConstants.Email.MaxEmailLength} characters.");
 
         Value = normalizedValue;
     }

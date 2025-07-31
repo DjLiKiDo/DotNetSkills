@@ -52,14 +52,30 @@ public class Task : BaseEntity<TaskId>
 
     public double SubtaskCompletionPercentage => SubtaskCount == 0 ? 100 : (double)CompletedSubtaskCount / SubtaskCount * 100;
 
-    public void UpdateDetails(string title, string? description, TaskPriority priority, decimal? estimatedHours = null, DateTime? dueDate = null)
+    public void UpdateDetails(string title, string? description, TaskPriority priority, UserId updatedBy, decimal? estimatedHours = null, DateTime? dueDate = null)
     {
+        var oldPriority = Priority;
+        
         Title = ValidateAndSetTitle(title);
         Description = description?.Trim();
         Priority = priority;
         EstimatedHours = ValidateEstimatedHours(estimatedHours);
         DueDate = dueDate;
+        var updatedAt = DateTime.UtcNow;
         UpdateTimestamp();
+
+        if (oldPriority != priority)
+        {
+            RaiseDomainEvent(new TaskPriorityChangedDomainEvent(
+                Id,
+                Title,
+                ProjectId,
+                oldPriority,
+                priority,
+                updatedBy,
+                updatedAt
+            ));
+        }
     }
 
     public void UpdateStatus(Enums.TaskStatus newStatus, UserRole updatedByRole, UserId updatedBy)
@@ -180,7 +196,7 @@ public class Task : BaseEntity<TaskId>
         if (!recordedByRole.CanManageTasks())
             throw new DomainException("Only developers and above can record actual hours.");
 
-        if (hours < 0)
+        if (hours < DomainConstants.Task.MinHours)
             throw new DomainException("Actual hours cannot be negative.");
 
         ActualHours = hours;
@@ -261,11 +277,11 @@ public class Task : BaseEntity<TaskId>
         if (string.IsNullOrWhiteSpace(title))
             throw new DomainException("Task title is required.");
 
-        if (title.Length < 3)
-            throw new DomainException("Task title must be at least 3 characters long.");
+        if (title.Length < DomainConstants.Task.MinTitleLength)
+            throw new DomainException($"Task title must be at least {DomainConstants.Task.MinTitleLength} characters long.");
 
-        if (title.Length > 200)
-            throw new DomainException("Task title cannot exceed 200 characters.");
+        if (title.Length > DomainConstants.Task.MaxTitleLength)
+            throw new DomainException($"Task title cannot exceed {DomainConstants.Task.MaxTitleLength} characters.");
 
         return title.Trim();
     }
@@ -283,7 +299,7 @@ public class Task : BaseEntity<TaskId>
 
     private static decimal? ValidateEstimatedHours(decimal? estimatedHours)
     {
-        if (estimatedHours.HasValue && estimatedHours.Value < 0)
+        if (estimatedHours.HasValue && estimatedHours.Value < DomainConstants.Task.MinHours)
             throw new DomainException("Estimated hours cannot be negative.");
 
         return estimatedHours;

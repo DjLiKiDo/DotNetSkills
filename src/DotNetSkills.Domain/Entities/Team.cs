@@ -205,11 +205,11 @@ public class Team : BaseEntity<TeamId>
         if (string.IsNullOrWhiteSpace(name))
             throw new DomainException("Team name is required.");
 
-        if (name.Length < 2)
-            throw new DomainException("Team name must be at least 2 characters long.");
+        if (name.Length < DomainConstants.Team.MinNameLength)
+            throw new DomainException($"Team name must be at least {DomainConstants.Team.MinNameLength} characters long.");
 
-        if (name.Length > 100)
-            throw new DomainException("Team name cannot exceed 100 characters.");
+        if (name.Length > DomainConstants.Team.MaxNameLength)
+            throw new DomainException($"Team name cannot exceed {DomainConstants.Team.MaxNameLength} characters.");
 
         return name.Trim();
     }

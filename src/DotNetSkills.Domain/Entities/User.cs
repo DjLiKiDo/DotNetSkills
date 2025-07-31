@@ -86,10 +86,20 @@ public class User : BaseEntity<UserId>
         ));
     }
 
-    public void UpdatePassword(string newPasswordHash)
+    public void UpdatePassword(string newPasswordHash, UserId changedBy)
     {
         PasswordHash = ValidateAndSetPasswordHash(newPasswordHash);
+        var changedAt = DateTime.UtcNow;
         UpdateTimestamp();
+
+        RaiseDomainEvent(new UserPasswordChangedDomainEvent(
+            Id,
+            FirstName,
+            LastName,
+            Email,
+            changedBy,
+            changedAt
+        ));
     }
 
     public void Deactivate(UserRole requestedByRole, UserId deactivatedBy)
@@ -205,8 +215,8 @@ public class User : BaseEntity<UserId>
         if (string.IsNullOrWhiteSpace(firstName))
             throw new DomainException("First name is required.");
 
-        if (firstName.Length > 50)
-            throw new DomainException("First name cannot exceed 50 characters.");
+        if (firstName.Length > DomainConstants.User.MaxFirstNameLength)
+            throw new DomainException($"First name cannot exceed {DomainConstants.User.MaxFirstNameLength} characters.");
 
         return firstName.Trim();
     }
@@ -216,8 +226,8 @@ public class User : BaseEntity<UserId>
         if (string.IsNullOrWhiteSpace(lastName))
             throw new DomainException("Last name is required.");
 
-        if (lastName.Length > 50)
-            throw new DomainException("Last name cannot exceed 50 characters.");
+        if (lastName.Length > DomainConstants.User.MaxLastNameLength)
+            throw new DomainException($"Last name cannot exceed {DomainConstants.User.MaxLastNameLength} characters.");
 
         return lastName.Trim();
     }
