@@ -39,6 +39,7 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
 - **TEC-004**: Implement Minimal APIs with proper endpoint organization
 - **TEC-005**: Use AutoMapper for entity-to-DTO mapping
 - **TEC-006**: Configure Serilog for structured logging
+- **TEC-007**: Project structure to follow Domain-Driven Design (DDD) principles with semantic namespacing
 
 ### Quality Requirements
 - **QUA-001**: Achieve minimum 80% test coverage for Domain and Application layers
@@ -73,31 +74,27 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
 ### Phase 1: Foundation & Infrastructure (Week 1-2)
 
 #### Domain Layer Implementation
-- [ ] **TASK-001**: Create base entities and interfaces
-  - [ ] **TASK-001.001**: Implement `BaseEntity<TId>` with audit fields and domain events
-  - [ ] **TASK-001.002**: Create `IStronglyTypedId<T>` interface for type-safe identifiers
-  - [ ] **TASK-001.003**: Define `IDomainEvent` interface and event handling contracts
-  - Location: `src/DotNetSkills.Domain/Common/`
+- [x] **TASK-001**: Create base entities and interfaces
+  - [x] **TASK-001.001**: Implement `BaseEntity<TId>` with audit fields and domain events
+  - [x] **TASK-001.002**: Create `IStronglyTypedId<T>` interface for type-safe identifiers
+  - [x] **TASK-001.003**: Define `IDomainEvent` interface and event handling contracts
 
-- [ ] **TASK-002**: Implement core domain entities
-  - [ ] **TASK-002.001**: Create `User` entity with role-based logic and team membership management
-  - [ ] **TASK-002.002**: Implement `Team` entity with member management and validation rules
-  - [ ] **TASK-002.003**: Develop `Project` entity with status management and team association
-  - [ ] **TASK-002.004**: Build `Task` entity with assignment, status transitions, and subtask support
-  - [ ] **TASK-002.005**: Create `TeamMember` join entity for user-team relationships
-  - Location: `src/DotNetSkills.Domain/Entities/`
+- [x] **TASK-002**: Implement core domain entities
+  - [x] **TASK-002.001**: Create `User` entity with role-based logic and team membership management
+  - [x] **TASK-002.002**: Implement `Team` entity with member management and validation rules
+  - [x] **TASK-002.003**: Develop `Project` entity with status management and team association
+  - [x] **TASK-002.004**: Build `Task` entity with assignment, status transitions, and subtask support
+  - [x] **TASK-002.005**: Create `TeamMember` join entity for user-team relationships
 
-- [ ] **TASK-003**: Define value objects and enumerations
-  - [ ] **TASK-003.001**: Implement `UserId`, `TeamId`, `ProjectId`, `TaskId` strongly-typed identifiers
-  - [ ] **TASK-003.002**: Create `EmailAddress` value object with validation
-  - [ ] **TASK-003.003**: Define `UserRole`, `TaskStatus`, `TaskPriority`, `TaskType`, `ProjectStatus` enums
-  - Location: `src/DotNetSkills.Domain/ValueObjects/` and `src/DotNetSkills.Domain/Enums/`
+- [x] **TASK-003**: Define value objects and enumerations
+  - [x] **TASK-003.001**: Implement `UserId`, `TeamId`, `ProjectId`, `TaskId` strongly-typed identifiers
+  - [x] **TASK-003.002**: Create `EmailAddress` value object with validation
+  - [x] **TASK-003.003**: Define `UserRole`, `TaskStatus`, `TaskPriority`, `TaskType`, `ProjectStatus` enums
 
-- [ ] **TASK-004**: Implement domain events
-  - [ ] **TASK-004.001**: Create `UserCreatedDomainEvent`, `TaskAssignedDomainEvent`, `TaskStatusUpdatedDomainEvent`
-  - [ ] **TASK-004.002**: Implement `TeamMemberAddedDomainEvent`, `TeamMemberRemovedDomainEvent`
-  - [ ] **TASK-004.003**: Define `ProjectStatusUpdatedDomainEvent`, `TaskCompletedDomainEvent`
-  - Location: `src/DotNetSkills.Domain/Events/`
+- [x] **TASK-004**: Implement domain events
+  - [x] **TASK-004.001**: Create `UserCreatedDomainEvent`, `TaskAssignedDomainEvent`, `TaskStatusUpdatedDomainEvent`
+  - [x] **TASK-004.002**: Implement `TeamMemberAddedDomainEvent`, `TeamMemberRemovedDomainEvent`
+  - [x] **TASK-004.003**: Define `ProjectStatusUpdatedDomainEvent`, `TaskCompletedDomainEvent`
 
 #### Infrastructure Layer Setup
 - [ ] **TASK-005**: Configure Entity Framework Core
@@ -106,21 +103,18 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-005.003**: Implement entity configurations using `IEntityTypeConfiguration<T>`
   - [ ] **TASK-005.004**: Configure value object ownership and conversions
   - [ ] **TASK-005.005**: Setup optimistic concurrency control
-  - Location: `src/DotNetSkills.Infrastructure/Data/`
 
 - [ ] **TASK-006**: Create database migrations
   - [ ] **TASK-006.001**: Generate initial migration with all entity tables
   - [ ] **TASK-006.002**: Configure indexes for performance optimization
   - [ ] **TASK-006.003**: Setup foreign key relationships and constraints
   - [ ] **TASK-006.004**: Create seed data for initial roles and admin user
-  - Location: `src/DotNetSkills.Infrastructure/Data/Migrations/`
 
 - [ ] **TASK-007**: Implement repository pattern
   - [ ] **TASK-007.001**: Create repository interfaces in Application layer
   - [ ] **TASK-007.002**: Implement EF Core repositories in Infrastructure layer
   - [ ] **TASK-007.003**: Add Unit of Work pattern for transaction coordination
   - [ ] **TASK-007.004**: Include domain event dispatching in SaveChanges
-  - Location: `src/DotNetSkills.Application/Interfaces/` and `src/DotNetSkills.Infrastructure/Repositories/`
 
 #### Application Layer Foundation
 - [ ] **TASK-008**: Setup dependency injection container
@@ -128,14 +122,12 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-008.002**: Register repositories, services, and external dependencies
   - [ ] **TASK-008.003**: Setup AutoMapper profiles and validation
   - [ ] **TASK-008.004**: Configure logging and middleware services
-  - Location: `src/DotNetSkills.API/Extensions/ServiceCollectionExtensions.cs`
 
 - [ ] **TASK-009**: Implement basic DTOs and mapping
   - [ ] **TASK-009.001**: Create request/response DTOs for all entities
   - [ ] **TASK-009.002**: Configure AutoMapper profiles for entity-DTO mapping
   - [ ] **TASK-009.003**: Implement validation attributes and custom validators
   - [ ] **TASK-009.004**: Setup DTO inheritance for common properties
-  - Location: `src/DotNetSkills.Application/DTOs/`
 
 ### Phase 2: Authentication & Security (Week 2-3)
 
@@ -145,7 +137,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-010.002**: Implement secure password hashing with salt generation
   - [ ] **TASK-010.003**: Add password strength validation rules
   - [ ] **TASK-010.004**: Include password verification methods
-  - Location: `src/DotNetSkills.Application/Services/Security/`
 
 - [ ] **TASK-011**: Configure JWT authentication
   - [ ] **TASK-011.001**: Install JWT authentication packages
@@ -153,14 +144,12 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-011.003**: Setup JWT secret management using configuration
   - [ ] **TASK-011.004**: Implement token generation service with user claims
   - [ ] **TASK-011.005**: Configure token expiration and security policies
-  - Location: `src/DotNetSkills.Infrastructure/Services/Authentication/`
 
 - [ ] **TASK-012**: Implement role-based authorization
   - [ ] **TASK-012.001**: Define authorization policies for each role
   - [ ] **TASK-012.002**: Create custom authorization handlers for business rules
   - [ ] **TASK-012.003**: Setup policy-based authorization attributes
   - [ ] **TASK-012.004**: Implement resource-based authorization for team/project access
-  - Location: `src/DotNetSkills.API/Authorization/`
 
 #### Authentication Endpoints
 - [ ] **TASK-013**: Create authentication API endpoints
@@ -168,7 +157,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-013.002**: Create POST `/api/v1/auth/register` (admin-only user creation)
   - [ ] **TASK-013.003**: Add JWT token generation and response formatting
   - [ ] **TASK-013.004**: Implement authentication error handling and logging
-  - Location: `src/DotNetSkills.API/Endpoints/AuthEndpoints.cs`
 
 - [ ] **TASK-014**: Configure security middleware
   - [ ] **TASK-014.001**: Setup CORS policies for allowed origins
@@ -176,7 +164,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-014.003**: Configure global exception handling middleware
   - [ ] **TASK-014.004**: Add security headers middleware (HSTS, CSP, etc.)
   - [ ] **TASK-014.005**: Setup request/response logging middleware
-  - Location: `src/DotNetSkills.API/Middleware/`
 
 ### Phase 3: Core Business Logic & APIs (Week 3-5)
 
@@ -187,7 +174,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-015.003**: Implement user retrieval with role-based filtering
   - [ ] **TASK-015.004**: Add user update functionality (excluding password changes)
   - [ ] **TASK-015.005**: Implement user deletion with business rule validation
-  - Location: `src/DotNetSkills.Application/Services/UserService.cs`
 
 - [ ] **TASK-016**: Create user management endpoints
   - [ ] **TASK-016.001**: Implement GET `/api/v1/users` with pagination and filtering
@@ -195,7 +181,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-016.003**: Add DELETE `/api/v1/users/{id}` with admin authorization
   - [ ] **TASK-016.004**: Implement GET `/api/v1/users/{id}` for single user retrieval
   - [ ] **TASK-016.005**: Include proper authorization and validation
-  - Location: `src/DotNetSkills.API/Endpoints/UserEndpoints.cs`
 
 #### Team Management Implementation
 - [ ] **TASK-017**: Implement team management services
@@ -204,7 +189,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-017.003**: Implement team member addition/removal with business rules
   - [ ] **TASK-017.004**: Add team retrieval with member information
   - [ ] **TASK-017.005**: Implement team deletion with active project validation
-  - Location: `src/DotNetSkills.Application/Services/TeamService.cs`
 
 - [ ] **TASK-018**: Create team management endpoints
   - [ ] **TASK-018.001**: Implement GET `/api/v1/teams` with member details
@@ -212,7 +196,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-018.003**: Add PUT `/api/v1/teams/{id}` for team updates
   - [ ] **TASK-018.004**: Implement DELETE `/api/v1/teams/{id}` with validation
   - [ ] **TASK-018.005**: Create POST/DELETE `/api/v1/teams/{id}/members` for membership management
-  - Location: `src/DotNetSkills.API/Endpoints/TeamEndpoints.cs`
 
 #### Project Management Implementation
 - [ ] **TASK-019**: Implement project management services
@@ -221,7 +204,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-019.003**: Implement project status management with business rules
   - [ ] **TASK-019.004**: Add project retrieval with team and task information
   - [ ] **TASK-019.005**: Implement project deletion with active task validation
-  - Location: `src/DotNetSkills.Application/Services/ProjectService.cs`
 
 - [ ] **TASK-020**: Create project management endpoints
   - [ ] **TASK-020.001**: Implement GET `/api/v1/projects` with team filtering
@@ -229,7 +211,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-020.003**: Add PUT `/api/v1/projects/{id}` for project updates
   - [ ] **TASK-020.004**: Implement DELETE `/api/v1/projects/{id}` with validation
   - [ ] **TASK-020.005**: Create GET `/api/v1/projects/{id}` for detailed project view
-  - Location: `src/DotNetSkills.API/Endpoints/ProjectEndpoints.cs`
 
 #### Task Management Implementation
 - [ ] **TASK-021**: Implement task management services
@@ -239,7 +220,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-021.004**: Add task status management with transition validation
   - [ ] **TASK-021.005**: Implement subtask creation with nesting constraints
   - [ ] **TASK-021.006**: Add task filtering and search capabilities
-  - Location: `src/DotNetSkills.Application/Services/TaskService.cs`
 
 - [ ] **TASK-022**: Create task management endpoints
   - [ ] **TASK-022.001**: Implement GET `/api/v1/projects/{projectId}/tasks` with filtering
@@ -248,7 +228,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-022.004**: Implement PUT `/api/v1/tasks/{id}/assign` for assignment changes
   - [ ] **TASK-022.005**: Create PUT `/api/v1/tasks/{id}/status` for status updates
   - [ ] **TASK-022.006**: Add DELETE `/api/v1/tasks/{id}` with subtask handling
-  - Location: `src/DotNetSkills.API/Endpoints/TaskEndpoints.cs`
 
 #### Input Validation Implementation
 - [ ] **TASK-023**: Create comprehensive input validation
@@ -257,7 +236,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-023.003**: Create cross-field validation for complex scenarios
   - [ ] **TASK-023.004**: Implement async validation for uniqueness checks
   - [ ] **TASK-023.005**: Setup validation error formatting and messaging
-  - Location: `src/DotNetSkills.Application/Validators/`
 
 ### Phase 4: Testing & Quality Assurance (Week 5-6)
 
@@ -268,7 +246,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-024.003**: Test entity state transitions and validation
   - [ ] **TASK-024.004**: Implement edge case and error scenario testing
   - [ ] **TASK-024.005**: Use builder pattern for test data creation
-  - Location: `tests/DotNetSkills.Domain.UnitTests/`
 
 - [ ] **TASK-025**: Create application service unit tests
   - [ ] **TASK-025.001**: Test all service methods with mocked dependencies
@@ -276,14 +253,12 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-025.003**: Test error handling and exception scenarios
   - [ ] **TASK-025.004**: Implement authorization and validation testing
   - [ ] **TASK-025.005**: Achieve minimum 80% code coverage
-  - Location: `tests/DotNetSkills.Application.UnitTests/`
 
 - [ ] **TASK-026**: Create infrastructure unit tests
   - [ ] **TASK-026.001**: Test repository implementations with in-memory database
   - [ ] **TASK-026.002**: Validate entity configuration and mapping
   - [ ] **TASK-026.003**: Test database constraint enforcement
   - [ ] **TASK-026.004**: Implement migration and seed data testing
-  - Location: `tests/DotNetSkills.Infrastructure.UnitTests/`
 
 #### Integration Testing Implementation
 - [ ] **TASK-027**: Create API integration tests
@@ -292,14 +267,12 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-027.003**: Validate authentication and authorization flows
   - [ ] **TASK-027.004**: Test error scenarios and edge cases
   - [ ] **TASK-027.005**: Implement database transaction testing
-  - Location: `tests/DotNetSkills.API.IntegrationTests/`
 
 - [ ] **TASK-028**: Create end-to-end testing scenarios
   - [ ] **TASK-028.001**: Test complete user workflows (user creation to task completion)
   - [ ] **TASK-028.002**: Validate complex business scenarios with multiple entities
   - [ ] **TASK-028.003**: Test performance under load conditions
   - [ ] **TASK-028.004**: Implement security testing for all endpoints
-  - Location: `tests/DotNetSkills.E2ETests/`
 
 #### Documentation and API Quality
 - [ ] **TASK-029**: Configure comprehensive API documentation
@@ -308,7 +281,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-029.003**: Create comprehensive request/response examples
   - [ ] **TASK-029.004**: Implement API versioning documentation
   - [ ] **TASK-029.005**: Configure Swagger UI with authentication support
-  - Location: `src/DotNetSkills.API/` (XML comments) and Swagger configuration
 
 - [ ] **TASK-030**: Implement monitoring and logging
   - [ ] **TASK-030.001**: Configure structured logging with Serilog
@@ -316,7 +288,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-030.003**: Implement health check endpoints
   - [ ] **TASK-030.004**: Setup error tracking and alerting
   - [ ] **TASK-030.005**: Configure log aggregation and analysis
-  - Location: `src/DotNetSkills.API/Extensions/` and middleware
 
 ### Phase 5: Deployment & DevOps (Week 6-7)
 
@@ -327,7 +298,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-031.003**: Configure SQL Server container with persistent data
   - [ ] **TASK-031.004**: Add environment-specific configuration files
   - [ ] **TASK-031.005**: Implement health checks and container monitoring
-  - Location: Root directory (`Dockerfile`, `docker-compose.yml`)
 
 - [ ] **TASK-032**: Configure development environment
   - [ ] **TASK-032.001**: Setup .NET User Secrets for local configuration
@@ -335,7 +305,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-032.003**: Configure hot reload and debugging support
   - [ ] **TASK-032.004**: Add development-specific middleware and tools
   - [ ] **TASK-032.005**: Document local development setup process
-  - Location: `src/DotNetSkills.API/` and documentation
 
 #### CI/CD Pipeline Implementation
 - [ ] **TASK-033**: Create continuous integration workflow
@@ -344,7 +313,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-033.003**: Add code quality analysis and security scanning
   - [ ] **TASK-033.004**: Implement Docker image building and pushing
   - [ ] **TASK-033.005**: Setup branch protection and PR requirements
-  - Location: `.github/workflows/ci.yml`
 
 - [ ] **TASK-034**: Create deployment workflows
   - [ ] **TASK-034.001**: Setup staging deployment workflow for Azure
@@ -352,7 +320,6 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [ ] **TASK-034.003**: Implement database migration automation
   - [ ] **TASK-034.004**: Add rollback capabilities and health monitoring
   - [ ] **TASK-034.005**: Setup environment-specific configuration management
-  - Location: `.github/workflows/deploy-staging.yml`, `.github/workflows/deploy-production.yml`
 
 #### Azure Environment Configuration
 - [ ] **TASK-035**: Setup Azure infrastructure

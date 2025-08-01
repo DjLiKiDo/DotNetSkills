@@ -33,7 +33,7 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
-app.Run();
+await app.RunAsync();
 
 internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
