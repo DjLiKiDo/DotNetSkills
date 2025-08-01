@@ -42,12 +42,6 @@ This implementation plan addresses the inconsistent validation patterns across d
 - Include comprehensive XML documentation
 - Add unit tests for all validation methods
 
-#### TASK-002: Create Validation Constants and Business Rules
-- Create `src/DotNetSkills.Domain/Common/Validation/ValidationConstants.cs` for primitive validation values
-- Create `src/DotNetSkills.Domain/Common/Rules/BusinessRules.cs` for complex business logic
-- Define all magic numbers as named constants with RFC references
-- Implement status transition logic and authorization rules
-
 ### Phase 2: Standardize Entity Validation (Days 2-3)
 
 #### TASK-005: Refactor User Entity Validation
