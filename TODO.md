@@ -1,6 +1,9 @@
+# Domain Layer TODOs
+
 [x] Review entities
-[ ] Implement extensions for enums
 [x] Folder structure matching Domain looking for better organization and namespacing
+[x] Work on technical debt
+[ ] Implement extensions for enums
+[ ] Add unit tests
 
-
-
+# Infrastructure Layer TODOs
