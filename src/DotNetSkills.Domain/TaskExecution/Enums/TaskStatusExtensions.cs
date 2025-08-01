@@ -6,25 +6,6 @@ namespace DotNetSkills.Domain.TaskExecution.Enums;
 public static class TaskStatusExtensions
 {
     /// <summary>
-    /// Determines if the current task status can transition to the specified new status.
-    /// </summary>
-    /// <param name="currentStatus">The current task status.</param>
-    /// <param name="newStatus">The target status to transition to.</param>
-    /// <returns>True if the transition is valid, false otherwise.</returns>
-    public static bool CanTransitionTo(this TaskStatus currentStatus, TaskStatus newStatus)
-    {
-        return currentStatus switch
-        {
-            TaskStatus.ToDo => newStatus is TaskStatus.InProgress or TaskStatus.Cancelled,
-            TaskStatus.InProgress => newStatus is TaskStatus.ToDo or TaskStatus.InReview or TaskStatus.Done or TaskStatus.Cancelled,
-            TaskStatus.InReview => newStatus is TaskStatus.InProgress or TaskStatus.Done or TaskStatus.Cancelled,
-            TaskStatus.Done => false, // Cannot move from Done back to any other status
-            TaskStatus.Cancelled => false, // Cannot move from Cancelled back to any other status
-            _ => false
-        };
-    }
-
-    /// <summary>
     /// Gets the display name for the task status.
     /// </summary>
     /// <param name="status">The task status.</param>
@@ -93,11 +74,5 @@ public static class TaskStatusExtensions
         _ => 0
     };
 
-    /// <summary>
-    /// Checks if the task can be assigned in the current status.
-    /// </summary>
-    /// <param name="status">The task status.</param>
-    /// <returns>True if the task can be assigned, false otherwise.</returns>
-    public static bool CanBeAssigned(this TaskStatus status) =>
-        status is TaskStatus.ToDo or TaskStatus.InProgress;
+    // ...existing code...
 }

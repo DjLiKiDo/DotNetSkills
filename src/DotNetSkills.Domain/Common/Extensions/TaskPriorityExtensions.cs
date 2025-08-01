@@ -48,22 +48,6 @@ public static class TaskPriorityExtensions
     };
 
     /// <summary>
-    /// Checks if the priority is considered high (High or Critical).
-    /// </summary>
-    /// <param name="priority">The task priority.</param>
-    /// <returns>True if the priority is High or Critical, false otherwise.</returns>
-    public static bool IsHighPriority(this TaskPriority priority) =>
-        priority is TaskPriority.High or TaskPriority.Critical;
-
-    /// <summary>
-    /// Checks if the priority requires immediate attention (Critical only).
-    /// </summary>
-    /// <param name="priority">The task priority.</param>
-    /// <returns>True if the priority is Critical, false otherwise.</returns>
-    public static bool RequiresImmediateAttention(this TaskPriority priority) =>
-        priority == TaskPriority.Critical;
-
-    /// <summary>
     /// Gets the SLA (Service Level Agreement) days based on priority.
     /// </summary>
     /// <param name="priority">The task priority.</param>

@@ -6,25 +6,6 @@ namespace DotNetSkills.Domain.Common.Extensions;
 public static class ProjectStatusExtensions
 {
     /// <summary>
-    /// Determines if the current project status can transition to the specified new status.
-    /// </summary>
-    /// <param name="currentStatus">The current project status.</param>
-    /// <param name="newStatus">The target status to transition to.</param>
-    /// <returns>True if the transition is valid, false otherwise.</returns>
-    public static bool CanTransitionTo(this ProjectStatus currentStatus, ProjectStatus newStatus)
-    {
-        return currentStatus switch
-        {
-            ProjectStatus.Planning => newStatus is ProjectStatus.Active or ProjectStatus.Cancelled,
-            ProjectStatus.Active => newStatus is ProjectStatus.OnHold or ProjectStatus.Completed or ProjectStatus.Cancelled,
-            ProjectStatus.OnHold => newStatus is ProjectStatus.Active or ProjectStatus.Cancelled,
-            ProjectStatus.Completed => false, // Completed projects cannot be changed
-            ProjectStatus.Cancelled => false, // Cancelled projects cannot be changed
-            _ => false
-        };
-    }
-
-    /// <summary>
     /// Gets the display name for the project status.
     /// </summary>
     /// <param name="status">The project status.</param>
