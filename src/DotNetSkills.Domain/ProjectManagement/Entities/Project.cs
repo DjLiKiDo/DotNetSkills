@@ -64,17 +64,15 @@ public class Project : AggregateRoot<ProjectId>
     public Project(string name, string? description, TeamId teamId, DateTime? plannedEndDate, User createdBy) 
         : base(ProjectId.New())
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Project name cannot be empty", nameof(name));
-
-        ArgumentNullException.ThrowIfNull(teamId);
-        ArgumentNullException.ThrowIfNull(createdBy);
-
-        if (!createdBy.CanManageProjects())
-            throw new DomainException("User does not have permission to create projects");
-
-        if (plannedEndDate.HasValue && plannedEndDate.Value <= DateTime.UtcNow)
-            throw new DomainException("Planned end date must be in the future");
+        Ensure.NotNullOrWhiteSpace(name, nameof(name));
+        Ensure.NotNull(teamId, nameof(teamId));
+        Ensure.NotNull(createdBy, nameof(createdBy));
+        Ensure.BusinessRule(createdBy.CanManageProjects(), ValidationMessages.Project.NoPermissionToCreate);
+        
+        if (plannedEndDate.HasValue)
+        {
+            Ensure.FutureDate(plannedEndDate.Value, nameof(plannedEndDate));
+        }
 
         Name = name.Trim();
         Description = description?.Trim();
@@ -112,19 +110,15 @@ public class Project : AggregateRoot<ProjectId>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
     public void UpdateInfo(string name, string? description, DateTime? plannedEndDate, User updatedBy)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Project name cannot be empty", nameof(name));
-
-        ArgumentNullException.ThrowIfNull(updatedBy);
-
-        if (!CanModifyProject(updatedBy))
-            throw new DomainException("User does not have permission to modify this project");
-
-        if (Status == ProjectStatus.Completed)
-            throw new DomainException("Cannot modify completed projects");
-
-        if (plannedEndDate.HasValue && plannedEndDate.Value <= DateTime.UtcNow && Status != ProjectStatus.Completed)
-            throw new DomainException("Planned end date must be in the future for active projects");
+        Ensure.NotNullOrWhiteSpace(name, nameof(name));
+        Ensure.NotNull(updatedBy, nameof(updatedBy));
+        Ensure.BusinessRule(CanModifyProject(updatedBy), ValidationMessages.Project.NoPermissionToModify);
+        Ensure.BusinessRule(Status != ProjectStatus.Completed, ValidationMessages.Project.CannotModifyCompleted);
+        
+        if (plannedEndDate.HasValue && Status != ProjectStatus.Completed)
+        {
+            Ensure.FutureDate(plannedEndDate.Value, nameof(plannedEndDate));
+        }
 
         Name = name.Trim();
         Description = description?.Trim();
@@ -139,13 +133,10 @@ public class Project : AggregateRoot<ProjectId>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
     public void Start(User startedBy)
     {
-        ArgumentNullException.ThrowIfNull(startedBy);
-
-        if (!CanModifyProject(startedBy))
-            throw new DomainException("User does not have permission to start this project");
-
-        if (!CanTransitionTo(ProjectStatus.Active))
-            throw new DomainException($"Cannot start project from {Status} status");
+        Ensure.NotNull(startedBy, nameof(startedBy));
+        Ensure.BusinessRule(CanModifyProject(startedBy), ValidationMessages.Project.NoPermissionToStart);
+        Ensure.BusinessRule(CanTransitionTo(ProjectStatus.Active), 
+            ValidationMessages.Formatting.Format(ValidationMessages.Common.InvalidStatusTransition, "project", Status.ToString(), ProjectStatus.Active.ToString()));
 
         var previousStatus = Status;
         Status = ProjectStatus.Active;
@@ -163,13 +154,10 @@ public class Project : AggregateRoot<ProjectId>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
     public void PutOnHold(User pausedBy)
     {
-        ArgumentNullException.ThrowIfNull(pausedBy);
-
-        if (!CanModifyProject(pausedBy))
-            throw new DomainException("User does not have permission to modify this project");
-
-        if (!CanTransitionTo(ProjectStatus.OnHold))
-            throw new DomainException($"Cannot put project on hold from {Status} status");
+        Ensure.NotNull(pausedBy, nameof(pausedBy));
+        Ensure.BusinessRule(CanModifyProject(pausedBy), ValidationMessages.Project.NoPermissionToModify);
+        Ensure.BusinessRule(CanTransitionTo(ProjectStatus.OnHold), 
+            ValidationMessages.Formatting.Format(ValidationMessages.Common.InvalidStatusTransition, "project", Status.ToString(), ProjectStatus.OnHold.ToString()));
 
         var previousStatus = Status;
         Status = ProjectStatus.OnHold;
@@ -186,13 +174,9 @@ public class Project : AggregateRoot<ProjectId>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
     public void Resume(User resumedBy)
     {
-        ArgumentNullException.ThrowIfNull(resumedBy);
-
-        if (!CanModifyProject(resumedBy))
-            throw new DomainException("User does not have permission to modify this project");
-
-        if (Status != ProjectStatus.OnHold)
-            throw new DomainException("Can only resume projects that are on hold");
+        Ensure.NotNull(resumedBy, nameof(resumedBy));
+        Ensure.BusinessRule(CanModifyProject(resumedBy), ValidationMessages.Project.NoPermissionToModify);
+        Ensure.BusinessRule(Status == ProjectStatus.OnHold, ValidationMessages.Project.CanOnlyResumeFromHold);
 
         var previousStatus = Status;
         Status = ProjectStatus.Active;
@@ -210,16 +194,11 @@ public class Project : AggregateRoot<ProjectId>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
     public void Complete(User completedBy, bool hasActiveTasks = false)
     {
-        ArgumentNullException.ThrowIfNull(completedBy);
-
-        if (!CanModifyProject(completedBy))
-            throw new DomainException("User does not have permission to complete this project");
-
-        if (!CanTransitionTo(ProjectStatus.Completed))
-            throw new DomainException($"Cannot complete project from {Status} status");
-
-        if (hasActiveTasks)
-            throw new DomainException("Cannot complete project with active tasks");
+        Ensure.NotNull(completedBy, nameof(completedBy));
+        Ensure.BusinessRule(CanModifyProject(completedBy), ValidationMessages.Project.NoPermissionToComplete);
+        Ensure.BusinessRule(CanTransitionTo(ProjectStatus.Completed), 
+            ValidationMessages.Formatting.Format(ValidationMessages.Common.InvalidStatusTransition, "project", Status.ToString(), ProjectStatus.Completed.ToString()));
+        Ensure.BusinessRule(!hasActiveTasks, ValidationMessages.Project.CannotCompleteWithActiveTasks);
 
         var previousStatus = Status;
         Status = ProjectStatus.Completed;
@@ -237,13 +216,9 @@ public class Project : AggregateRoot<ProjectId>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
     public void Cancel(User cancelledBy)
     {
-        ArgumentNullException.ThrowIfNull(cancelledBy);
-
-        if (!CanModifyProject(cancelledBy))
-            throw new DomainException("User does not have permission to cancel this project");
-
-        if (Status == ProjectStatus.Completed)
-            throw new DomainException("Cannot cancel completed projects");
+        Ensure.NotNull(cancelledBy, nameof(cancelledBy));
+        Ensure.BusinessRule(CanModifyProject(cancelledBy), ValidationMessages.Project.NoPermissionToCancel);
+        Ensure.BusinessRule(Status != ProjectStatus.Completed, ValidationMessages.Project.CannotCancelCompleted);
 
         var previousStatus = Status;
         Status = ProjectStatus.Cancelled;

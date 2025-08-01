@@ -54,11 +54,11 @@ public class User : AggregateRoot<UserId>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
     public User(string name, EmailAddress email, UserRole role, UserId? createdBy = null) : base(UserId.New())
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("User name cannot be empty", nameof(name));
+        Ensure.NotNullOrWhiteSpace(name, nameof(name));
+        Ensure.NotNull(email, nameof(email));
 
         Name = name.Trim();
-        Email = email ?? throw new ArgumentNullException(nameof(email));
+        Email = email;
         Role = role;
         Status = UserStatus.Active;
 
@@ -78,8 +78,9 @@ public class User : AggregateRoot<UserId>
     /// <exception cref="DomainException">Thrown when the creator is not an admin.</exception>
     public static User Create(string name, EmailAddress email, UserRole role, User? createdByUser = null)
     {
-        if (createdByUser != null && createdByUser.Role != UserRole.Admin)
-            throw new DomainException("Only admin users can create new users");
+        Ensure.BusinessRule(
+            createdByUser?.Role == UserRole.Admin || createdByUser is null,
+            ValidationMessages.User.OnlyAdminCanCreate);
 
         return new User(name, email, role, createdByUser?.Id);
     }
@@ -93,11 +94,11 @@ public class User : AggregateRoot<UserId>
     /// <exception cref="ArgumentNullException">Thrown when email is null.</exception>
     public void UpdateProfile(string name, EmailAddress email)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("User name cannot be empty", nameof(name));
+        Ensure.NotNullOrWhiteSpace(name, nameof(name));
+        Ensure.NotNull(email, nameof(email));
 
         Name = name.Trim();
-        Email = email ?? throw new ArgumentNullException(nameof(email));
+        Email = email;
     }
 
     /// <summary>
@@ -108,11 +109,13 @@ public class User : AggregateRoot<UserId>
     /// <exception cref="DomainException">Thrown when the changer is not an admin or when trying to change own role.</exception>
     public void ChangeRole(UserRole newRole, User changedBy)
     {
-        if (changedBy.Role != UserRole.Admin)
-            throw new DomainException("Only admin users can change user roles");
-
-        if (changedBy.Id == Id)
-            throw new DomainException("Users cannot change their own role");
+        Ensure.NotNull(changedBy, nameof(changedBy));
+        Ensure.BusinessRule(
+            changedBy.Role == UserRole.Admin,
+            ValidationMessages.User.OnlyAdminCanChangeRole);
+        Ensure.BusinessRule(
+            changedBy.Id != Id,
+            ValidationMessages.User.CannotChangeSelfRole);
 
         Role = newRole;
     }
