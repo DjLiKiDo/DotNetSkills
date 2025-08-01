@@ -2,93 +2,111 @@
 
 ## Project Overview
 
-This is a .NET 9 project management API built with **Clean Architecture** and **Domain-Driven Design** principles. The project demonstrates enterprise-grade development practices for a portfolio/skills showcase.
+This is a .NET 9 project management API demonstrating **Clean Architecture** and **Domain-Driven Design** principles. The project showcases enterprise-grade development practices with modern .NET patterns and is currently in early development phase with domain models established.
 
-## Architecture Structure
+## Architecture & Core Patterns
 
-**Clean Architecture Layers** (dependency flow: API → Application → Domain):
-- `DotNetSkills.Domain/` - Core business entities, domain events, and business rules
-- `DotNetSkills.Application/` - Use cases, DTOs, repository interfaces, orchestration logic  
-- `DotNetSkills.Infrastructure/` - EF Core repositories, external services, database implementations
-- `DotNetSkills.API/` - Minimal APIs, JWT auth, validation, mapping layer
-
-**Testing Structure**: Each layer has corresponding unit test projects in `tests/` directory.
-
-## Key Technical Patterns
-
-### Domain-Driven Design Implementation
-- **Rich Domain Models**: Business logic lives in entity methods (e.g., `Task.AssignTo()`, `Team.AddMember()`)
-- **Domain Events**: Use domain events for cross-aggregate communication (see PRD section 3.4.3)
-- **Aggregates**: User, Team, Project, Task are separate aggregates with clear boundaries
-- **Value Objects**: Use for immutable data structures
-
-### Authentication & Authorization
-- **JWT-based**: Stateless authentication with role-based authorization
-- **Roles**: Admin, ProjectManager, Developer, Viewer with specific permissions
-- **Admin-only user creation**: No self-registration in MVP
-
-### Data Relationships
-- **Team ↔ User**: Many-to-many via `TeamMember` entity
-- **Project → Team**: Each project belongs to one team
-- **Task → Project**: Tasks belong to projects
-- **Task → User**: Single assignment model
-- **Task → Task**: One-level subtask nesting only
-
-## Development Workflow
-
-### Build & Test Commands
-```bash
-# Build solution
-dotnet build
-
-# Run API project
-dotnet run --project src/DotNetSkills.API
-
-# Run all tests
-dotnet test
-
-# Run specific test project
-dotnet test tests/DotNetSkills.Domain.UnitTests
+### Clean Architecture Structure (Dependency Rule: API → Application → Domain)
+```
+src/
+├── DotNetSkills.API/           # Minimal APIs, JWT auth, Program.cs startup
+├── DotNetSkills.Application/   # Use cases, DTOs, repository interfaces (currently minimal)
+├── DotNetSkills.Domain/        # Rich domain models with business logic (primary focus)
+└── DotNetSkills.Infrastructure/ # EF Core repositories, external services (not implemented)
 ```
 
-### Project Structure Conventions
-- **Entities**: Domain models in `Domain/Entities/`
-- **DTOs**: Request/response models in `Application/DTOs/`
-- **Repositories**: Interfaces in Application, implementations in Infrastructure
-- **Endpoints**: Minimal API endpoints organized by feature in `API/Endpoints/`
+### Domain-Driven Design Implementation
+- **Rich Domain Models**: Business logic in entity methods (e.g., `Task.AssignTo(assignee, assignedBy)`, `Team.AddMember()`)
+- **Strongly-Typed IDs**: All entities use value objects like `UserId(Guid)`, `TaskId(Guid)` - see `IStronglyTypedId<T>` pattern
+- **Domain Events**: Rich event system - `TaskAssignedDomainEvent`, `UserJoinedTeamDomainEvent` - raised via `AggregateRoot.RaiseDomainEvent()`
+- **Aggregate Boundaries**: `User`, `Team`, `Project`, `Task` are separate aggregates; `TeamMember` is part of Team aggregate
 
-## Critical Business Rules
+### Key Domain Patterns to Follow
+```csharp
+// Strongly-typed IDs pattern
+public record UserId(Guid Value) : IStronglyTypedId<Guid>
+{
+    public static UserId New() => new(Guid.NewGuid());
+    public static implicit operator Guid(UserId id) => id.Value;
+}
 
-### Task Management
-- **Single assignment**: Each task assigned to exactly one user
-- **Status transitions**: Enforce valid state changes (cannot go from Done to ToDo)
-- **Subtask constraints**: Only one level of nesting allowed
-- **Cascading deletes**: Parent task deletion affects subtasks
+// Rich domain methods with business rules
+public void AssignTo(User assignee, User assignedBy)
+{
+    if (Status == TaskStatus.Done) throw new DomainException("Cannot assign completed tasks");
+    if (!assignee.CanBeAssignedTasks()) throw new DomainException("User cannot be assigned tasks");
+    
+    AssignedUserId = assignee.Id;
+    RaiseDomainEvent(new TaskAssignedDomainEvent(Id, assignee.Id, assignedBy.Id));
+}
 
-### Team & Project Logic
-- **Project leadership**: No explicit leader field - use ProjectManager role within team
-- **Deletion constraints**: Cannot delete teams with active projects, projects with active tasks
+// Global usings in each layer (see Domain/GlobalUsings.cs)
+global using DotNetSkills.Domain.Common.Entities;
+global using DotNetSkills.Domain.UserManagement.ValueObjects;
+```
 
-### Authentication Flow
-- **Token-based**: JWT tokens for stateless authentication
-- **Role validation**: Endpoint access controlled by user roles
-- **Admin privileges**: User CRUD operations restricted to Admin role
+## Essential Development Commands
 
-## Technology Stack Specifics
+```bash
+# Build entire solution
+dotnet build
 
-- **.NET 9**: Latest framework features, nullable reference types enabled
-- **Minimal APIs**: Use for lean endpoint definitions
-- **EF Core**: Repository pattern with DbContext
-- **JWT**: For authentication (no refresh tokens in MVP)
-- **AutoMapper**: Entity ↔ DTO mapping
-- **FluentValidation**: Input validation
-- **xUnit + Moq**: Testing framework and mocking
+# Run API (currently basic weather API template at https://localhost:7240)
+dotnet run --project src/DotNetSkills.API
 
-## Implementation Priorities
+# Run tests (when implemented)
+dotnet test
+dotnet test tests/DotNetSkills.Domain.UnitTests  # Domain logic tests
 
-**Phase 1**: Domain models and basic infrastructure
-**Phase 2**: JWT authentication and user management  
-**Phase 3**: Core CRUD operations for all entities
-**Phase 4**: Testing and CI/CD pipeline
+# EF migrations (when Infrastructure is configured)
+dotnet ef migrations add <Name> --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
+```
 
-Refer to `doc/PRD.md` section 7 for detailed implementation phases and acceptance criteria.
+## Critical Business Rules & Constraints
+
+### Authentication & Authorization
+- **JWT-based** with role-based access: Admin > ProjectManager > Developer > Viewer
+- **Admin-only user creation** - no self-registration in MVP
+- **User.Create()** factory method enforces "only admin users can create new users"
+
+### Core Domain Rules
+- **Single task assignment**: `Task.AssignTo()` - one user per task only
+- **One-level subtask nesting**: Tasks can have subtasks, but subtasks cannot have children
+- **Team membership**: Many-to-many via `TeamMember` entity (part of Team aggregate)
+- **Project ownership**: Each project belongs to exactly one team
+- **Status transitions**: Business rules prevent invalid state changes (e.g., Done → ToDo)
+
+### Deletion Constraints
+- Cannot delete teams with active projects
+- Cannot delete projects with active tasks
+- Cascading operations handled through domain events
+
+## Implementation Status & Priorities
+
+**Current State**: Domain layer established with rich models, Application/Infrastructure layers are placeholder classes.
+
+**Immediate Priorities** (based on `plan/feature-dotnetskills-mvp-1.md`):
+1. **Infrastructure Layer**: EF Core DbContext, repository implementations, entity configurations
+2. **Application Layer**: Use cases, DTOs, MediatR commands/queries, FluentValidation
+3. **API Layer**: Replace placeholder weather API with real endpoints using extension methods pattern
+4. **Authentication**: JWT middleware configuration and user management endpoints
+
+## Key Files & Patterns to Reference
+
+- **Domain Models**: `src/DotNetSkills.Domain/{Module}/Entities/` - Follow existing patterns
+- **Domain Events**: `src/DotNetSkills.Domain/{Module}/Events/` - Use `BaseDomainEvent` pattern
+- **Value Objects**: `src/DotNetSkills.Domain/{Module}/ValueObjects/` - Implement `IStronglyTypedId<T>`
+- **Base Classes**: `AggregateRoot<TId>`, `BaseEntity<TId>` in `Domain/Common/Entities/`
+- **Coding Standards**: Follow patterns in `.github/instructions/dotnet-arquitecture.instructions.md`
+
+## Technology Stack
+
+- **.NET 9** with C# 13, nullable reference types enabled
+- **Minimal APIs** with endpoint extension methods (see coding principles doc)
+- **Entity Framework Core** with SQL Server (when implemented)
+- **MediatR** for CQRS pattern in Application layer
+- **AutoMapper** for entity ↔ DTO mapping
+- **FluentValidation** for input validation
+- **Global using statements** per layer (see existing `GlobalUsings.cs` files)
+
+When implementing new features, follow the established patterns in the Domain layer and refer to the comprehensive implementation plan in `plan/feature-dotnetskills-mvp-1.md` for task breakdown and acceptance criteria.
