@@ -79,24 +79,24 @@ Complete implementation plan for the DotNetSkills Project Management API MVP, fo
   - [x] **TASK-001.003**: Define `IDomainEvent` interface and event handling contracts
   - Location: `src/DotNetSkills.Domain/Common/`
 
-- [x] **TASK-002**: Implement core domain entities
-  - [x] **TASK-002.001**: Create `User` entity with role-based logic and team membership management
-  - [x] **TASK-002.002**: Implement `Team` entity with member management and validation rules
-  - [x] **TASK-002.003**: Develop `Project` entity with status management and team association
-  - [x] **TASK-002.004**: Build `Task` entity with assignment, status transitions, and subtask support
-  - [x] **TASK-002.005**: Create `TeamMember` join entity for user-team relationships
+- [ ] **TASK-002**: Implement core domain entities
+  - [ ] **TASK-002.001**: Create `User` entity with role-based logic and team membership management
+  - [ ] **TASK-002.002**: Implement `Team` entity with member management and validation rules
+  - [ ] **TASK-002.003**: Develop `Project` entity with status management and team association
+  - [ ] **TASK-002.004**: Build `Task` entity with assignment, status transitions, and subtask support
+  - [ ] **TASK-002.005**: Create `TeamMember` join entity for user-team relationships
   - Location: `src/DotNetSkills.Domain/Entities/`
 
-- [x] **TASK-003**: Define value objects and enumerations
-  - [x] **TASK-003.001**: Implement `UserId`, `TeamId`, `ProjectId`, `TaskId` strongly-typed identifiers
-  - [x] **TASK-003.002**: Create `EmailAddress` value object with validation
-  - [x] **TASK-003.003**: Define `UserRole`, `TaskStatus`, `TaskPriority`, `TaskType`, `ProjectStatus` enums
+- [ ] **TASK-003**: Define value objects and enumerations
+  - [ ] **TASK-003.001**: Implement `UserId`, `TeamId`, `ProjectId`, `TaskId` strongly-typed identifiers
+  - [ ] **TASK-003.002**: Create `EmailAddress` value object with validation
+  - [ ] **TASK-003.003**: Define `UserRole`, `TaskStatus`, `TaskPriority`, `TaskType`, `ProjectStatus` enums
   - Location: `src/DotNetSkills.Domain/ValueObjects/` and `src/DotNetSkills.Domain/Enums/`
 
-- [x] **TASK-004**: Implement domain events
-  - [x] **TASK-004.001**: Create `UserCreatedDomainEvent`, `TaskAssignedDomainEvent`, `TaskStatusUpdatedDomainEvent`
-  - [x] **TASK-004.002**: Implement `TeamMemberAddedDomainEvent`, `TeamMemberRemovedDomainEvent`
-  - [x] **TASK-004.003**: Define `ProjectStatusUpdatedDomainEvent`, `TaskCompletedDomainEvent`
+- [ ] **TASK-004**: Implement domain events
+  - [ ] **TASK-004.001**: Create `UserCreatedDomainEvent`, `TaskAssignedDomainEvent`, `TaskStatusUpdatedDomainEvent`
+  - [ ] **TASK-004.002**: Implement `TeamMemberAddedDomainEvent`, `TeamMemberRemovedDomainEvent`
+  - [ ] **TASK-004.003**: Define `ProjectStatusUpdatedDomainEvent`, `TaskCompletedDomainEvent`
   - Location: `src/DotNetSkills.Domain/Events/`
 
 #### Infrastructure Layer Setup

@@ -1,74 +1,49 @@
 namespace DotNetSkills.Domain.Common;
 
-public abstract class BaseEntity<TId> : IEquatable<BaseEntity<TId>>
-    where TId : IStronglyTypedId<Guid>
+public abstract class BaseEntity<TId> where TId : IStronglyTypedId<Guid>
 {
-    private readonly List<IDomainEvent> _domainEvents = new();
+    public TId Id { get; }
 
-    public static DateTime GetCurrentTime()
-    {
-        return DateTimeService.UtcNow;
-    }
+    public DateTime CreatedAt { get; private set; }
+
+    public DateTime UpdatedAt { get; private set; }
+
+    public Guid? CreatedBy { get; private set; }
+
+    public Guid? UpdatedBy { get; private set; }
 
     protected BaseEntity(TId id)
     {
-        Id = id;
-        CreatedAt = DateTimeService.UtcNow;
-        UpdatedAt = DateTimeService.UtcNow;
+        Id = id ?? throw new ArgumentNullException(nameof(id));
+        var utcNow = DateTime.UtcNow;
+        CreatedAt = utcNow;
+        UpdatedAt = utcNow;
     }
 
-    protected BaseEntity() 
+    protected internal virtual void SetCreatedBy(Guid? createdBy)
     {
-        CreatedAt = DateTimeService.UtcNow;
-        UpdatedAt = DateTimeService.UtcNow;
+        CreatedBy = createdBy;
     }
 
-    public TId Id { get; protected set; } = default!;
-    public DateTime CreatedAt { get; protected set; }
-    public DateTime UpdatedAt { get; protected set; }
-
-    public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
-
-    protected void RaiseDomainEvent(IDomainEvent domainEvent)
+    protected internal virtual void SetUpdatedBy(Guid? updatedBy)
     {
-        _domainEvents.Add(domainEvent);
-    }
-
-    public void ClearDomainEvents()
-    {
-        _domainEvents.Clear();
-    }
-
-    protected void UpdateTimestamp()
-    {
-        UpdatedAt = DateTimeService.UtcNow;
-    }
-
-    public virtual bool Equals(BaseEntity<TId>? other)
-    {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-        
-        return Id.Equals(other.Id);
+        UpdatedBy = updatedBy;
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public override bool Equals(object? obj)
     {
-        return Equals(obj as BaseEntity<TId>);
+        if (obj is not BaseEntity<TId> other)
+            return false;
+
+        if (ReferenceEquals(this, other))
+            return true;
+
+        return Id.Equals(other.Id);
     }
 
     public override int GetHashCode()
     {
         return Id.GetHashCode();
-    }
-
-    public static bool operator ==(BaseEntity<TId>? left, BaseEntity<TId>? right)
-    {
-        return Equals(left, right);
-    }
-
-    public static bool operator !=(BaseEntity<TId>? left, BaseEntity<TId>? right)
-    {
-        return !Equals(left, right);
     }
 }
