@@ -10,6 +10,7 @@ global using DotNetSkills.Domain.Common;
 global using DotNetSkills.Domain.Common.Entities;
 global using DotNetSkills.Domain.Common.Events;
 global using DotNetSkills.Domain.Common.Exceptions;
+global using DotNetSkills.Domain.Common.Extensions;
 
 // Domain layer specific globals - User Management
 global using DotNetSkills.Domain.UserManagement.Entities;
