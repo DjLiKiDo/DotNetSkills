@@ -1,4 +1,4 @@
-namespace DotNetSkills.Domain.Common.Extensions;
+namespace DotNetSkills.Domain.TeamCollaboration.Enums;
 
 /// <summary>
 /// Extension methods for TeamRole enum providing business logic and utility methods.

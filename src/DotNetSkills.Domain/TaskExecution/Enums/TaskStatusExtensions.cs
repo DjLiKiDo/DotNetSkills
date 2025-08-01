@@ -1,4 +1,4 @@
-namespace DotNetSkills.Domain.Common.Extensions;
+namespace DotNetSkills.Domain.TaskExecution.Enums;
 
 /// <summary>
 /// Extension methods for TaskStatus enum providing business logic and utility methods.

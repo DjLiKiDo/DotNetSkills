@@ -1,4 +1,4 @@
-namespace DotNetSkills.Domain.Common.Extensions;
+namespace DotNetSkills.Domain.UserManagement.Enums;
 
 /// <summary>
 /// Extension methods for UserRole enum providing business logic and utility methods.
