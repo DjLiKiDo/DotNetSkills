@@ -2,7 +2,7 @@
 
 [x] Review entities
 [x] Folder structure matching Domain looking for better organization and namespacing
-[x] Work on technical debt
+[-] Work on technical debt
 [ ] Implement extensions for enums
 [ ] Add unit tests
 
