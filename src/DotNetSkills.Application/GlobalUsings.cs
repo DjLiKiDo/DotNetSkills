@@ -25,6 +25,11 @@ global using DotNetSkills.Domain.UserManagement.ValueObjects;
 global using DotNetSkills.Domain.UserManagement.Enums;
 global using DotNetSkills.Domain.UserManagement.Events;
 
+// User Management Application references
+global using DotNetSkills.Application.UserManagement.Commands;
+global using DotNetSkills.Application.UserManagement.Queries;
+global using DotNetSkills.Application.UserManagement.DTOs;
+
 // Team Collaboration Domain references
 global using DotNetSkills.Domain.TeamCollaboration.Entities;
 global using DotNetSkills.Domain.TeamCollaboration.ValueObjects;

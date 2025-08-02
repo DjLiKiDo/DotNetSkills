@@ -24,7 +24,12 @@ app.UseCors("AllowAll");
 // Health checks
 app.MapHealthChecks("/health");
 
-// TODO: Add domain endpoints here
-// Domain endpoints will be implemented in the next phase
+// Domain endpoints organized by bounded context
+app.MapUserManagementEndpoints();
+
+// TODO: Add remaining bounded context endpoints when implemented
+// app.MapTeamCollaborationEndpoints();
+// app.MapProjectManagementEndpoints();
+// app.MapTaskExecutionEndpoints();
 
 await app.RunAsync();

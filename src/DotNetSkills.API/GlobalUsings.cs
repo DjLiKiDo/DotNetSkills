@@ -29,9 +29,9 @@ global using Microsoft.Extensions.Logging;
 // global using FluentValidation;
 
 // Application layer references - User Management
-// global using DotNetSkills.Application.UserManagement.Commands;
-// global using DotNetSkills.Application.UserManagement.Queries;
-// global using DotNetSkills.Application.UserManagement.DTOs;
+global using DotNetSkills.Application.UserManagement.Commands;
+global using DotNetSkills.Application.UserManagement.Queries;
+global using DotNetSkills.Application.UserManagement.DTOs;
 
 // Application layer references - Team Collaboration
 // global using DotNetSkills.Application.TeamCollaboration.Commands;
@@ -51,6 +51,9 @@ global using Microsoft.Extensions.Logging;
 // Application layer references - Common
 // global using DotNetSkills.Application.Common.Models;
 // global using DotNetSkills.Application.Common.Interfaces;
+
+// API layer endpoint extensions
+global using DotNetSkills.API.Endpoints.UserManagement;
 
 // Domain references (for basic types and exceptions)
 global using DotNetSkills.Domain.Common.Exceptions;
