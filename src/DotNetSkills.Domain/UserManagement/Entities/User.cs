@@ -76,10 +76,15 @@ public class User : AggregateRoot<UserId>
     /// <param name="createdByUser">The user creating this user (must be an admin).</param>
     /// <returns>A new User instance.</returns>
     /// <exception cref="DomainException">Thrown when the creator is not an admin.</exception>
+    /// <remarks>
+    /// This method uses BusinessRules for static authorization validation.
+    /// For complex validations like email uniqueness, use IUserDomainService in the Application layer.
+    /// </remarks>
     public static User Create(string name, EmailAddress email, UserRole role, User? createdByUser = null)
     {
+        // Use BusinessRules for static authorization validation (fast, no dependencies)
         Ensure.BusinessRule(
-            createdByUser?.Role == UserRole.Admin || createdByUser is null,
+            BusinessRules.Authorization.CanCreateUser(createdByUser?.Role),
             ValidationMessages.User.OnlyAdminCanCreate);
 
         return new User(name, email, role, createdByUser?.Id);
@@ -110,8 +115,10 @@ public class User : AggregateRoot<UserId>
     public void ChangeRole(UserRole newRole, User changedBy)
     {
         Ensure.NotNull(changedBy, nameof(changedBy));
+        
+        // Use BusinessRules for static authorization validation
         Ensure.BusinessRule(
-            changedBy.Role == UserRole.Admin,
+            BusinessRules.Authorization.CanModifyUserRole(changedBy.Role, Role),
             ValidationMessages.User.OnlyAdminCanChangeRole);
         Ensure.BusinessRule(
             changedBy.Id != Id,

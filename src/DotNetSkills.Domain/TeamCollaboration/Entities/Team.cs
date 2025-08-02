@@ -100,26 +100,24 @@ public class Team : AggregateRoot<TeamId>
     /// <param name="addedBy">The user adding the member (must have appropriate permissions).</param>
     /// <exception cref="ArgumentNullException">Thrown when user or addedBy is null.</exception>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
+    /// <remarks>
+    /// This method uses BusinessRules for static validation. For complex validations that require
+    /// checking against external data (like active projects), use ITeamDomainService in the Application layer.
+    /// </remarks>
     public void AddMember(User user, TeamRole role, User addedBy)
     {
         Ensure.NotNull(user, nameof(user));
         Ensure.NotNull(addedBy, nameof(addedBy));
 
+        // Use BusinessRules for static authorization and validation
         Ensure.BusinessRule(
-            CanAddMembers(addedBy),
+            BusinessRules.TeamManagement.CanAddMemberToTeam(
+                user.Status, user.Role, _members.Count, addedBy.Role),
             ValidationMessages.Team.NoPermissionToAddMembers);
-
-        Ensure.BusinessRule(
-            user.IsActive(),
-            ValidationMessages.Team.CannotAddInactiveUsers);
 
         Ensure.BusinessRule(
             !_members.Any(m => m.UserId == user.Id),
             ValidationMessages.User.AlreadyTeamMember);
-
-        Ensure.BusinessRule(
-            _members.Count < MaxMembers,
-            ValidationMessages.Formatting.Format(ValidationMessages.Common.ExceedsMaxCount, "Team members", MaxMembers.ToString()));
 
         var teamMember = new TeamMember(user.Id, Id, role);
         _members.Add(teamMember);
