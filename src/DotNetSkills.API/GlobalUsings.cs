@@ -22,19 +22,35 @@ global using Microsoft.Extensions.Logging;
 // global using Microsoft.AspNetCore.Authorization;
 // global using Microsoft.IdentityModel.Tokens;
 
-// Application layer references (for Commands/Queries/DTOs)
-// global using DotNetSkills.Application.Common.Models;
-// global using DotNetSkills.Application.Users.Commands;
-// global using DotNetSkills.Application.Users.Queries;
-// global using DotNetSkills.Application.Teams.Commands;
-// global using DotNetSkills.Application.Teams.Queries;
-// global using DotNetSkills.Application.Projects.Commands;
-// global using DotNetSkills.Application.Projects.Queries;
-// global using DotNetSkills.Application.Tasks.Commands;
-// global using DotNetSkills.Application.Tasks.Queries;
-
 // MediatR (when added)
 // global using MediatR;
+
+// FluentValidation (when added)
+// global using FluentValidation;
+
+// Application layer references - User Management
+// global using DotNetSkills.Application.UserManagement.Commands;
+// global using DotNetSkills.Application.UserManagement.Queries;
+// global using DotNetSkills.Application.UserManagement.DTOs;
+
+// Application layer references - Team Collaboration
+// global using DotNetSkills.Application.TeamCollaboration.Commands;
+// global using DotNetSkills.Application.TeamCollaboration.Queries;
+// global using DotNetSkills.Application.TeamCollaboration.DTOs;
+
+// Application layer references - Project Management
+// global using DotNetSkills.Application.ProjectManagement.Commands;
+// global using DotNetSkills.Application.ProjectManagement.Queries;
+// global using DotNetSkills.Application.ProjectManagement.DTOs;
+
+// Application layer references - Task Execution
+// global using DotNetSkills.Application.TaskExecution.Commands;
+// global using DotNetSkills.Application.TaskExecution.Queries;
+// global using DotNetSkills.Application.TaskExecution.DTOs;
+
+// Application layer references - Common
+// global using DotNetSkills.Application.Common.Models;
+// global using DotNetSkills.Application.Common.Interfaces;
 
 // Domain references (for basic types and exceptions)
 global using DotNetSkills.Domain.Common.Exceptions;
