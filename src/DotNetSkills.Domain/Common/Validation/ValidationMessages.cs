@@ -11,6 +11,7 @@ namespace DotNetSkills.Domain.Common.Validation;
 /// - Parameter names should be descriptive when used in validation methods
 /// - All messages should be clear, consistent, and user-friendly
 /// </remarks>
+[ExcludeFromCodeCoverage]
 public static class ValidationMessages
 {
     /// <summary>
