@@ -10,6 +10,7 @@ namespace DotNetSkills.Domain.Common.Validation;
 /// and removes magic numbers from domain entities. All constants are organized by category
 /// and include documentation with relevant standards references where applicable.
 /// </remarks>
+[ExcludeFromCodeCoverage]
 public static class ValidationConstants
 {
     /// <summary>
