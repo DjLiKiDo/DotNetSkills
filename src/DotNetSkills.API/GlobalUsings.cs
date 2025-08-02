@@ -34,9 +34,9 @@ global using DotNetSkills.Application.UserManagement.Queries;
 global using DotNetSkills.Application.UserManagement.DTOs;
 
 // Application layer references - Team Collaboration
-// global using DotNetSkills.Application.TeamCollaboration.Commands;
-// global using DotNetSkills.Application.TeamCollaboration.Queries;
-// global using DotNetSkills.Application.TeamCollaboration.DTOs;
+global using DotNetSkills.Application.TeamCollaboration.Commands;
+global using DotNetSkills.Application.TeamCollaboration.Queries;
+global using DotNetSkills.Application.TeamCollaboration.DTOs;
 
 // Application layer references - Project Management
 // global using DotNetSkills.Application.ProjectManagement.Commands;
@@ -54,6 +54,7 @@ global using DotNetSkills.Application.UserManagement.DTOs;
 
 // API layer endpoint extensions
 global using DotNetSkills.API.Endpoints.UserManagement;
+global using DotNetSkills.API.Endpoints.TeamCollaboration;
 
 // Domain references (for basic types and exceptions)
 global using DotNetSkills.Domain.Common.Exceptions;
