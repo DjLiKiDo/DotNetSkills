@@ -23,11 +23,9 @@ public record EmailAddress
     /// <exception cref="ArgumentException">Thrown when the email address is invalid.</exception>
     public EmailAddress(string value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Email address cannot be empty", nameof(value));
-
-        if (!IsValidEmail(value))
-            throw new ArgumentException("Invalid email address format", nameof(value));
+        Ensure.NotNullOrWhiteSpace(value, nameof(value));
+        Ensure.HasMaxLength(value, ValidationConstants.StringLengths.EmailMaxLength, nameof(value));
+        Ensure.BusinessRule(IsValidEmail(value), ValidationMessages.ValueObjects.InvalidEmailFormat);
 
         Value = value.ToLowerInvariant().Trim();
     }
@@ -39,11 +37,6 @@ public record EmailAddress
     /// <returns>True if the email is valid, false otherwise.</returns>
     private static bool IsValidEmail(string email)
     {
-        if (string.IsNullOrWhiteSpace(email))
-            return false;
-
-        if (email.Length > 254) // RFC 5321 limit
-            return false;
 
         return EmailRegex.IsMatch(email);
     }

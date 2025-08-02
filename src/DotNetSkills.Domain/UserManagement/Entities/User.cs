@@ -54,11 +54,11 @@ public class User : AggregateRoot<UserId>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
     public User(string name, EmailAddress email, UserRole role, UserId? createdBy = null) : base(UserId.New())
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("User name cannot be empty", nameof(name));
+        Ensure.NotNullOrWhiteSpace(name, nameof(name));
+        Ensure.NotNull(email, nameof(email));
 
         Name = name.Trim();
-        Email = email ?? throw new ArgumentNullException(nameof(email));
+        Email = email;
         Role = role;
         Status = UserStatus.Active;
 
@@ -76,10 +76,16 @@ public class User : AggregateRoot<UserId>
     /// <param name="createdByUser">The user creating this user (must be an admin).</param>
     /// <returns>A new User instance.</returns>
     /// <exception cref="DomainException">Thrown when the creator is not an admin.</exception>
+    /// <remarks>
+    /// This method uses BusinessRules for static authorization validation.
+    /// For complex validations like email uniqueness, use IUserDomainService in the Application layer.
+    /// </remarks>
     public static User Create(string name, EmailAddress email, UserRole role, User? createdByUser = null)
     {
-        if (createdByUser != null && createdByUser.Role != UserRole.Admin)
-            throw new DomainException("Only admin users can create new users");
+        // Use BusinessRules for static authorization validation (fast, no dependencies)
+        Ensure.BusinessRule(
+            BusinessRules.Authorization.CanCreateUser(createdByUser?.Role),
+            ValidationMessages.User.OnlyAdminCanCreate);
 
         return new User(name, email, role, createdByUser?.Id);
     }
@@ -93,11 +99,11 @@ public class User : AggregateRoot<UserId>
     /// <exception cref="ArgumentNullException">Thrown when email is null.</exception>
     public void UpdateProfile(string name, EmailAddress email)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("User name cannot be empty", nameof(name));
+        Ensure.NotNullOrWhiteSpace(name, nameof(name));
+        Ensure.NotNull(email, nameof(email));
 
         Name = name.Trim();
-        Email = email ?? throw new ArgumentNullException(nameof(email));
+        Email = email;
     }
 
     /// <summary>
@@ -108,11 +114,15 @@ public class User : AggregateRoot<UserId>
     /// <exception cref="DomainException">Thrown when the changer is not an admin or when trying to change own role.</exception>
     public void ChangeRole(UserRole newRole, User changedBy)
     {
-        if (changedBy.Role != UserRole.Admin)
-            throw new DomainException("Only admin users can change user roles");
-
-        if (changedBy.Id == Id)
-            throw new DomainException("Users cannot change their own role");
+        Ensure.NotNull(changedBy, nameof(changedBy));
+        
+        // Use BusinessRules for static authorization validation
+        Ensure.BusinessRule(
+            BusinessRules.Authorization.CanModifyUserRole(changedBy.Role, Role),
+            ValidationMessages.User.OnlyAdminCanChangeRole);
+        Ensure.BusinessRule(
+            changedBy.Id != Id,
+            ValidationMessages.User.CannotChangeSelfRole);
 
         Role = newRole;
     }

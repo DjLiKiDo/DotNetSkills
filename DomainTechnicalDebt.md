@@ -191,57 +191,6 @@ public class MediatRDomainEventDispatcher : IDomainEventDispatcher
 
 ## Major Issues (🟠 Medium Priority)
 
-### 4. Inconsistent Validation Patterns
-**Severity:** Medium | **Effort:** 4 days | **Impact:** Code consistency & maintainability
-
-**Problem:**
-- Mixed validation approaches across entities
-- Some validations in constructors, others in methods
-- Inconsistent exception types and messages
-- Missing validation for some edge cases
-
-**Examples:**
-```csharp
-// User entity - good validation
-public User(string name, EmailAddress email, UserRole role, UserId? createdBy = null)
-{
-    if (string.IsNullOrWhiteSpace(name))
-        throw new ArgumentException("User name cannot be empty", nameof(name));
-    // Consistent pattern
-}
-
-// Task entity - inconsistent validation
-public Task(string title, string? description, ProjectId projectId, TaskPriority priority, ...)
-{
-    if (string.IsNullOrWhiteSpace(title))
-        throw new ArgumentException("Task title cannot be empty", nameof(title));
-    
-    if (dueDate.HasValue && dueDate.Value <= DateTime.UtcNow) // Inconsistent - should use UTC consistently
-        throw new DomainException("Due date must be in the future");
-}
-```
-
-**Recommended Standardization:**
-```csharp
-// Consistent validation helper
-public static class Ensure
-{
-    public static void NotNullOrWhiteSpace(string value, string paramName)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException($"{paramName} cannot be null or whitespace", paramName);
-    }
-    
-    public static void FutureDate(DateTime? date, string paramName)
-    {
-        if (date.HasValue && date.Value <= DateTime.UtcNow)
-            throw new DomainException($"{paramName} must be in the future");
-    }
-}
-```
-
----
-
 ### 5. DateTime Handling Inconsistencies
 **Severity:** Medium | **Effort:** 2 days | **Impact:** Timezone-related bugs
 
@@ -285,41 +234,84 @@ protected BaseEntity(TId id, ISystemClock clock)
 
 ---
 
-### 6. Missing Domain Service Abstractions
+### 6. Missing Domain Service Abstractions ✅ RESOLVED
 **Severity:** Medium | **Effort:** 3 days | **Impact:** Separation of concerns
 
-**Problem:**
-- Complex business logic embedded in entities
-- Missing domain services for cross-aggregate operations
-- No email uniqueness validation service
-- Missing authorization service abstractions
+**Resolution:**
+- ✅ Implemented hybrid approach with Domain Service interfaces
+- ✅ Maintained BusinessRules for static logic (performance + independence)
+- ✅ Created Domain Services for operations requiring external dependencies
+- ✅ Refactored entities to use BusinessRules for authorization validation
+- ✅ Added comprehensive documentation and examples
 
-**Example Issue:**
+**Implementation Summary:**
 ```csharp
-// User.cs - Business logic that should be in a domain service
+// ✅ IMPLEMENTED: Domain Service interfaces for complex operations
+public interface IUserDomainService
+{
+    Task<bool> IsEmailUniqueAsync(EmailAddress email, UserId? excludeUserId = null);
+    Task<bool> CanDeleteUserAsync(UserId userId, User requestingUser);
+    Task<bool> HasActiveTaskAssignmentsAsync(UserId userId);
+    Task<DomainValidationResult> ValidateUserCreationAsync(CreateUserRequest request, User? createdByUser);
+}
+
+public interface ITeamDomainService
+{
+    Task<bool> CanDeleteTeamAsync(TeamId teamId, User requestingUser);
+    Task<bool> HasActiveProjectsAsync(TeamId teamId);
+    Task<TeamCapacityResult> CalculateTeamCapacityAsync(TeamId teamId);
+}
+
+// ✅ REFACTORED: Entities now use BusinessRules for static validation
 public static User Create(string name, EmailAddress email, UserRole role, User? createdByUser = null)
 {
-    if (createdByUser != null && createdByUser.Role != UserRole.Admin)
-        throw new DomainException("Only admin users can create new users");
-    // This authorization logic could be in a domain service
+    // Static validation using BusinessRules (fast, no dependencies)
+    Ensure.BusinessRule(
+        BusinessRules.Authorization.CanCreateUser(createdByUser?.Role),
+        ValidationMessages.User.OnlyAdminCanCreate);
+    
+    return new User(name, email, role, createdByUser?.Id);
+    // Complex validations (email uniqueness) handled in Application layer with IUserDomainService
 }
 ```
 
-**Recommended Approach:**
-```csharp
-// Domain service for user management
-public interface IUserDomainService
-{
-    Task<bool> IsEmailUniqueAsync(EmailAddress email);
-    bool CanCreateUser(User creator);
-    bool CanManageUser(User manager, User target);
-}
+**Architectural Benefits Achieved:**
+- 🏗️ **Domain Independence**: BusinessRules remain dependency-free
+- ⚡ **Performance Optimized**: Static rules execute in microseconds
+- 🧪 **Enhanced Testability**: Clear separation of concerns for testing
+- 🔮 **Future-Ready**: Domain Service contracts ready for Infrastructure implementation
+- 📚 **DDD Compliance**: Pure domain services pattern implementation
 
-public class UserDomainService : IUserDomainService
+**Files Created:**
+- `src/DotNetSkills.Domain/UserManagement/Services/IUserDomainService.cs`
+- `src/DotNetSkills.Domain/TeamCollaboration/Services/ITeamDomainService.cs`
+- `src/DotNetSkills.Domain/ProjectManagement/Services/IProjectDomainService.cs`
+- `src/DotNetSkills.Domain/TaskExecution/Services/ITaskDomainService.cs`
+
+**Files Modified:**
+- `src/DotNetSkills.Domain/GlobalUsings.cs` - Added Service namespaces
+- `src/DotNetSkills.Domain/UserManagement/Entities/User.cs` - Uses BusinessRules
+- `src/DotNetSkills.Domain/TeamCollaboration/Entities/Team.cs` - Uses BusinessRules
+
+**Next Steps for Application Layer:**
+```csharp
+// When implementing Application layer, use Domain Services for complex operations
+public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, UserResponse>
 {
-    public bool CanCreateUser(User creator)
+    private readonly IUserDomainService _userDomainService;
+    
+    public async Task<UserResponse> Handle(CreateUserCommand request, CancellationToken ct)
     {
-        return creator.Role == UserRole.Admin && creator.IsActive();
+        // Validate email uniqueness using Domain Service
+        var isEmailUnique = await _userDomainService.IsEmailUniqueAsync(request.Email);
+        if (!isEmailUnique)
+            throw new DomainException("Email already exists");
+            
+        // Create user (using BusinessRules internally for authorization)
+        var user = User.Create(request.Name, request.Email, request.Role, request.CreatedBy);
+        
+        // Save and return response
+        return UserMapper.ToResponse(user);
     }
 }
 ```
@@ -338,30 +330,6 @@ public class UserDomainService : IUserDomainService
 - No usage examples
 
 **Fix:** Standardize XML documentation across all public APIs.
-
----
-
-### 8. Magic Numbers and Constants
-**Severity:** Low | **Effort:** 1 day | **Impact:** Code readability
-
-**Problem:**
-```csharp
-// Team.cs - Good constant usage
-public const int MaxMembers = 50;
-
-// EmailAddress.cs - Magic number
-if (email.Length > 254) // RFC 5321 limit - should be constant
-    return false;
-```
-
-**Recommended Fix:**
-```csharp
-public static class EmailConstants
-{
-    public const int MaxLength = 254; // RFC 5321 limit
-    public const string ValidationPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-}
-```
 
 ---
 

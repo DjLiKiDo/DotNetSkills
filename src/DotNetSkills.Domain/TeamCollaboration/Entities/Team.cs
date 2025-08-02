@@ -52,13 +52,12 @@ public class Team : AggregateRoot<TeamId>
     /// <exception cref="DomainException">Thrown when the creator doesn't have permission to create teams.</exception>
     public Team(string name, string? description, User createdBy) : base(TeamId.New())
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Team name cannot be empty", nameof(name));
+        Ensure.NotNullOrWhiteSpace(name, nameof(name));
+        Ensure.NotNull(createdBy, nameof(createdBy));
 
-        ArgumentNullException.ThrowIfNull(createdBy);
-
-        if (!createdBy.CanManageTeams())
-            throw new DomainException("User does not have permission to create teams");
+        Ensure.BusinessRule(
+            createdBy.CanManageTeams(),
+            ValidationMessages.Team.NoPermissionToCreate);
 
         Name = name.Trim();
         Description = description?.Trim();
@@ -87,8 +86,7 @@ public class Team : AggregateRoot<TeamId>
     /// <exception cref="ArgumentException">Thrown when name is empty or whitespace.</exception>
     public void UpdateInfo(string name, string? description)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Team name cannot be empty", nameof(name));
+        Ensure.NotNullOrWhiteSpace(name, nameof(name));
 
         Name = name.Trim();
         Description = description?.Trim();
@@ -102,22 +100,24 @@ public class Team : AggregateRoot<TeamId>
     /// <param name="addedBy">The user adding the member (must have appropriate permissions).</param>
     /// <exception cref="ArgumentNullException">Thrown when user or addedBy is null.</exception>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
+    /// <remarks>
+    /// This method uses BusinessRules for static validation. For complex validations that require
+    /// checking against external data (like active projects), use ITeamDomainService in the Application layer.
+    /// </remarks>
     public void AddMember(User user, TeamRole role, User addedBy)
     {
-        ArgumentNullException.ThrowIfNull(user);
-        ArgumentNullException.ThrowIfNull(addedBy);
+        Ensure.NotNull(user, nameof(user));
+        Ensure.NotNull(addedBy, nameof(addedBy));
 
-        if (!CanAddMembers(addedBy))
-            throw new DomainException("User does not have permission to add team members");
+        // Use BusinessRules for static authorization and validation
+        Ensure.BusinessRule(
+            BusinessRules.TeamManagement.CanAddMemberToTeam(
+                user.Status, user.Role, _members.Count, addedBy.Role),
+            ValidationMessages.Team.NoPermissionToAddMembers);
 
-        if (!user.IsActive())
-            throw new DomainException("Cannot add inactive users to the team");
-
-        if (_members.Any(m => m.UserId == user.Id))
-            throw new DomainException("User is already a member of this team");
-
-        if (_members.Count >= MaxMembers)
-            throw new DomainException($"Team cannot have more than {MaxMembers} members");
+        Ensure.BusinessRule(
+            !_members.Any(m => m.UserId == user.Id),
+            ValidationMessages.User.AlreadyTeamMember);
 
         var teamMember = new TeamMember(user.Id, Id, role);
         _members.Add(teamMember);
@@ -138,23 +138,25 @@ public class Team : AggregateRoot<TeamId>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
     public void RemoveMember(User user, User removedBy)
     {
-        ArgumentNullException.ThrowIfNull(user);
-        ArgumentNullException.ThrowIfNull(removedBy);
+        Ensure.NotNull(user, nameof(user));
+        Ensure.NotNull(removedBy, nameof(removedBy));
 
         var member = _members.FirstOrDefault(m => m.UserId == user.Id);
-        if (member == null)
-            throw new DomainException("User is not a member of this team");
+        Ensure.BusinessRule(
+            member != null,
+            ValidationMessages.User.NotTeamMember);
 
-        if (!CanRemoveMembers(removedBy, member))
-            throw new DomainException("User does not have permission to remove this team member");
+        Ensure.BusinessRule(
+            CanRemoveMembers(removedBy, member!),
+            ValidationMessages.Team.NoPermissionToRemoveMembers);
 
-        _members.Remove(member);
+        _members.Remove(member!);
 
         // Remove the membership from the user as well
         user.RemoveTeamMembership(Id);
 
         // Raise domain event
-        RaiseDomainEvent(new UserLeftTeamDomainEvent(user.Id, Id, member.Role));
+        RaiseDomainEvent(new UserLeftTeamDomainEvent(user.Id, Id, member!.Role));
     }
 
     /// <summary>

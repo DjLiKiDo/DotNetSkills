@@ -188,10 +188,10 @@ public static class BusinessRules
         /// Determines if a user role has permission to create new users.
         /// Only administrators can create users to maintain security and control.
         /// </summary>
-        /// <param name="role">The user role to check.</param>
+        /// <param name="role">The user role to check (null means no creator, which allows creation).</param>
         /// <returns>True if the role can create users, false otherwise.</returns>
-        public static bool CanCreateUser(UserRole role) => 
-            role == UserRole.Admin;
+        public static bool CanCreateUser(UserRole? role) => 
+            role == UserRole.Admin || role == null;
         
         /// <summary>
         /// Determines if a user role has permission to manage team membership.
