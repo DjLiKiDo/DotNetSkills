@@ -50,6 +50,7 @@ When creating plan files:
 - Purpose prefixes: `upgrade|refactor|feature|data|infrastructure|process|architecture|design`
 - Example: `upgrade-system-command-4.md`, `feature-auth-module-1.md`
 - File must be valid Markdown with proper front matter structure
+- Use [ ] for tasks or subtask that are not yet completed and [x] for completed ones
 
 ## Mandatory Template Structure
 
