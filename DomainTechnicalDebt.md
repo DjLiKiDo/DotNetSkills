@@ -333,30 +333,6 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, UserR
 
 ---
 
-### 8. Magic Numbers and Constants
-**Severity:** Low | **Effort:** 1 day | **Impact:** Code readability
-
-**Problem:**
-```csharp
-// Team.cs - Good constant usage
-public const int MaxMembers = 50;
-
-// EmailAddress.cs - Magic number
-if (email.Length > 254) // RFC 5321 limit - should be constant
-    return false;
-```
-
-**Recommended Fix:**
-```csharp
-public static class EmailConstants
-{
-    public const int MaxLength = 254; // RFC 5321 limit
-    public const string ValidationPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-}
-```
-
----
-
 ### 9. Performance Considerations
 **Severity:** Low | **Effort:** 2 days | **Impact:** Performance
 
