@@ -100,17 +100,15 @@ public class Task : AggregateRoot<TaskId>
                 TaskId? parentTaskId, int? estimatedHours, DateTime? dueDate, User createdBy) 
         : base(TaskId.New())
     {
-        if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Task title cannot be empty", nameof(title));
+        Ensure.NotNullOrWhiteSpace(title, nameof(title));
+        Ensure.NotNull(projectId, nameof(projectId));
+        Ensure.NotNull(createdBy, nameof(createdBy));
 
-        ArgumentNullException.ThrowIfNull(projectId);
-        ArgumentNullException.ThrowIfNull(createdBy);
+        if (estimatedHours.HasValue)
+            Ensure.Positive(estimatedHours.Value, nameof(estimatedHours));
 
-        if (estimatedHours.HasValue && estimatedHours.Value <= 0)
-            throw new ArgumentException("Estimated hours must be positive", nameof(estimatedHours));
-
-        if (dueDate.HasValue && dueDate.Value <= DateTime.UtcNow)
-            throw new DomainException("Due date must be in the future");
+        if (dueDate.HasValue)
+            Ensure.FutureDate(dueDate.Value, nameof(dueDate));
 
         Title = title.Trim();
         Description = description?.Trim();
@@ -142,8 +140,9 @@ public class Task : AggregateRoot<TaskId>
                              Task? parentTask, int? estimatedHours, DateTime? dueDate, User createdBy)
     {
         // Enforce single-level subtask nesting
-        if (parentTask?.ParentTaskId != null)
-            throw new DomainException("Cannot create subtasks of subtasks (only single-level nesting allowed)");
+        Ensure.BusinessRule(
+            parentTask?.ParentTaskId == null,
+            ValidationMessages.Task.SubtaskNestingLimit);
 
         return new Task(title, description, projectId, priority, parentTask?.Id, estimatedHours, dueDate, createdBy);
     }
@@ -163,19 +162,18 @@ public class Task : AggregateRoot<TaskId>
     public void UpdateInfo(string title, string? description, TaskPriority priority, 
                           int? estimatedHours, DateTime? dueDate, User updatedBy)
     {
-        if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Task title cannot be empty", nameof(title));
+        Ensure.NotNullOrWhiteSpace(title, nameof(title));
+        Ensure.NotNull(updatedBy, nameof(updatedBy));
 
-        ArgumentNullException.ThrowIfNull(updatedBy);
+        Ensure.BusinessRule(
+            Status != TaskStatus.Done,
+            ValidationMessages.Formatting.Format(ValidationMessages.Common.CannotModifyCompleted, "modify", "tasks"));
 
-        if (Status == TaskStatus.Done)
-            throw new DomainException("Cannot modify completed tasks");
+        if (estimatedHours.HasValue)
+            Ensure.Positive(estimatedHours.Value, nameof(estimatedHours));
 
-        if (estimatedHours.HasValue && estimatedHours.Value <= 0)
-            throw new ArgumentException("Estimated hours must be positive", nameof(estimatedHours));
-
-        if (dueDate.HasValue && dueDate.Value <= DateTime.UtcNow && Status != TaskStatus.Done)
-            throw new DomainException("Due date must be in the future for active tasks");
+        if (dueDate.HasValue && Status != TaskStatus.Done)
+            Ensure.FutureDate(dueDate.Value, nameof(dueDate));
 
         Title = title.Trim();
         Description = description?.Trim();
@@ -296,17 +294,19 @@ public class Task : AggregateRoot<TaskId>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
     public void Complete(User completedBy, int? actualHours = null)
     {
-        ArgumentNullException.ThrowIfNull(completedBy);
+        Ensure.NotNull(completedBy, nameof(completedBy));
 
-        if (!CanTransitionTo(TaskStatus.Done))
-            throw new DomainException($"Cannot complete task from {Status} status");
+        Ensure.BusinessRule(
+            CanTransitionTo(TaskStatus.Done),
+            ValidationMessages.Formatting.Format(ValidationMessages.Common.InvalidStatusTransition, "Task", Status.ToString(), TaskStatus.Done.ToString()));
 
-        if (actualHours.HasValue && actualHours.Value <= 0)
-            throw new ArgumentException("Actual hours must be positive", nameof(actualHours));
+        if (actualHours.HasValue)
+            Ensure.Positive(actualHours.Value, nameof(actualHours));
 
         // Check if all subtasks are completed
-        if (_subtasks.Any(st => st.Status != TaskStatus.Done && st.Status != TaskStatus.Cancelled))
-            throw new DomainException("Cannot complete task with incomplete subtasks");
+        Ensure.BusinessRule(
+            !_subtasks.Any(st => st.Status != TaskStatus.Done && st.Status != TaskStatus.Cancelled),
+            ValidationMessages.Task.IncompleteSubtasks);
 
         var previousStatus = Status;
         Status = TaskStatus.Done;

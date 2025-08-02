@@ -1,322 +1,343 @@
 ---
-goal: Standardize validation patterns across domain entities for consistency and maintainability
+goal: Create a comprehensive domain layer test suite for DotNetSkills project
 version: 1.0
-date_created: 2025-08-01
-last_updated: 2025-08-01
-owner: Development Team
+date_created: 2025-08-02
+last_updated: 2025-08-02
+owner: AI Development Team
 status: 'Planned'
-tags: ['refactor', 'domain', 'validation', 'code-quality', 'technical-debt']
+tags: ['testing', 'domain-layer', 'unit-tests', 'tdd', 'domain-driven-design']
 ---
 
-# Standardize Domain Validation Patterns
+# Domain Layer Full Test Suite Implementation Plan
 
 ![Status: Planned](https://img.shields.io/badge/status-Planned-blue)
 
-This implementation plan addresses the inconsistent validation patterns across domain entities in the DotNetSkills project. The goal is to establish a standardized, reusable validation framework that ensures consistency in exception handling, error messages, and validation logic across all domain entities.
+This implementation plan provides a comprehensive roadmap for creating a full test suite for the DotNetSkills domain layer. The plan covers all four bounded contexts (UserManagement, TeamCollaboration, ProjectManagement, TaskExecution) with their entities, value objects, domain events, enums, and business rules.
 
 ## 1. Requirements & Constraints
 
-- **REQ-001**: All validation logic must be consistent across domain entities
-- **REQ-002**: Exception types must follow a clear hierarchy (ArgumentException for input validation, DomainException for business rules)
-- **REQ-003**: Error messages must be consistent and descriptive
-- **REQ-004**: Validation helpers must be reusable and centralized
-- **REQ-005**: DateTime validation must consistently use UTC time
-- **REQ-006**: String validation must handle trimming and null/whitespace consistently
-- **REQ-007**: Numeric validation must handle edge cases (negative numbers, zero, etc.)
-- **SEC-001**: All user inputs must be validated before processing
-- **SEC-002**: Validation must prevent injection attacks and malformed data
-- **CON-001**: Must maintain backward compatibility with existing domain event signatures
-- **CON-002**: Must not break existing aggregate boundaries
-- **GUD-001**: Follow .NET naming conventions and coding standards
-- **GUD-002**: Use consistent parameter names across all validation methods
-- **PAT-001**: Follow Domain-Driven Design validation patterns
-- **PAT-002**: Maintain clear separation between input validation and business rule validation
+- **REQ-001**: All domain entities must have comprehensive unit tests covering business logic
+- **REQ-002**: Value objects must be tested for validation rules and immutability
+- **REQ-003**: Domain events must be tested for proper raising and data integrity
+- **REQ-004**: Enum extensions and business rules must have full coverage
+- **REQ-005**: Test builders must be implemented for clean test data creation
+- **REQ-006**: Follow AAA (Arrange, Act, Assert) pattern consistently
+- **REQ-007**: Use FluentAssertions for expressive test assertions
+- **REQ-008**: Achieve minimum 95% code coverage for domain layer
+- **REQ-009**: Tests must be fast (under 100ms each) and isolated
+- **REQ-010**: Mock external dependencies appropriately
+
+- **SEC-001**: Test authorization rules and permission checks
+- **SEC-002**: Validate input sanitization in value objects
+- **SEC-003**: Test domain exception handling for security violations
+
+- **CON-001**: Tests must run on .NET 9 with nullable reference types enabled
+- **CON-002**: Must use xUnit, FluentAssertions, and Moq frameworks
+- **CON-003**: Follow existing project structure and naming conventions
+- **CON-004**: No external dependencies in domain tests (pure unit tests)
+- **CON-005**: Maximum test execution time: 5 seconds for entire suite
+
+- **GUD-001**: Each test class should test a single aggregate or value object
+- **GUD-002**: Test methods should focus on single behaviors
+- **GUD-003**: Use descriptive test method names following Given_When_Then pattern
+- **GUD-004**: Group related tests using nested classes or traits
+- **GUD-005**: Include both positive and negative test scenarios
+
+- **PAT-001**: Use Builder pattern for creating test entities
+- **PAT-002**: Implement shared test fixtures for common scenarios
+- **PAT-003**: Use Theory/InlineData for parameterized tests
+- **PAT-004**: Implement custom assertions for domain-specific validations
+- **PAT-005**: Follow DDD testing patterns for aggregate boundaries
 
 ## 2. Implementation Steps
 
-### Phase 1: Create Validation Infrastructure (Day 1)
+### Phase 1: Foundation and Infrastructure (Tasks 1-8)
 
-#### TASK-001: Create Domain Validation Helper Class
-- Create `src/DotNetSkills.Domain/Common/Validation/Ensure.cs`
-- Implement standardized validation methods for common scenarios
-- Include comprehensive XML documentation
-- Add unit tests for all validation methods
+- [ ] **TASK-001**: Set up test infrastructure and common utilities
+  - Create test base classes and shared fixtures
+  - Implement domain event testing utilities
+  - Set up test data builders foundation
+  - Configure test project dependencies
 
-### Phase 2: Standardize Entity Validation (Days 2-3)
+- [ ] **TASK-002**: Create common domain testing utilities
+  - Implement `DomainEventTestHelper` for event verification
+  - Create `TestClock` for deterministic time testing
+  - Build custom FluentAssertions extensions
+  - Set up test logging and diagnostics
 
-#### TASK-005: Refactor User Entity Validation
-- Update `User.cs` constructor and methods to use Ensure helpers
-- Standardize exception types and messages
-- Maintain existing business logic integrity
+- [ ] **TASK-003**: Implement value object test builders
+  - Create builders for all strongly-typed IDs (UserId, TeamId, ProjectId, TaskId, TeamMemberId)
+  - Implement EmailAddress test builder with valid/invalid scenarios
+  - Build test data generators for complex value objects
+  - Create fluent builder APIs for easy test data creation
 
-#### TASK-006: Refactor Task Entity Validation
-- Update `Task.cs` constructor and methods to use Ensure helpers
-- Fix DateTime UTC consistency issues
-- Standardize numeric validation patterns
+- [ ] **TASK-004**: Set up test categories and organization
+  - Define test traits for different test types (Unit, Domain, Fast)
+  - Create test collections for parallel execution
+  - Implement test naming conventions
+  - Set up test discovery and filtering
 
-#### TASK-007: Refactor Team Entity Validation
-- Update `Team.cs` constructor and methods to use Ensure helpers
-- Ensure consistent string validation patterns
+### Phase 2: UserManagement Bounded Context Tests (Tasks 9-16)
 
-#### TASK-008: Refactor Project Entity Validation
-- Update `Project.cs` constructor and methods to use Ensure helpers
-- Standardize date validation logic
+- [ ] **TASK-005**: Test User entity comprehensive behaviors
+  - Test User creation with factory method and constructor validation
+  - Test role management and permission checks (CanManageTeams, CanManageProjects, CanBeAssignedTasks)
+  - Test user status transitions (Activate, Deactivate, Suspend)
+  - Test team membership management (AddTeamMembership, RemoveTeamMembership)
+  - Test business rule validations and domain exceptions
+  - Test domain event raising (UserCreatedDomainEvent)
 
-#### TASK-009: Refactor Value Object Validation
-- Update `EmailAddress.cs` and other value objects
-- Use centralized constants and messages
-- Maintain immutability and record semantics
+- [ ] **TASK-006**: Test UserManagement value objects
+  - Test UserId creation, conversion, and equality
+  - Test EmailAddress validation rules and edge cases
+  - Test value object immutability and serialization
+  - Test invalid input handling and exception messages
 
-### Phase 3: Comprehensive Testing (Day 4)
+- [ ] **TASK-007**: Test UserManagement enums and extensions
+  - Test UserRole enum values and string conversions
+  - Test UserStatus enum values and business logic
+  - Test enum extension methods and utility functions
+  - Test enum serialization and deserialization
 
-#### TASK-010: Create Validation Unit Tests
-- Create comprehensive test suite for `Ensure` class
-- Test all edge cases and error conditions
-- Verify consistent exception types and messages
+- [ ] **TASK-008**: Test UserManagement domain events
+  - Test UserCreatedDomainEvent data integrity and serialization
+  - Test event raising scenarios and timing
+  - Test event handler compatibility and data contracts
+  - Test event versioning and backward compatibility
 
-#### TASK-011: Update Entity Unit Tests
-- Update existing entity tests to verify new validation patterns
-- Add tests for validation consistency
-- Ensure backward compatibility
+### Phase 3: TeamCollaboration Bounded Context Tests (Tasks 17-26)
 
-#### TASK-012: Integration Testing
-- Verify that domain events still work correctly
-- Test aggregate boundaries with new validation
-- Performance testing for validation overhead
+- [ ] **TASK-009**: Test Team aggregate comprehensive behaviors
+  - Test Team creation with validation and business rules
+  - Test team member management (AddMember, RemoveMember, ChangeMemberRole)
+  - Test team leadership validation (CanAddMembers, CanRemoveMembers)
+  - Test team capacity limits and business constraints
+  - Test team information updates and validation
+  - Test domain event raising (TeamCreatedDomainEvent, UserJoinedTeamDomainEvent, UserLeftTeamDomainEvent)
 
-### Phase 4: Documentation and Cleanup (Day 4)
+- [ ] **TASK-010**: Test TeamMember entity behaviors
+  - Test TeamMember creation and role assignment
+  - Test role change functionality and permissions
+  - Test team member capabilities (HasLeadershipPrivileges, CanBeAssignedTasks, CanAssignTasks)
+  - Test join date tracking and membership history
+  - Test cross-aggregate synchronization with User entity
 
-#### TASK-013: Update Documentation
-- Update XML documentation for all modified entities
-- Create validation guidelines documentation
-- Update coding standards with validation patterns
+- [ ] **TASK-011**: Test TeamCollaboration value objects
+  - Test TeamId and TeamMemberId creation and validation
+  - Test value object equality and hash code generation
+  - Test strongly-typed ID conversions and operators
+  - Test serialization and persistence scenarios
 
-#### TASK-014: Code Review and Cleanup
-- Remove duplicate validation logic
-- Ensure consistent code formatting
-- Verify all TODO comments are addressed
+- [ ] **TASK-012**: Test TeamCollaboration enums
+  - Test TeamRole enum values and hierarchy
+  - Test role-based permission logic
+  - Test enum utility methods and extensions
+  - Test role comparison and validation
+
+- [ ] **TASK-013**: Test TeamCollaboration domain events
+  - Test TeamCreatedDomainEvent with complete data
+  - Test UserJoinedTeamDomainEvent and UserLeftTeamDomainEvent
+  - Test event sequence and aggregate consistency
+  - Test cross-boundary event propagation
+
+### Phase 4: ProjectManagement Bounded Context Tests (Tasks 27-34)
+
+- [ ] **TASK-014**: Test Project aggregate comprehensive behaviors
+  - Test Project creation with team association and validation
+  - Test project status management (Start, PutOnHold, Resume, Complete, Cancel)
+  - Test project information updates and permission checks
+  - Test project lifecycle and state transitions
+  - Test project duration calculations and date handling
+  - Test domain event raising (ProjectCreatedDomainEvent, ProjectStatusChangedDomainEvent)
+
+- [ ] **TASK-015**: Test Project business rules and validations
+  - Test project modification permissions (CanModifyProject)
+  - Test status transition validation (CanTransitionTo)
+  - Test project completion with active tasks validation
+  - Test planned end date validation and constraints
+  - Test cross-aggregate business rules with teams
+
+- [ ] **TASK-016**: Test ProjectManagement value objects
+  - Test ProjectId creation, equality, and conversions
+  - Test project-specific value objects and validation
+  - Test value object serialization and persistence
+  - Test edge cases and boundary conditions
+
+- [ ] **TASK-017**: Test ProjectManagement enums
+  - Test ProjectStatus enum values and transitions
+  - Test status-based business logic and rules
+  - Test enum utility methods and validation
+  - Test status change workflows and constraints
+
+- [ ] **TASK-018**: Test ProjectManagement domain events
+  - Test ProjectCreatedDomainEvent data completeness
+  - Test ProjectStatusChangedDomainEvent with status history
+  - Test event timing and aggregate state consistency
+  - Test cross-context event integration
+
+### Phase 5: TaskExecution Bounded Context Tests (Tasks 35-44)
+
+- [ ] **TASK-019**: Test Task aggregate comprehensive behaviors
+  - Test Task creation with project association and validation
+  - Test task assignment functionality (AssignTo, Unassign)
+  - Test task status management (Start, Complete, Cancel)
+  - Test subtask creation and single-level nesting enforcement
+  - Test task information updates and permission validation
+  - Test task lifecycle and business rule enforcement
+
+- [ ] **TASK-020**: Test Task business rules and constraints
+  - Test single-level subtask nesting limitation
+  - Test task assignment rules and user validation
+  - Test status transition validation and constraints
+  - Test estimated vs actual hours tracking
+  - Test due date validation and business logic
+
+- [ ] **TASK-021**: Test Task domain events
+  - Test TaskCreatedDomainEvent with complete data
+  - Test TaskAssignedDomainEvent and assignment tracking
+  - Test task status change events and state consistency
+  - Test subtask-related event propagation
+
+- [ ] **TASK-022**: Test TaskExecution value objects
+  - Test TaskId creation, conversion, and validation
+  - Test task-specific value objects and constraints
+  - Test value object immutability and thread safety
+  - Test serialization and data integrity
+
+- [ ] **TASK-023**: Test TaskExecution enums
+  - Test TaskStatus enum values and transitions
+  - Test TaskPriority enum and priority-based logic
+  - Test enum validation and business rule integration
+  - Test enum serialization and API compatibility
+
+### Phase 6: Cross-Cutting Concerns and Integration Tests (Tasks 45-52)
+
+- [ ] **TASK-024**: Test domain validation framework
+  - Test Ensure class methods and validation rules
+  - Test ValidationMessages consistency and localization
+  - Test BusinessRules static validation methods
+  - Test custom validation extensions and utilities
+
+- [ ] **TASK-025**: Test domain events infrastructure
+  - Test BaseDomainEvent implementation and inheritance
+  - Test AggregateRoot event management (RaiseDomainEvent, ClearDomainEvents)
+  - Test event ordering and consistency
+  - Test event serialization and persistence compatibility
+
+- [ ] **TASK-026**: Test common base classes and interfaces
+  - Test BaseEntity functionality and behavior
+  - Test AggregateRoot implementation and event handling
+  - Test IStronglyTypedId interface compliance
+  - Test entity equality and comparison logic
+
+- [ ] **TASK-027**: Test cross-aggregate business scenarios
+  - Test user-team-project relationship integrity
+  - Test task assignment across aggregates
+  - Test permission propagation and validation
+  - Test business rule enforcement across boundaries
+
+- [ ] **TASK-028**: Test domain service interfaces and contracts
+  - Test ITeamDomainService and IProjectDomainService interfaces
+  - Mock external dependencies for isolated testing
+  - Test service contract compliance and behavior
+  - Test async operation handling and error scenarios
+
+### Phase 7: Performance and Edge Case Testing (Tasks 53-58)
+
+- [ ] **TASK-029**: Test performance characteristics
+  - Test entity creation and modification performance
+  - Test large collection handling and memory usage
+  - Test domain event performance and batching
+  - Test value object creation and comparison performance
+
+- [ ] **TASK-030**: Test edge cases and boundary conditions
+  - Test null and empty value handling
+  - Test maximum length and capacity constraints
+  - Test Unicode and special character handling
+  - Test concurrent access scenarios and thread safety
+
+- [ ] **TASK-031**: Test error scenarios and exception handling
+  - Test all DomainException scenarios and messages
+  - Test ArgumentException and validation failures
+  - Test exception serialization and error propagation
+  - Test recovery scenarios and error handling patterns
+
+### Phase 8: Test Quality and Maintenance (Tasks 59-62)
+
+- [ ] **TASK-032**: Implement test quality metrics
+  - Set up code coverage reporting and thresholds
+  - Implement test performance monitoring
+  - Create test maintainability guidelines
+  - Set up automated test quality checks
+
+- [ ] **TASK-033**: Create test documentation and guidelines
+  - Document test patterns and best practices
+  - Create test data builder usage guides
+  - Document domain testing strategies
+  - Create troubleshooting and debugging guides
+
+- [ ] **TASK-034**: Set up continuous testing infrastructure
+  - Configure test execution in CI/CD pipeline
+  - Set up test result reporting and analytics
+  - Implement test failure notification and tracking
+  - Create test maintenance and update procedures
 
 ## 3. Alternatives
 
-- **ALT-001**: Use FluentValidation library - Rejected due to domain layer dependency constraints and Clean Architecture principles
-- **ALT-002**: Create attribute-based validation - Rejected as it would scatter validation logic and reduce discoverability
-- **ALT-003**: Use Data Annotations - Rejected as inappropriate for rich domain models and business rule validation
-- **ALT-004**: Individual validation methods per entity - Rejected due to code duplication and maintenance overhead
+- **ALT-001**: Use AutoFixture instead of custom builders - Rejected due to lack of domain-specific control
+- **ALT-002**: Use integration tests instead of pure unit tests - Rejected to maintain fast execution and isolation
+- **ALT-003**: Use record-based test data - Rejected in favor of builder pattern for flexibility
+- **ALT-004**: Use single large test classes - Rejected in favor of focused, single-responsibility test classes
+- **ALT-005**: Use reflection-based testing - Rejected to maintain explicit test scenarios and readability
 
 ## 4. Dependencies
 
-- **DEP-001**: Existing domain entities (`User`, `Task`, `Team`, `Project`)
-- **DEP-002**: Domain exception classes (`DomainException`)
-- **DEP-003**: Value objects (`EmailAddress`, strongly-typed IDs)
-- **DEP-004**: Existing unit test infrastructure
-- **DEP-005**: GlobalUsings.cs configuration
+- **DEP-001**: xUnit testing framework (already configured)
+- **DEP-002**: FluentAssertions library (already configured)
+- **DEP-003**: Moq mocking framework (already configured)
+- **DEP-004**: Coverlet code coverage tool (needs addition)
+- **DEP-005**: Domain layer source code (complete and stable)
+- **DEP-006**: Test utilities and builders (to be implemented)
 
 ## 5. Files
 
-- **FILE-001**: `src/DotNetSkills.Domain/Common/Validation/Ensure.cs` - Central validation helper class
-- **FILE-002**: `src/DotNetSkills.Domain/Common/Validation/ValidationConstants.cs` - Primitive validation constants
-- **FILE-002B**: `src/DotNetSkills.Domain/Common/Rules/BusinessRules.cs` - Complex business rule logic
-- **FILE-003**: `src/DotNetSkills.Domain/Common/Validation/ValidationMessages.cs` - Centralized error messages
-- **FILE-004**: `src/DotNetSkills.Domain/UserManagement/Entities/User.cs` - Updated validation patterns
-- **FILE-005**: `src/DotNetSkills.Domain/TaskExecution/Entities/Task.cs` - Updated validation patterns
-- **FILE-006**: `src/DotNetSkills.Domain/TeamCollaboration/Entities/Team.cs` - Updated validation patterns
-- **FILE-007**: `src/DotNetSkills.Domain/ProjectManagement/Entities/Project.cs` - Updated validation patterns
-- **FILE-008**: `src/DotNetSkills.Domain/UserManagement/ValueObjects/EmailAddress.cs` - Updated validation patterns
-- **FILE-009**: `src/DotNetSkills.Domain/GlobalUsings.cs` - Updated global using statements
-- **FILE-010**: `src/DotNetSkills.Domain/Common/Extensions/ProjectStatusExtensions.cs` - Project status business logic
-- **FILE-011**: `src/DotNetSkills.Domain/Common/Extensions/TaskStatusExtensions.cs` - Task status transitions and utilities
-- **FILE-012**: `src/DotNetSkills.Domain/Common/Extensions/TaskPriorityExtensions.cs` - Task priority helpers
-- **FILE-013**: `src/DotNetSkills.Domain/Common/Extensions/UserRoleExtensions.cs` - User role permissions and hierarchy
-- **FILE-014**: `src/DotNetSkills.Domain/Common/Extensions/UserStatusExtensions.cs` - User status transitions
-- **FILE-015**: `src/DotNetSkills.Domain/Common/Extensions/TeamRoleExtensions.cs` - Team role privileges and responsibilities
-- **FILE-016**: `tests/DotNetSkills.Domain.UnitTests/Common/Extensions/` - Extension method tests
-- **FILE-010**: `tests/DotNetSkills.Domain.UnitTests/Common/Validation/EnsureTests.cs` - Validation helper tests
-- **FILE-011**: `tests/DotNetSkills.Domain.UnitTests/UserManagement/UserValidationTests.cs` - User validation tests
-- **FILE-012**: `tests/DotNetSkills.Domain.UnitTests/TaskExecution/TaskValidationTests.cs` - Task validation tests
+- **FILE-001**: Test project structure in `tests/DotNetSkills.Domain.UnitTests/`
+- **FILE-002**: Builder classes in `tests/DotNetSkills.Domain.UnitTests/Builders/`
+- **FILE-003**: Common test utilities in `tests/DotNetSkills.Domain.UnitTests/Common/`
+- **FILE-004**: Entity tests in `tests/DotNetSkills.Domain.UnitTests/{BoundedContext}/Entities/`
+- **FILE-005**: Value object tests in `tests/DotNetSkills.Domain.UnitTests/{BoundedContext}/ValueObjects/`
+- **FILE-006**: Domain event tests in `tests/DotNetSkills.Domain.UnitTests/{BoundedContext}/Events/`
+- **FILE-007**: Enum tests in `tests/DotNetSkills.Domain.UnitTests/{BoundedContext}/Enums/`
+- **FILE-008**: Business rule tests in `tests/DotNetSkills.Domain.UnitTests/Common/Rules/`
 
 ## 6. Testing
 
-- **TEST-001**: Unit tests for `Ensure` class covering all validation methods and edge cases
-- **TEST-002**: Unit tests for each entity's validation logic using the new patterns
-- **TEST-003**: Integration tests to verify domain events still fire correctly after validation changes
-- **TEST-004**: Performance tests to ensure validation doesn't introduce significant overhead
-- **TEST-005**: Negative testing to verify proper exception handling and error messages
-- **TEST-006**: Regression tests to ensure existing business logic remains intact
-- **TEST-007**: Edge case testing for boundary conditions (empty strings, null values, extreme dates)
+- **TEST-001**: All test classes must have minimum 95% code coverage
+- **TEST-002**: Test execution time must be under 5 seconds for entire suite
+- **TEST-003**: No external dependencies in domain unit tests
+- **TEST-004**: All tests must be deterministic and repeatable
+- **TEST-005**: Test naming must follow Given_When_Then convention
+- **TEST-006**: Each test must focus on single behavior or scenario
+- **TEST-007**: Positive and negative test scenarios for all public methods
+- **TEST-008**: Edge cases and boundary conditions must be covered
 
 ## 7. Risks & Assumptions
 
-- **RISK-001**: Breaking changes to existing validation could affect dependent code - Mitigation: Comprehensive testing and gradual rollout
-- **RISK-002**: Performance impact from centralized validation - Mitigation: Performance testing and optimization
-- **RISK-003**: Developer adoption of new patterns - Mitigation: Clear documentation and code review enforcement
-- **ASSUMPTION-001**: Current domain events and business logic are correct and should be preserved
-- **ASSUMPTION-002**: UTC time handling is the desired standard for all date operations
-- **ASSUMPTION-003**: Existing entity constructors and method signatures should remain unchanged for compatibility
+- **RISK-001**: Domain layer complexity might require extensive test scenarios
+- **RISK-002**: Cross-aggregate testing might reveal design issues requiring refactoring
+- **RISK-003**: Performance tests might identify bottlenecks in domain logic
+- **RISK-004**: Test maintenance burden might increase with domain evolution
+
+- **ASSUMPTION-001**: Domain layer is stable and won't undergo major structural changes
+- **ASSUMPTION-002**: Business rules are well-defined and documented
+- **ASSUMPTION-003**: Development team is familiar with DDD testing patterns
+- **ASSUMPTION-004**: Test infrastructure can handle the volume of tests planned
 
 ## 8. Related Specifications / Further Reading
 
-- [DotNet Coding Principles - Validation Guidelines](/Users/marquez/Downloads/Pablo/Repos/DotNetSkills/.github/instructions/dotnet.instructions.md)
-- [Domain Technical Debt Analysis - Validation Patterns](/Users/marquez/Downloads/Pablo/Repos/DotNetSkills/DomainTechnicalDebt.md)
-- [Clean Architecture Validation Patterns](https://docs.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles#separation-of-concerns)
-- [Domain-Driven Design Validation Patterns](https://martinfowler.com/articles/domain-validation.html)
-
----
-
-## Detailed Implementation Specifications
-
-### Ensure Class Design
-
-```csharp
-public static class Ensure
-{
-    // String validation
-    public static void NotNullOrWhiteSpace(string value, string paramName, string? customMessage = null)
-    public static void HasMaxLength(string value, int maxLength, string paramName, string? customMessage = null)
-    public static void HasMinLength(string value, int minLength, string paramName, string? customMessage = null)
-    
-    // Numeric validation
-    public static void Positive(int value, string paramName, string? customMessage = null)
-    public static void PositiveOrZero(int value, string paramName, string? customMessage = null)
-    public static void InRange(int value, int min, int max, string paramName, string? customMessage = null)
-    
-    // DateTime validation
-    public static void FutureDate(DateTime value, string paramName, string? customMessage = null)
-    public static void FutureDateOrNull(DateTime? value, string paramName, string? customMessage = null)
-    public static void PastDate(DateTime value, string paramName, string? customMessage = null)
-    
-    // Business rule validation
-    public static void BusinessRule(bool condition, string message)
-    public static void BusinessRule(Func<bool> condition, string message)
-    
-    // Collection validation
-    public static void NotEmpty<T>(IEnumerable<T> collection, string paramName, string? customMessage = null)
-    public static void MaxCount<T>(IEnumerable<T> collection, int maxCount, string paramName, string? customMessage = null)
-}
-```
-
-### Validation Constants Structure
-
-```csharp
-public static class ValidationConstants
-{
-    public static class StringLengths
-    {
-        public const int UserNameMaxLength = 100;
-        public const int TaskTitleMaxLength = 200;
-        public const int TeamNameMaxLength = 100;
-        public const int ProjectNameMaxLength = 150;
-        public const int DescriptionMaxLength = 1000;
-        public const int EmailMaxLength = 254; // RFC 5321
-    }
-    
-    public static class Numeric
-    {
-        public const int TeamMaxMembers = 50;
-        public const int TaskMaxEstimatedHours = 1000;
-        public const int TaskMinEstimatedHours = 1;
-    }
-    
-    public static class DateTime
-    {
-        public static readonly System.DateTime MinAllowedDate = new(2000, 1, 1);
-        public static readonly System.DateTime MaxAllowedDate = new(2100, 12, 31);
-    }
-}
-```
-
-### Business Rules Structure
-
-```csharp
-public static class BusinessRules
-{
-    public static class ProjectStatus
-    {
-        public static bool CanTransitionTo(Domain.ProjectManagement.Enums.ProjectStatus current, 
-                                         Domain.ProjectManagement.Enums.ProjectStatus target)
-        {
-            return current switch
-            {
-                Domain.ProjectManagement.Enums.ProjectStatus.Planning => 
-                    target is Domain.ProjectManagement.Enums.ProjectStatus.Active or 
-                             Domain.ProjectManagement.Enums.ProjectStatus.Cancelled,
-                Domain.ProjectManagement.Enums.ProjectStatus.Active => 
-                    target is Domain.ProjectManagement.Enums.ProjectStatus.OnHold or 
-                             Domain.ProjectManagement.Enums.ProjectStatus.Completed or 
-                             Domain.ProjectManagement.Enums.ProjectStatus.Cancelled,
-                Domain.ProjectManagement.Enums.ProjectStatus.OnHold => 
-                    target is Domain.ProjectManagement.Enums.ProjectStatus.Active or 
-                             Domain.ProjectManagement.Enums.ProjectStatus.Cancelled,
-                _ => false
-            };
-        }
-        
-        public static bool IsFinalized(Domain.ProjectManagement.Enums.ProjectStatus status) =>
-            status is Domain.ProjectManagement.Enums.ProjectStatus.Completed or 
-                     Domain.ProjectManagement.Enums.ProjectStatus.Cancelled;
-    }
-    
-    public static class TaskStatus
-    {
-        public static bool CanTransitionTo(Domain.TaskExecution.Enums.TaskStatus current, 
-                                         Domain.TaskExecution.Enums.TaskStatus target)
-        {
-            return current switch
-            {
-                Domain.TaskExecution.Enums.TaskStatus.ToDo => 
-                    target is Domain.TaskExecution.Enums.TaskStatus.InProgress,
-                Domain.TaskExecution.Enums.TaskStatus.InProgress => 
-                    target is Domain.TaskExecution.Enums.TaskStatus.InReview or 
-                             Domain.TaskExecution.Enums.TaskStatus.Done or
-                             Domain.TaskExecution.Enums.TaskStatus.ToDo,
-                Domain.TaskExecution.Enums.TaskStatus.InReview => 
-                    target is Domain.TaskExecution.Enums.TaskStatus.Done or 
-                             Domain.TaskExecution.Enums.TaskStatus.InProgress,
-                Domain.TaskExecution.Enums.TaskStatus.Done => false, // Final state
-                _ => false
-            };
-        }
-    }
-    
-    public static class Authorization
-    {
-        public static bool CanCreateUser(UserRole role) => role == UserRole.Admin;
-        
-        public static bool CanManageTeam(UserRole role) => 
-            role is UserRole.Admin or UserRole.ProjectManager;
-            
-        public static bool CanManageProject(UserRole role) => 
-            role is UserRole.Admin or UserRole.ProjectManager;
-    }
-}
-```
-
-### Error Message Centralization
-
-```csharp
-public static class ValidationMessages
-{
-    public static class Common
-    {
-        public const string CannotBeEmpty = "{0} cannot be null or whitespace";
-        public const string MustBePositive = "{0} must be positive";
-        public const string MustBeFutureDate = "{0} must be in the future";
-        public const string ExceedsMaxLength = "{0} cannot exceed {1} characters";
-    }
-    
-    public static class User
-    {
-        public const string NameRequired = "User name cannot be empty";
-        public const string EmailRequired = "Email address is required";
-        public const string OnlyAdminCanCreate = "Only admin users can create new users";
-    }
-    
-    public static class Task
-    {
-        public const string TitleRequired = "Task title cannot be empty";
-        public const string DueDateMustBeFuture = "Due date must be in the future";
-        public const string EstimatedHoursMustBePositive = "Estimated hours must be positive";
-    }
-}
-```
-
-This plan provides a comprehensive approach to standardizing validation patterns while maintaining the integrity of the existing domain model and ensuring thorough testing coverage.
+- [DotNetSkills MVP Feature Plan](feature-dotnetskills-mvp-1.md)
+- [.NET Architecture Guidelines](.github/instructions/dotnet-arquitecture.instructions.md)
+- [Domain-Driven Design Testing Patterns](https://docs.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/infrastructure-persistence-layer-design)
+- [xUnit Documentation](https://xunit.net/docs/getting-started/netcore/cmdline)
+- [FluentAssertions Documentation](https://fluentassertions.com/introduction)
+- [Test-Driven Development Best Practices](https://docs.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices)

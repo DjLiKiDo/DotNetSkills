@@ -83,7 +83,7 @@ public static class ValidationMessages
         /// Message for empty collection validation.
         /// Parameter: {0} = collection name (e.g., "Team members", "Project tasks")
         /// </summary>
-        public const string CannotBeEmptyCollection = "{0} cannot be empty";
+        public const string CollectionCannotBeEmpty = "{0} cannot be empty";
         
         /// <summary>
         /// Message for null parameter validation.
