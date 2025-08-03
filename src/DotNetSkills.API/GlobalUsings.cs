@@ -39,14 +39,14 @@ global using DotNetSkills.Application.TeamCollaboration.Queries;
 global using DotNetSkills.Application.TeamCollaboration.DTOs;
 
 // Application layer references - Project Management
-// global using DotNetSkills.Application.ProjectManagement.Commands;
-// global using DotNetSkills.Application.ProjectManagement.Queries;
-// global using DotNetSkills.Application.ProjectManagement.DTOs;
+global using DotNetSkills.Application.ProjectManagement.Commands;
+global using DotNetSkills.Application.ProjectManagement.Queries;
+global using DotNetSkills.Application.ProjectManagement.DTOs;
 
-// Application layer references - Task Execution
-// global using DotNetSkills.Application.TaskExecution.Commands;
-// global using DotNetSkills.Application.TaskExecution.Queries;
-// global using DotNetSkills.Application.TaskExecution.DTOs;
+// Application layer references - Task Execution (aliased to avoid conflicts)
+global using DotNetSkills.Application.TaskExecution.Commands;
+global using DotNetSkills.Application.TaskExecution.Queries;
+global using DotNetSkills.Application.TaskExecution.DTOs;
 
 // Application layer references - Common
 // global using DotNetSkills.Application.Common.Models;
@@ -55,10 +55,14 @@ global using DotNetSkills.Application.TeamCollaboration.DTOs;
 // API layer endpoint extensions
 global using DotNetSkills.API.Endpoints.UserManagement;
 global using DotNetSkills.API.Endpoints.TeamCollaboration;
+global using DotNetSkills.API.Endpoints.ProjectManagement;
+global using DotNetSkills.API.Endpoints.TaskExecution;
 
 // Domain references (for basic types and exceptions)
 global using DotNetSkills.Domain.Common.Exceptions;
 global using DotNetSkills.Domain.UserManagement.ValueObjects;
 global using DotNetSkills.Domain.TeamCollaboration.ValueObjects;
 global using DotNetSkills.Domain.ProjectManagement.ValueObjects;
+global using DotNetSkills.Domain.ProjectManagement.Enums;
 global using DotNetSkills.Domain.TaskExecution.ValueObjects;
+global using DotNetSkills.Domain.TaskExecution.Enums;

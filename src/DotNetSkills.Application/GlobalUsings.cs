@@ -8,6 +8,10 @@ global using System.Threading.Tasks;
 // Application layer specific globals - Common interfaces
 global using DotNetSkills.Application.Common;
 
+
+// Application layer specific globals - MediatR (when added)
+// global using MediatR;
+
 // Application layer specific globals - AutoMapper (when added)
 // global using AutoMapper;
 
@@ -47,8 +51,18 @@ global using DotNetSkills.Domain.ProjectManagement.ValueObjects;
 global using DotNetSkills.Domain.ProjectManagement.Enums;
 global using DotNetSkills.Domain.ProjectManagement.Events;
 
+// Project Management Application references
+global using DotNetSkills.Application.ProjectManagement.Commands;
+global using DotNetSkills.Application.ProjectManagement.Queries;
+global using DotNetSkills.Application.ProjectManagement.DTOs;
+
 // Task Execution Domain references (aliased to avoid conflicts)
 global using DomainTask = DotNetSkills.Domain.TaskExecution.Entities.Task;
 global using DotNetSkills.Domain.TaskExecution.ValueObjects;
 global using DotNetSkills.Domain.TaskExecution.Enums;
 global using DotNetSkills.Domain.TaskExecution.Events;
+
+// Task Execution Application references
+global using DotNetSkills.Application.TaskExecution.Commands;
+global using DotNetSkills.Application.TaskExecution.Queries;
+global using DotNetSkills.Application.TaskExecution.DTOs;

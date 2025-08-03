@@ -26,10 +26,8 @@ app.MapHealthChecks("/health");
 
 // Domain endpoints organized by bounded context
 app.MapUserManagementEndpoints();
-
-// TODO: Add remaining bounded context endpoints when implemented
-// app.MapTeamCollaborationEndpoints();
-// app.MapProjectManagementEndpoints();
-// app.MapTaskExecutionEndpoints();
+app.MapTeamCollaborationEndpoints();
+app.MapProjectManagementEndpoints();
+app.MapTaskExecutionEndpoints();
 
 await app.RunAsync();

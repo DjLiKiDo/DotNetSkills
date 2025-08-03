@@ -17,8 +17,8 @@ public static class UserManagementEndpointsExtensions
         // Register User CRUD endpoints
         app.MapUserEndpoints();
         
-        // TODO: Add UserAccountEndpoints when implemented (for activate/deactivate/role changes)
-        // app.MapUserAccountEndpoints();
+        // Register User Account management endpoints
+        app.MapUserAccountEndpoints();
         
         return app;
     }
