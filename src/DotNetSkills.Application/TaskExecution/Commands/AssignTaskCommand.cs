@@ -12,12 +12,15 @@ public record AssignTaskCommand(
     /// <summary>
     /// Validates the assign task command.
     /// </summary>
-    /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
+    /// <exception cref="ArgumentException">Thrown when required parameters are invalid.</exception>
     public void Validate()
     {
-        ArgumentNullException.ThrowIfNull(TaskId);
-        ArgumentNullException.ThrowIfNull(AssignedUserId);
-        ArgumentNullException.ThrowIfNull(AssignedByUserId);
+        if (TaskId.Value == Guid.Empty)
+            throw new ArgumentException("TaskId cannot be empty", nameof(TaskId));
+        if (AssignedUserId.Value == Guid.Empty)
+            throw new ArgumentException("AssignedUserId cannot be empty", nameof(AssignedUserId));
+        if (AssignedByUserId.Value == Guid.Empty)
+            throw new ArgumentException("AssignedByUserId cannot be empty", nameof(AssignedByUserId));
     }
 };
 
@@ -32,11 +35,13 @@ public record UnassignTaskCommand(
     /// <summary>
     /// Validates the unassign task command.
     /// </summary>
-    /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
+    /// <exception cref="ArgumentException">Thrown when required parameters are invalid.</exception>
     public void Validate()
     {
-        ArgumentNullException.ThrowIfNull(TaskId);
-        ArgumentNullException.ThrowIfNull(UnassignedByUserId);
+        if (TaskId.Value == Guid.Empty)
+            throw new ArgumentException("TaskId cannot be empty", nameof(TaskId));
+        if (UnassignedByUserId.Value == Guid.Empty)
+            throw new ArgumentException("UnassignedByUserId cannot be empty", nameof(UnassignedByUserId));
     }
 };
 
@@ -58,11 +63,12 @@ public record CreateSubtaskCommand(
     /// Validates the create subtask command.
     /// </summary>
     /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
-    /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
     public void Validate()
     {
-        ArgumentNullException.ThrowIfNull(ParentTaskId);
-        ArgumentNullException.ThrowIfNull(CreatedByUserId);
+        if (ParentTaskId.Value == Guid.Empty)
+            throw new ArgumentException("ParentTaskId cannot be empty", nameof(ParentTaskId));
+        if (CreatedByUserId.Value == Guid.Empty)
+            throw new ArgumentException("CreatedByUserId cannot be empty", nameof(CreatedByUserId));
 
         if (string.IsNullOrWhiteSpace(Title))
             throw new ArgumentException("Title is required", nameof(Title));
@@ -102,11 +108,12 @@ public record UpdateSubtaskCommand(
     /// Validates the update subtask command.
     /// </summary>
     /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
-    /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
     public void Validate()
     {
-        ArgumentNullException.ThrowIfNull(TaskId);
-        ArgumentNullException.ThrowIfNull(UpdatedByUserId);
+        if (TaskId.Value == Guid.Empty)
+            throw new ArgumentException("TaskId cannot be empty", nameof(TaskId));
+        if (UpdatedByUserId.Value == Guid.Empty)
+            throw new ArgumentException("UpdatedByUserId cannot be empty", nameof(UpdatedByUserId));
 
         if (string.IsNullOrWhiteSpace(Title))
             throw new ArgumentException("Title is required", nameof(Title));

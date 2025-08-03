@@ -10,9 +10,10 @@ public record GetTaskSubtasksQuery(
     /// <summary>
     /// Validates the get task subtasks query.
     /// </summary>
-    /// <exception cref="ArgumentNullException">Thrown when TaskId is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when TaskId is invalid (Guid.Empty).</exception>
     public void Validate()
     {
-        ArgumentNullException.ThrowIfNull(TaskId);
+        if (TaskId.Value == Guid.Empty)
+            throw new ArgumentException("TaskId cannot be empty", nameof(TaskId));
     }
 };

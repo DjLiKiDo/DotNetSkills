@@ -186,12 +186,16 @@ public static class ProjectTaskEndpoints
             }
 
             // Validate request
-            var validationErrors = request.Validate();
-            if (validationErrors.Count > 0)
+            try
             {
-                return Results.ValidationProblem(validationErrors.ToDictionary(
-                    error => "ValidationError", 
-                    error => new[] { error }));
+                request.Validate();
+            }
+            catch (ValidationException ex)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["ValidationError"] = new[] { ex.Message }
+                });
             }
 
             // TODO: Get current user ID from authentication context
@@ -278,12 +282,16 @@ public static class ProjectTaskEndpoints
             }
 
             // Validate request
-            var validationErrors = request.Validate();
-            if (validationErrors.Count > 0)
+            try
             {
-                return Results.ValidationProblem(validationErrors.ToDictionary(
-                    error => "ValidationError", 
-                    error => new[] { error }));
+                request.Validate();
+            }
+            catch (ValidationException ex)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["ValidationError"] = new[] { ex.Message }
+                });
             }
 
             // TODO: Get current user ID from authentication context

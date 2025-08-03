@@ -47,10 +47,10 @@ public record CreateTaskInProjectRequest
     public Guid? AssignedUserId { get; init; }
 
     /// <summary>
-    /// Validates the request data and returns any validation errors.
+    /// Validates the request data and throws ValidationException if invalid.
     /// </summary>
-    /// <returns>List of validation error messages, empty if valid.</returns>
-    public List<string> Validate()
+    /// <exception cref="ValidationException">Thrown when validation fails.</exception>
+    public void Validate()
     {
         var errors = new List<string>();
 
@@ -81,7 +81,8 @@ public record CreateTaskInProjectRequest
         if (AssignedUserId.HasValue && AssignedUserId == Guid.Empty)
             errors.Add("Assigned user ID cannot be empty GUID.");
 
-        return errors;
+        if (errors.Count > 0)
+            throw new ValidationException(string.Join(" ", errors));
     }
 
     /// <summary>

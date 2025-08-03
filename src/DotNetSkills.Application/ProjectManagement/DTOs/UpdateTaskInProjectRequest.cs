@@ -35,10 +35,10 @@ public record UpdateTaskInProjectRequest
     public DateTime? DueDate { get; init; }
 
     /// <summary>
-    /// Validates the request data and returns any validation errors.
+    /// Validates the request data and throws ValidationException if invalid.
     /// </summary>
-    /// <returns>List of validation error messages, empty if valid.</returns>
-    public List<string> Validate()
+    /// <exception cref="ValidationException">Thrown when validation fails.</exception>
+    public void Validate()
     {
         var errors = new List<string>();
 
@@ -63,7 +63,8 @@ public record UpdateTaskInProjectRequest
         // Note: Due date validation against current time is handled in domain logic
         // since completed tasks can have past due dates
 
-        return errors;
+        if (errors.Count > 0)
+            throw new ValidationException(string.Join(" ", errors));
     }
 
     /// <summary>
