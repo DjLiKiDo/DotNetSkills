@@ -28,23 +28,101 @@ public static class DependencyInjection
         
         // API-specific services
         services.AddEndpointsApiExplorer();
+        
+        // Configure JSON serialization options for strongly-typed IDs and domain types
+        services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            options.SerializerOptions.WriteIndented = true;
+            options.SerializerOptions.PropertyNameCaseInsensitive = true;
+            
+            // Add custom converters for strongly-typed IDs when needed
+            // options.SerializerOptions.Converters.Add(new UserIdJsonConverter());
+            // options.SerializerOptions.Converters.Add(new TeamIdJsonConverter());
+            // options.SerializerOptions.Converters.Add(new ProjectIdJsonConverter());
+            // options.SerializerOptions.Converters.Add(new TaskIdJsonConverter());
+        });
+        
+        // Configure model binding for minimal APIs
+        services.Configure<JsonOptions>(options =>
+        {
+            options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            options.JsonSerializerOptions.WriteIndented = true;
+            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        });
+        
+        // Problem Details configuration for consistent error responses
+        services.AddProblemDetails(options =>
+        {
+            options.CustomizeProblemDetails = (context) =>
+            {
+                context.ProblemDetails.Instance = context.HttpContext.Request.Path;
+                context.ProblemDetails.Extensions["requestId"] = context.HttpContext.TraceIdentifier;
+                context.ProblemDetails.Extensions["timestamp"] = DateTime.UtcNow;
+            };
+        });
+        
+        // FluentValidation integration for endpoint validation
+        // Will be activated when Application layer implements validators
+        // services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
+        // services.AddFluentValidationAutoValidation();
+        // services.AddFluentValidationClientsideAdapters();
+        
+        // Configure Swagger/OpenAPI with enhanced documentation
         services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new() 
             { 
                 Title = "DotNetSkills API", 
                 Version = "v1",
-                Description = "Project Management API demonstrating Clean Architecture and DDD"
+                Description = "Project Management API demonstrating Clean Architecture and Domain-Driven Design",
+                Contact = new() 
+                {
+                    Name = "DotNetSkills Team",
+                    Email = "support@dotnetskills.com"
+                }
             });
             
-            // JWT Bearer configuration for Swagger
+            // Include XML documentation when available
+            // var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            // var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            // if (File.Exists(xmlPath))
+            // {
+            //     options.IncludeXmlComments(xmlPath);
+            // }
+            
+            // Configure response types and examples
+            options.SupportNonNullableReferenceTypes();
+            options.UseInlineDefinitionsForEnums();
+            options.DescribeAllParametersInCamelCase();
+            
+            // Additional Swagger customizations will be added here
+            // as the API evolves and more specific requirements emerge
+            
+            // JWT Bearer configuration for Swagger (when authentication is implemented)
             // options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             // {
-            //     Description = "JWT Authorization header using the Bearer scheme",
+            //     Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
             //     Name = "Authorization",
             //     In = ParameterLocation.Header,
             //     Type = SecuritySchemeType.ApiKey,
-            //     Scheme = "Bearer"
+            //     Scheme = "Bearer",
+            //     BearerFormat = "JWT"
+            // });
+            //
+            // options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            // {
+            //     {
+            //         new OpenApiSecurityScheme
+            //         {
+            //             Reference = new OpenApiReference
+            //             {
+            //                 Type = ReferenceType.SecurityScheme,
+            //                 Id = "Bearer"
+            //             }
+            //         },
+            //         Array.Empty<string>()
+            //     }
             // });
         });
         
@@ -84,6 +162,48 @@ public static class DependencyInjection
         
         // Health checks
         services.AddHealthChecks();
+        
+        // Rate limiting configuration (when needed)
+        // services.AddRateLimiter(options =>
+        // {
+        //     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(
+        //         httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        //             partitionKey: httpContext.User.Identity?.Name ?? httpContext.Request.Headers.Host.ToString(),
+        //             factory: partition => new FixedWindowRateLimiterOptions
+        //             {
+        //                 AutoReplenishment = true,
+        //                 PermitLimit = 100,
+        //                 Window = TimeSpan.FromMinutes(1)
+        //             }));
+        // });
+        
+        // Output caching configuration (when needed)
+        // services.AddOutputCache(options =>
+        // {
+        //     options.AddPolicy("DefaultCache", builder =>
+        //         builder.Cache()
+        //               .Expire(TimeSpan.FromMinutes(5))
+        //               .SetVaryByHeader("Accept", "Accept-Language"));
+        // });
+        
+        // Request decompression (for handling compressed requests)
+        services.AddRequestDecompression();
+        
+        // Response compression
+        services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            // Add specific MIME types when needed
+            // options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+            //     new[] { "application/json", "text/json" });
+        });
+        
+        // Model binding configuration
+        services.Configure<RouteOptions>(options =>
+        {
+            options.LowercaseUrls = true;
+            options.LowercaseQueryStrings = true;
+        });
         
         // API versioning (when needed)
         // services.AddApiVersioning(options =>

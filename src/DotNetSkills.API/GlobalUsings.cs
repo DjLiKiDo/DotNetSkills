@@ -4,6 +4,7 @@ global using System.Collections.Generic;
 global using System.Linq;
 global using System.Threading;
 global using System.Threading.Tasks;
+global using System.Text.Json;
 
 // ASP.NET Core
 global using Microsoft.AspNetCore.Builder;
@@ -14,8 +15,8 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
 
-// OpenAPI/Swagger (when added)
-// global using Microsoft.OpenApi.Models;
+// OpenAPI/Swagger
+global using Microsoft.OpenApi.Models;
 
 // Authentication & Authorization (when added)
 // global using Microsoft.AspNetCore.Authentication.JwtBearer;
