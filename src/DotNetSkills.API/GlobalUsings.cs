@@ -2,6 +2,7 @@
 global using System;
 global using System.Collections.Generic;
 global using System.Linq;
+global using System.Reflection;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using System.Text.Json;
@@ -10,6 +11,7 @@ global using System.Text.Json;
 global using Microsoft.AspNetCore.Builder;
 global using Microsoft.AspNetCore.Http;
 global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.AspNetCore.Mvc.ApiExplorer;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
@@ -17,6 +19,11 @@ global using Microsoft.Extensions.Logging;
 
 // OpenAPI/Swagger
 global using Microsoft.OpenApi.Models;
+global using Swashbuckle.AspNetCore.SwaggerGen;
+
+// API Configuration
+global using DotNetSkills.API.Configuration.Swagger;
+global using DotNetSkills.API.Configuration.Swagger.Filters;
 
 // Authentication & Authorization (when added)
 // global using Microsoft.AspNetCore.Authentication.JwtBearer;

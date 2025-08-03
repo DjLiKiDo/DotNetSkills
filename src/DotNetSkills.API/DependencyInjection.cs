@@ -26,8 +26,8 @@ public static class DependencyInjection
         services.AddApplicationServices();
         services.AddInfrastructureServices(configuration);
         
-        // API-specific services
-        services.AddEndpointsApiExplorer();
+        // Configure comprehensive Swagger/OpenAPI documentation
+        services.AddSwaggerDocumentation(configuration);
         
         // Configure JSON serialization options for strongly-typed IDs and domain types
         services.ConfigureHttpJsonOptions(options =>
@@ -68,63 +68,11 @@ public static class DependencyInjection
         // services.AddFluentValidationAutoValidation();
         // services.AddFluentValidationClientsideAdapters();
         
-        // Configure Swagger/OpenAPI with enhanced documentation
-        services.AddSwaggerGen(options =>
-        {
-            options.SwaggerDoc("v1", new() 
-            { 
-                Title = "DotNetSkills API", 
-                Version = "v1",
-                Description = "Project Management API demonstrating Clean Architecture and Domain-Driven Design",
-                Contact = new() 
-                {
-                    Name = "DotNetSkills Team",
-                    Email = "support@dotnetskills.com"
-                }
-            });
-            
-            // Include XML documentation when available
-            // var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            // var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            // if (File.Exists(xmlPath))
-            // {
-            //     options.IncludeXmlComments(xmlPath);
-            // }
-            
-            // Configure response types and examples
-            options.SupportNonNullableReferenceTypes();
-            options.UseInlineDefinitionsForEnums();
-            options.DescribeAllParametersInCamelCase();
-            
-            // Additional Swagger customizations will be added here
-            // as the API evolves and more specific requirements emerge
-            
-            // JWT Bearer configuration for Swagger (when authentication is implemented)
-            // options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-            // {
-            //     Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
-            //     Name = "Authorization",
-            //     In = ParameterLocation.Header,
-            //     Type = SecuritySchemeType.ApiKey,
-            //     Scheme = "Bearer",
-            //     BearerFormat = "JWT"
-            // });
-            //
-            // options.AddSecurityRequirement(new OpenApiSecurityRequirement
-            // {
-            //     {
-            //         new OpenApiSecurityScheme
-            //         {
-            //             Reference = new OpenApiReference
-            //             {
-            //                 Type = ReferenceType.SecurityScheme,
-            //                 Id = "Bearer"
-            //             }
-            //         },
-            //         Array.Empty<string>()
-            //     }
-            // });
-        });
+        // FluentValidation integration for endpoint validation
+        // Will be activated when Application layer implements validators
+        // services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
+        // services.AddFluentValidationAutoValidation();
+        // services.AddFluentValidationClientsideAdapters();
         
         // Authentication & Authorization (when implemented)
         // services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
