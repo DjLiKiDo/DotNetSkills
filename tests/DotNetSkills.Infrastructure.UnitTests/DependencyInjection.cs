@@ -18,23 +18,23 @@ public static class DependencyInjection
         // In-memory database for testing (when EF Core is added)
         // services.AddDbContext<ApplicationDbContext>(options =>
         //     options.UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()));
-        
+
         // Test repositories (real implementations with in-memory database)
         // services.AddScoped<IUserRepository, EfUserRepository>();
         // services.AddScoped<ITeamRepository, EfTeamRepository>();
         // services.AddScoped<IProjectRepository, EfProjectRepository>();
         // services.AddScoped<ITaskRepository, EfTaskRepository>();
-        
+
         // Unit of Work with in-memory database
         // services.AddScoped<IUnitOfWork, EfUnitOfWork>();
-        
+
         // Mock external services for testing
         // services.AddTransient<Mock<IEmailService>>();
         // services.AddTransient<Mock<INotificationService>>();
-        
+
         // Test data seeders
         // services.AddTransient<ITestDataSeeder, TestDataSeeder>();
-        
+
         return services;
     }
 }

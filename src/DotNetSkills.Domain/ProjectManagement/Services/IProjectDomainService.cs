@@ -10,7 +10,7 @@ namespace DotNetSkills.Domain.ProjectManagement.Services;
 /// - Require database access to check project dependencies
 /// - Involve cross-aggregate business logic (projects, teams, tasks)
 /// - Orchestrate complex project management operations
-/// 
+///
 /// Simple project business rules remain in BusinessRules.ProjectStatus for performance.
 /// </remarks>
 public interface IProjectDomainService

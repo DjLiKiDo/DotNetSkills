@@ -45,7 +45,7 @@ This is a .NET 9 project management API built with **Clean Architecture** and **
 
 The domain is organized into 4 bounded contexts:
 - `UserManagement/` - User entity with roles, status, team memberships
-- `TeamCollaboration/` - Team and TeamMember entities with membership management  
+- `TeamCollaboration/` - Team and TeamMember entities with membership management
 - `ProjectManagement/` - Project entities with team associations
 - `TaskExecution/` - Task entities with assignment and status management
 
@@ -76,11 +76,11 @@ public class User : AggregateRoot<UserId>
         // Business rule validation first
         if (_teamMemberships.Any(m => m.TeamId == team.Id))
             throw new DomainException("User is already a member of this team");
-        
+
         // State change
         var membership = new TeamMember(Id, team.Id, role);
         _teamMemberships.Add(membership);
-        
+
         // Domain event for cross-aggregate communication
         RaiseDomainEvent(new UserJoinedTeamDomainEvent(Id, team.Id, role));
     }
@@ -111,7 +111,7 @@ public class User : AggregateRoot<UserId>
 
 **Domain Layer**: ✅ Complete with rich domain models, value objects, events, and business rules
 **Application Layer**: 📋 Placeholder - needs CQRS commands/queries with MediatR
-**Infrastructure Layer**: 📋 Placeholder - needs EF Core DbContext and repository implementations  
+**Infrastructure Layer**: 📋 Placeholder - needs EF Core DbContext and repository implementations
 **API Layer**: 📋 Placeholder weather endpoint - needs real project management endpoints
 
 ### Validation Patterns

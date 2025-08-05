@@ -239,7 +239,7 @@ Current implementation status can be tracked in the [MVP Implementation Plan](pl
 
 - ✅ **Phase 1**: Domain models and infrastructure setup
 - 🚧 **Phase 2**: JWT authentication and user management
-- 📋 **Phase 3**: Core CRUD operations for all entities  
+- 📋 **Phase 3**: Core CRUD operations for all entities
 - 📋 **Phase 4**: Testing and CI/CD pipeline
 
 ## License

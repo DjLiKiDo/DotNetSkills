@@ -20,20 +20,20 @@ public static class DependencyInjection
         // services.AddTransient<Mock<ITeamRepository>>();
         // services.AddTransient<Mock<IProjectRepository>>();
         // services.AddTransient<Mock<ITaskRepository>>();
-        
+
         // Unit of Work mock
         // services.AddTransient<Mock<IUnitOfWork>>();
-        
+
         // MediatR test setup (when added)
         // services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
-        
+
         // AutoMapper test configuration (when added)
         // services.AddAutoMapper(typeof(MappingProfile));
-        
+
         // Test data builders
         // services.AddTransient<CommandBuilder>();
         // services.AddTransient<QueryBuilder>();
-        
+
         return services;
     }
 }

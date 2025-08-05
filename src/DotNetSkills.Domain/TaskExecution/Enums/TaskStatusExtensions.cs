@@ -25,7 +25,7 @@ public static class TaskStatusExtensions
     /// </summary>
     /// <param name="status">The task status.</param>
     /// <returns>True if the task is completed, false otherwise.</returns>
-    public static bool IsComplete(this TaskStatus status) => 
+    public static bool IsComplete(this TaskStatus status) =>
         status == TaskStatus.Done;
 
     /// <summary>
