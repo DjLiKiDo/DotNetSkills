@@ -37,48 +37,48 @@ public static class BusinessRules
         /// - Completed → No transitions allowed (final state)
         /// - Cancelled → No transitions allowed (final state)
         /// </remarks>
-        public static bool CanTransitionTo(Domain.ProjectManagement.Enums.ProjectStatus current, 
+        public static bool CanTransitionTo(Domain.ProjectManagement.Enums.ProjectStatus current,
                                          Domain.ProjectManagement.Enums.ProjectStatus target)
         {
             return current switch
             {
-                Domain.ProjectManagement.Enums.ProjectStatus.Planning => 
-                    target is Domain.ProjectManagement.Enums.ProjectStatus.Active or 
+                Domain.ProjectManagement.Enums.ProjectStatus.Planning =>
+                    target is Domain.ProjectManagement.Enums.ProjectStatus.Active or
                              Domain.ProjectManagement.Enums.ProjectStatus.Cancelled,
-                             
-                Domain.ProjectManagement.Enums.ProjectStatus.Active => 
-                    target is Domain.ProjectManagement.Enums.ProjectStatus.OnHold or 
-                             Domain.ProjectManagement.Enums.ProjectStatus.Completed or 
+
+                Domain.ProjectManagement.Enums.ProjectStatus.Active =>
+                    target is Domain.ProjectManagement.Enums.ProjectStatus.OnHold or
+                             Domain.ProjectManagement.Enums.ProjectStatus.Completed or
                              Domain.ProjectManagement.Enums.ProjectStatus.Cancelled,
-                             
-                Domain.ProjectManagement.Enums.ProjectStatus.OnHold => 
-                    target is Domain.ProjectManagement.Enums.ProjectStatus.Active or 
+
+                Domain.ProjectManagement.Enums.ProjectStatus.OnHold =>
+                    target is Domain.ProjectManagement.Enums.ProjectStatus.Active or
                              Domain.ProjectManagement.Enums.ProjectStatus.Cancelled,
-                             
+
                 Domain.ProjectManagement.Enums.ProjectStatus.Completed => false, // Final state
                 Domain.ProjectManagement.Enums.ProjectStatus.Cancelled => false, // Final state
                 _ => false
             };
         }
-        
+
         /// <summary>
         /// Determines if a project status represents a finalized state that cannot be changed.
         /// </summary>
         /// <param name="status">The project status to check.</param>
         /// <returns>True if the status is finalized, false otherwise.</returns>
         public static bool IsFinalized(Domain.ProjectManagement.Enums.ProjectStatus status) =>
-            status is Domain.ProjectManagement.Enums.ProjectStatus.Completed or 
+            status is Domain.ProjectManagement.Enums.ProjectStatus.Completed or
                      Domain.ProjectManagement.Enums.ProjectStatus.Cancelled;
-        
+
         /// <summary>
         /// Determines if a project in the given status can accept new tasks.
         /// </summary>
         /// <param name="status">The project status to check.</param>
         /// <returns>True if tasks can be added to the project, false otherwise.</returns>
         public static bool CanAcceptNewTasks(Domain.ProjectManagement.Enums.ProjectStatus status) =>
-            status is Domain.ProjectManagement.Enums.ProjectStatus.Planning or 
+            status is Domain.ProjectManagement.Enums.ProjectStatus.Planning or
                      Domain.ProjectManagement.Enums.ProjectStatus.Active;
-        
+
         /// <summary>
         /// Determines if a project can be deleted based on its current status.
         /// </summary>
@@ -88,7 +88,7 @@ public static class BusinessRules
         public static bool CanBeDeleted(Domain.ProjectManagement.Enums.ProjectStatus status, bool hasActiveTasks) =>
             status == Domain.ProjectManagement.Enums.ProjectStatus.Planning && !hasActiveTasks;
     }
-    
+
     /// <summary>
     /// Business rules related to task status transitions and task lifecycle management.
     /// These rules enforce the valid state machine for task execution workflow.
@@ -116,59 +116,59 @@ public static class BusinessRules
         /// - Done → No transitions allowed (final state)
         /// - Cancelled → No transitions allowed (final state)
         /// </remarks>
-        public static bool CanTransitionTo(Domain.TaskExecution.Enums.TaskStatus current, 
+        public static bool CanTransitionTo(Domain.TaskExecution.Enums.TaskStatus current,
                                          Domain.TaskExecution.Enums.TaskStatus target)
         {
             return current switch
             {
-                Domain.TaskExecution.Enums.TaskStatus.ToDo => 
-                    target is Domain.TaskExecution.Enums.TaskStatus.InProgress or 
+                Domain.TaskExecution.Enums.TaskStatus.ToDo =>
+                    target is Domain.TaskExecution.Enums.TaskStatus.InProgress or
                              Domain.TaskExecution.Enums.TaskStatus.Cancelled,
-                             
-                Domain.TaskExecution.Enums.TaskStatus.InProgress => 
-                    target is Domain.TaskExecution.Enums.TaskStatus.ToDo or 
-                             Domain.TaskExecution.Enums.TaskStatus.InReview or 
+
+                Domain.TaskExecution.Enums.TaskStatus.InProgress =>
+                    target is Domain.TaskExecution.Enums.TaskStatus.ToDo or
+                             Domain.TaskExecution.Enums.TaskStatus.InReview or
                              Domain.TaskExecution.Enums.TaskStatus.Done or
                              Domain.TaskExecution.Enums.TaskStatus.Cancelled,
-                             
-                Domain.TaskExecution.Enums.TaskStatus.InReview => 
-                    target is Domain.TaskExecution.Enums.TaskStatus.InProgress or 
-                             Domain.TaskExecution.Enums.TaskStatus.Done or 
+
+                Domain.TaskExecution.Enums.TaskStatus.InReview =>
+                    target is Domain.TaskExecution.Enums.TaskStatus.InProgress or
+                             Domain.TaskExecution.Enums.TaskStatus.Done or
                              Domain.TaskExecution.Enums.TaskStatus.Cancelled,
-                             
+
                 Domain.TaskExecution.Enums.TaskStatus.Done => false, // Final state
                 Domain.TaskExecution.Enums.TaskStatus.Cancelled => false, // Final state
                 _ => false
             };
         }
-        
+
         /// <summary>
         /// Determines if a task status represents a finalized state that cannot be changed.
         /// </summary>
         /// <param name="status">The task status to check.</param>
         /// <returns>True if the status is finalized, false otherwise.</returns>
         public static bool IsFinalized(Domain.TaskExecution.Enums.TaskStatus status) =>
-            status is Domain.TaskExecution.Enums.TaskStatus.Done or 
+            status is Domain.TaskExecution.Enums.TaskStatus.Done or
                      Domain.TaskExecution.Enums.TaskStatus.Cancelled;
-        
+
         /// <summary>
         /// Determines if a task can be assigned to a user in the given status.
         /// </summary>
         /// <param name="status">The task status to check.</param>
         /// <returns>True if the task can be assigned, false otherwise.</returns>
         public static bool CanBeAssigned(Domain.TaskExecution.Enums.TaskStatus status) =>
-            status is Domain.TaskExecution.Enums.TaskStatus.ToDo or 
+            status is Domain.TaskExecution.Enums.TaskStatus.ToDo or
                      Domain.TaskExecution.Enums.TaskStatus.InProgress;
-        
+
         /// <summary>
         /// Determines if a task can have subtasks created in the given status.
         /// </summary>
         /// <param name="status">The task status to check.</param>
         /// <returns>True if subtasks can be created, false otherwise.</returns>
         public static bool CanHaveSubtasks(Domain.TaskExecution.Enums.TaskStatus status) =>
-            status is Domain.TaskExecution.Enums.TaskStatus.ToDo or 
+            status is Domain.TaskExecution.Enums.TaskStatus.ToDo or
                      Domain.TaskExecution.Enums.TaskStatus.InProgress;
-        
+
         /// <summary>
         /// Determines if a task can be completed when it has subtasks.
         /// </summary>
@@ -177,7 +177,7 @@ public static class BusinessRules
         public static bool CanCompleteWithSubtasks(IEnumerable<Domain.TaskExecution.Enums.TaskStatus> subtaskStatuses) =>
             subtaskStatuses.All(status => status == Domain.TaskExecution.Enums.TaskStatus.Done);
     }
-    
+
     /// <summary>
     /// Business rules related to user authorization and permission management.
     /// These rules enforce role-based access control and hierarchical permissions.
@@ -190,27 +190,27 @@ public static class BusinessRules
         /// </summary>
         /// <param name="role">The user role to check (null means no creator, which allows creation).</param>
         /// <returns>True if the role can create users, false otherwise.</returns>
-        public static bool CanCreateUser(UserRole? role) => 
+        public static bool CanCreateUser(UserRole? role) =>
             role == UserRole.Admin || role == null;
-        
+
         /// <summary>
         /// Determines if a user role has permission to manage team membership.
         /// Project managers and administrators can manage teams for organizational flexibility.
         /// </summary>
         /// <param name="role">The user role to check.</param>
         /// <returns>True if the role can manage teams, false otherwise.</returns>
-        public static bool CanManageTeam(UserRole role) => 
+        public static bool CanManageTeam(UserRole role) =>
             role is UserRole.Admin or UserRole.ProjectManager;
-        
+
         /// <summary>
         /// Determines if a user role has permission to manage projects.
         /// Project managers and administrators can manage projects within their domain.
         /// </summary>
         /// <param name="role">The user role to check.</param>
         /// <returns>True if the role can manage projects, false otherwise.</returns>
-        public static bool CanManageProject(UserRole role) => 
+        public static bool CanManageProject(UserRole role) =>
             role is UserRole.Admin or UserRole.ProjectManager;
-        
+
         /// <summary>
         /// Determines if a user role can be assigned tasks.
         /// Developers, project managers, and administrators can be assigned work.
@@ -220,7 +220,7 @@ public static class BusinessRules
         /// <returns>True if the role can be assigned tasks, false otherwise.</returns>
         public static bool CanBeAssignedTasks(UserRole role) =>
             role is UserRole.Developer or UserRole.ProjectManager or UserRole.Admin;
-        
+
         /// <summary>
         /// Determines if a user role can assign tasks to other users.
         /// Project managers and administrators can assign tasks for workflow management.
@@ -229,7 +229,7 @@ public static class BusinessRules
         /// <returns>True if the role can assign tasks, false otherwise.</returns>
         public static bool CanAssignTasks(UserRole role) =>
             role is UserRole.ProjectManager or UserRole.Admin;
-        
+
         /// <summary>
         /// Determines if a user role can modify another user's role.
         /// Only administrators can change roles to maintain security hierarchy.
@@ -239,7 +239,7 @@ public static class BusinessRules
         /// <returns>True if the role change is authorized, false otherwise.</returns>
         public static bool CanModifyUserRole(UserRole modifierRole, UserRole targetRole) =>
             modifierRole == UserRole.Admin && targetRole != UserRole.Admin;
-        
+
         /// <summary>
         /// Determines if a user has sufficient privileges to perform an action on another user.
         /// Uses role hierarchy to enforce privilege-based access control.
@@ -253,7 +253,7 @@ public static class BusinessRules
             var targetLevel = GetRoleHierarchyLevel(targetRole);
             return actorLevel > targetLevel;
         }
-        
+
         /// <summary>
         /// Gets the numeric hierarchy level for a user role.
         /// Higher numbers indicate greater privileges in the system.
@@ -269,7 +269,7 @@ public static class BusinessRules
             _ => 0
         };
     }
-    
+
     /// <summary>
     /// Business rules related to team management and collaboration constraints.
     /// These rules enforce team composition, membership, and operational guidelines.
@@ -284,24 +284,24 @@ public static class BusinessRules
         /// <param name="currentMemberCount">The current number of team members.</param>
         /// <param name="requestorRole">The role of the user making the request.</param>
         /// <returns>True if the user can be added to the team, false otherwise.</returns>
-        public static bool CanAddMemberToTeam(UserStatus userStatus, UserRole userRole, 
+        public static bool CanAddMemberToTeam(UserStatus userStatus, UserRole userRole,
                                             int currentMemberCount, UserRole requestorRole)
         {
             // Check if requestor has permission to manage teams
             if (!Authorization.CanManageTeam(requestorRole))
                 return false;
-            
+
             // Check if user is active
             if (userStatus != UserStatus.Active)
                 return false;
-            
+
             // Check team size limits
             if (currentMemberCount >= ValidationConstants.Numeric.TeamMaxMembers)
                 return false;
-            
+
             return true;
         }
-        
+
         /// <summary>
         /// Determines if a user can be removed from a team.
         /// </summary>
@@ -309,22 +309,22 @@ public static class BusinessRules
         /// <param name="targetRole">The role of the user being removed.</param>
         /// <param name="teamHasActiveProjects">Whether the team has active projects.</param>
         /// <returns>True if the user can be removed, false otherwise.</returns>
-        public static bool CanRemoveMemberFromTeam(UserRole requestorRole, UserRole targetRole, 
+        public static bool CanRemoveMemberFromTeam(UserRole requestorRole, UserRole targetRole,
                                                  bool teamHasActiveProjects)
         {
             // Check if requestor has permission to manage teams
             if (!Authorization.CanManageTeam(requestorRole))
                 return false;
-            
+
             // Prevent removing team members if team has active projects
             // unless the requestor is an admin
             if (teamHasActiveProjects && requestorRole != UserRole.Admin)
                 return false;
-            
+
             // Check privilege hierarchy
             return Authorization.HasSufficientPrivileges(requestorRole, targetRole);
         }
-        
+
         /// <summary>
         /// Determines if a team can be deleted based on its current state.
         /// </summary>
@@ -337,19 +337,19 @@ public static class BusinessRules
             // Only admins and project managers can delete teams
             if (!Authorization.CanManageTeam(requestorRole))
                 return false;
-            
+
             // Cannot delete teams with active projects
             if (hasActiveProjects)
                 return false;
-            
+
             // For safety, require admin privileges to delete teams with members
             if (memberCount > 0 && requestorRole != UserRole.Admin)
                 return false;
-            
+
             return true;
         }
     }
-    
+
     /// <summary>
     /// Business rules related to task assignment and work allocation.
     /// These rules ensure proper task distribution and assignment constraints.
@@ -365,29 +365,29 @@ public static class BusinessRules
         /// <param name="assignerRole">The role of the user making the assignment.</param>
         /// <param name="isAlreadyAssigned">Whether the task is already assigned to someone.</param>
         /// <returns>True if the task can be assigned, false otherwise.</returns>
-        public static bool CanAssignTask(Domain.TaskExecution.Enums.TaskStatus taskStatus, 
-                                       UserRole assigneeRole, UserStatus assigneeStatus, 
+        public static bool CanAssignTask(Domain.TaskExecution.Enums.TaskStatus taskStatus,
+                                       UserRole assigneeRole, UserStatus assigneeStatus,
                                        UserRole assignerRole, bool isAlreadyAssigned)
         {
             // Check if assigner has permission to assign tasks
             if (!Authorization.CanAssignTasks(assignerRole))
                 return false;
-            
+
             // Check if task is in a state that allows assignment
             if (!TaskStatus.CanBeAssigned(taskStatus))
                 return false;
-            
+
             // Check if assignee can be assigned tasks
             if (!Authorization.CanBeAssignedTasks(assigneeRole))
                 return false;
-            
+
             // Check if assignee is active
             if (assigneeStatus != UserStatus.Active)
                 return false;
-            
+
             return true;
         }
-        
+
         /// <summary>
         /// Determines if a task can be unassigned from its current assignee.
         /// </summary>
@@ -395,21 +395,21 @@ public static class BusinessRules
         /// <param name="unassignerRole">The role of the user removing the assignment.</param>
         /// <param name="assigneeRole">The role of the currently assigned user.</param>
         /// <returns>True if the task can be unassigned, false otherwise.</returns>
-        public static bool CanUnassignTask(Domain.TaskExecution.Enums.TaskStatus taskStatus, 
+        public static bool CanUnassignTask(Domain.TaskExecution.Enums.TaskStatus taskStatus,
                                          UserRole unassignerRole, UserRole assigneeRole)
         {
             // Check if unassigner has permission to assign/unassign tasks
             if (!Authorization.CanAssignTasks(unassignerRole))
                 return false;
-            
+
             // Cannot unassign completed or cancelled tasks
             if (TaskStatus.IsFinalized(taskStatus))
                 return false;
-            
+
             // Check privilege hierarchy for removing assignments
             return Authorization.HasSufficientPrivileges(unassignerRole, assigneeRole);
         }
-        
+
         /// <summary>
         /// Determines the maximum number of tasks that can be assigned to a user concurrently.
         /// </summary>
@@ -423,7 +423,7 @@ public static class BusinessRules
             _ => 0
         };
     }
-    
+
     /// <summary>
     /// Business rules related to data validation and business constraint enforcement.
     /// These rules provide complex validation logic that spans multiple entities.
@@ -440,13 +440,13 @@ public static class BusinessRules
         {
             if (!dueDate.HasValue)
                 return true; // Null due dates are allowed
-            
+
             var now = DateTime.UtcNow.AddMinutes(ValidationConstants.DateTimes.FutureDateBufferMinutes);
-            
+
             // Due date must be in the future
             if (dueDate.Value <= now)
                 return false;
-            
+
             // Check entity-specific constraints
             return entityType.ToLowerInvariant() switch
             {
@@ -455,7 +455,7 @@ public static class BusinessRules
                 _ => IsValidGenericDueDate(dueDate.Value, now)
             };
         }
-        
+
         /// <summary>
         /// Validates task-specific due date constraints.
         /// </summary>
@@ -464,7 +464,7 @@ public static class BusinessRules
             var maxFutureDate = now.AddDays(ValidationConstants.DateTimes.TaskMaxFutureDays);
             return dueDate <= maxFutureDate;
         }
-        
+
         /// <summary>
         /// Validates project-specific due date constraints.
         /// </summary>
@@ -473,16 +473,16 @@ public static class BusinessRules
             var maxFutureDate = now.AddDays(ValidationConstants.DateTimes.ProjectMaxFutureDays);
             return dueDate <= maxFutureDate;
         }
-        
+
         /// <summary>
         /// Validates generic due date constraints.
         /// </summary>
         private static bool IsValidGenericDueDate(DateTime dueDate, DateTime _)
         {
-            return dueDate >= ValidationConstants.DateTimes.MinAllowedDate && 
+            return dueDate >= ValidationConstants.DateTimes.MinAllowedDate &&
                    dueDate <= ValidationConstants.DateTimes.MaxAllowedDate;
         }
-        
+
         /// <summary>
         /// Validates if an estimated hours value is reasonable for the given context.
         /// </summary>
@@ -493,16 +493,16 @@ public static class BusinessRules
         {
             if (!estimatedHours.HasValue)
                 return true; // Null estimates are allowed
-            
+
             // Basic range validation
             if (estimatedHours.Value < ValidationConstants.Numeric.TaskMinEstimatedHours ||
                 estimatedHours.Value > ValidationConstants.Numeric.TaskMaxEstimatedHours)
                 return false;
-            
+
             // Subtask estimates should not exceed parent task estimates
             if (parentEstimatedHours.HasValue && estimatedHours.Value > parentEstimatedHours.Value)
                 return false;
-            
+
             return true;
         }
     }

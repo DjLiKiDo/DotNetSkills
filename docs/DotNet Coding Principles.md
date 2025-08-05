@@ -140,7 +140,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, UserR
 {
     private readonly IUserRepository _userRepository; // Abstraction
     private readonly IDomainEventDispatcher _eventDispatcher; // Abstraction
-    
+
     public CreateUserCommandHandler(
         IUserRepository userRepository,
         IDomainEventDispatcher eventDispatcher)
@@ -207,15 +207,15 @@ public class Team : BaseEntity<TeamId>
 {
     private readonly List<TeamMember> _members = new();
     public IReadOnlyList<TeamMember> Members => _members.AsReadOnly();
-    
+
     public void AddMember(User user, TeamRole role = TeamRole.Developer)
     {
         if (_members.Any(m => m.UserId == user.Id))
             throw new DomainException("User is already a team member");
-            
+
         var member = new TeamMember(user.Id, Id, role);
         _members.Add(member);
-        
+
         // Raise domain event
         RaiseDomainEvent(new UserJoinedTeamDomainEvent(user.Id, Id));
     }
@@ -235,14 +235,14 @@ public class CreateTeamCommandHandler : IRequestHandler<CreateTeamCommand, TeamR
 {
     private readonly ITeamRepository _teamRepository;
     private readonly IUnitOfWork _unitOfWork;
-    
+
     public async Task<TeamResponse> Handle(CreateTeamCommand request, CancellationToken cancellationToken)
     {
         var team = Team.Create(request.Name, request.Description);
-        
+
         await _teamRepository.AddAsync(team);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        
+
         return TeamMapper.ToResponse(team);
     }
 }
@@ -259,7 +259,7 @@ public class CreateTeamCommandHandler : IRequestHandler<CreateTeamCommand, TeamR
 public class EfTeamRepository : ITeamRepository
 {
     private readonly ApplicationDbContext _context;
-    
+
     public async Task<Team?> GetByIdAsync(TeamId id)
     {
         return await _context.Teams
@@ -284,11 +284,11 @@ public static class TeamEndpoints
         var group = app.MapGroup("/api/v1/teams")
             .WithTags("Teams")
             .RequireAuthorization();
-            
+
         group.MapPost("/", CreateTeam)
             .WithSummary("Create a new team");
     }
-    
+
     private static async Task<IResult> CreateTeam(
         CreateTeamCommand command,
         IMediator mediator)
@@ -312,21 +312,21 @@ public class Task : BaseEntity<TaskId>
 {
     public TaskStatus Status { get; private set; }
     public UserId? AssignedUserId { get; private set; }
-    
+
     public void AssignTo(User user)
     {
         if (Status == TaskStatus.Completed)
             throw new DomainException("Cannot assign completed tasks");
-            
+
         AssignedUserId = user.Id;
         RaiseDomainEvent(new TaskAssignedDomainEvent(Id, user.Id));
     }
-    
+
     public void MarkAsCompleted()
     {
         if (AssignedUserId == null)
             throw new DomainException("Cannot complete unassigned task");
-            
+
         Status = TaskStatus.Completed;
         RaiseDomainEvent(new TaskCompletedDomainEvent(Id, AssignedUserId.Value));
     }
@@ -368,18 +368,18 @@ public record UserId(Guid Value) : IStronglyTypedId<Guid>
 public record EmailAddress
 {
     public string Value { get; }
-    
+
     public EmailAddress(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Email cannot be empty");
-            
+
         if (!IsValidEmail(value))
             throw new ArgumentException("Invalid email format");
-            
+
         Value = value.ToLowerInvariant();
     }
-    
+
     private static bool IsValidEmail(string email)
         => email.Contains('@') && email.Contains('.');
 }
@@ -395,12 +395,12 @@ public record TaskAssignedDomainEvent(TaskId TaskId, UserId UserId) : IDomainEve
 public class TaskAssignedDomainEventHandler : IDomainEventHandler<TaskAssignedDomainEvent>
 {
     private readonly INotificationService _notificationService;
-    
+
     public async Task Handle(TaskAssignedDomainEvent domainEvent, CancellationToken cancellationToken)
     {
         // Send notification without coupling aggregates
         await _notificationService.NotifyTaskAssignedAsync(
-            domainEvent.UserId, 
+            domainEvent.UserId,
             domainEvent.TaskId);
     }
 }
@@ -415,14 +415,14 @@ Each aggregate should be a consistency boundary with a single root entity.
 public class Team : BaseEntity<TeamId> // Aggregate Root
 {
     private readonly List<TeamMember> _members = new();
-    
+
     // All operations go through the root
     public void AddMember(UserId userId, TeamRole role)
     {
         // Invariant enforcement
         if (_members.Count >= MaxMembers)
             throw new DomainException("Team is at maximum capacity");
-            
+
         var member = new TeamMember(userId, Id, role);
         _members.Add(member);
     }
@@ -456,13 +456,13 @@ public class User : BaseEntity<UserId>
     public string Name { get; private set; } = string.Empty; // Non-nullable
     public string? Bio { get; private set; } // Explicitly nullable
     public EmailAddress Email { get; private set; } = null!; // Set in constructor
-    
+
     public User(string name, EmailAddress email)
     {
         Name = name ?? throw new ArgumentNullException(nameof(name));
         Email = email ?? throw new ArgumentNullException(nameof(email));
     }
-    
+
     public void UpdateBio(string? bio)
     {
         Bio = bio; // Can be null
@@ -529,7 +529,7 @@ global using System.Threading.Tasks;
 global using DotNetSkills.Domain.Common;
 global using DotNetSkills.Domain.Events;
 
-// Application layer globals  
+// Application layer globals
 global using MediatR;
 global using FluentValidation;
 ```
@@ -546,13 +546,13 @@ public static class UserEndpoints
         var group = app.MapGroup("/api/v1/users")
             .WithTags("Users")
             .RequireAuthorization();
-            
+
         group.MapGet("/{id:guid}", GetUser)
             .WithName("GetUser")
             .WithSummary("Get user by ID")
             .Produces<UserResponse>()
             .ProducesValidationProblem();
-            
+
         group.MapPost("/", CreateUser)
             .WithName("CreateUser")
             .RequireAuthorization(Policies.AdminOnly);
@@ -574,18 +574,18 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("Users");
-        
+
         builder.HasKey(u => u.Id);
-        
+
         builder.Property(u => u.Id)
             .HasConversion(
                 id => id.Value,
                 value => new UserId(value));
-                
+
         builder.Property(u => u.Name)
             .IsRequired()
             .HasMaxLength(100);
-            
+
         builder.OwnsOne(u => u.Email, email =>
         {
             email.Property(e => e.Value)
@@ -593,7 +593,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                 .IsRequired()
                 .HasMaxLength(256);
         });
-        
+
         // Optimistic concurrency
         builder.Property(u => u.UpdatedAt)
             .IsRowVersion();
@@ -621,18 +621,18 @@ public interface IUserRepository
 public class EfUserRepository : IUserRepository
 {
     private readonly ApplicationDbContext _context;
-    
+
     public EfUserRepository(ApplicationDbContext context)
     {
         _context = context;
     }
-    
+
     public async Task<User?> GetByIdAsync(UserId id)
     {
         return await _context.Users
             .FirstOrDefaultAsync(u => u.Id == id);
     }
-    
+
     public async Task<User> AddAsync(User user)
     {
         _context.Users.Add(user);
@@ -657,12 +657,12 @@ public interface IUnitOfWork
 public class EfUnitOfWork : IUnitOfWork
 {
     private readonly ApplicationDbContext _context;
-    
+
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         // Dispatch domain events before saving
         await DispatchDomainEventsAsync();
-        
+
         return await _context.SaveChangesAsync(cancellationToken);
     }
 }
@@ -713,29 +713,29 @@ public static class TaskEndpoints
         var group = app.MapGroup("/api/v1/tasks")
             .WithTags("Tasks")
             .RequireAuthorization();
-            
+
         // RESTful patterns
         group.MapGet("/", GetTasks)
             .WithName("GetTasks")
             .Produces<PagedResponse<TaskResponse>>();
-            
+
         group.MapGet("/{id:guid}", GetTask)
             .WithName("GetTask")
             .Produces<TaskResponse>()
             .Produces(404);
-            
+
         group.MapPost("/", CreateTask)
             .WithName("CreateTask")
             .Produces<TaskResponse>(201);
-            
+
         group.MapPut("/{id:guid}", UpdateTask)
             .WithName("UpdateTask")
             .Produces<TaskResponse>();
-            
+
         group.MapDelete("/{id:guid}", DeleteTask)
             .WithName("DeleteTask")
             .Produces(204);
-            
+
         // Business operations
         group.MapPost("/{id:guid}/assign", AssignTask)
             .WithName("AssignTask")
@@ -756,10 +756,10 @@ public class CreateTaskValidator : AbstractValidator<CreateTaskCommand>
         RuleFor(x => x.Title)
             .NotEmpty()
             .MaximumLength(200);
-            
+
         RuleFor(x => x.ProjectId)
             .NotEmpty();
-            
+
         RuleFor(x => x.Priority)
             .IsInEnum();
     }
@@ -776,7 +776,7 @@ private static async Task<IResult> CreateTask(
     {
         return Results.ValidationProblem(validationResult.ToDictionary());
     }
-    
+
     var result = await mediator.Send(command);
     return Results.Created($"/api/v1/tasks/{result.Id}", result);
 }
@@ -791,7 +791,7 @@ public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
-    
+
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -804,7 +804,7 @@ public class GlobalExceptionMiddleware
             await HandleExceptionAsync(context, ex);
         }
     }
-    
+
     private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         var (statusCode, problemDetails) = exception switch
@@ -815,20 +815,20 @@ public class GlobalExceptionMiddleware
                 Detail = domainEx.Message,
                 Status = 400
             }),
-            
+
             UnauthorizedAccessException => (401, new ProblemDetails
             {
                 Title = "Unauthorized",
                 Status = 401
             }),
-            
+
             _ => (500, new ProblemDetails
             {
                 Title = "Internal Server Error",
                 Status = 500
             })
         };
-        
+
         context.Response.StatusCode = statusCode;
         await context.Response.WriteAsJsonAsync(problemDetails);
     }
@@ -853,16 +853,16 @@ public class UserTests
         var user = UserBuilder.Default().Build();
         var team = TeamBuilder.Default().Build();
         var role = TeamRole.Developer;
-        
+
         // Act
         user.JoinTeam(team, role);
-        
+
         // Assert
         user.TeamMemberships.Should().HaveCount(1);
         user.TeamMemberships.First().TeamId.Should().Be(team.Id);
         user.TeamMemberships.First().Role.Should().Be(role);
     }
-    
+
     [Fact]
     public void JoinTeam_WhenAlreadyMember_ShouldThrowDomainException()
     {
@@ -870,7 +870,7 @@ public class UserTests
         var user = UserBuilder.Default().Build();
         var team = TeamBuilder.Default().Build();
         user.JoinTeam(team, TeamRole.Developer);
-        
+
         // Act & Assert
         var action = () => user.JoinTeam(team, TeamRole.ProjectManager);
         action.Should().Throw<DomainException>()
@@ -889,27 +889,27 @@ public class UserBuilder
     private string _name = "Test User";
     private EmailAddress _email = new("test@example.com");
     private bool _isActive = true;
-    
+
     public static UserBuilder Default() => new();
-    
+
     public UserBuilder WithName(string name)
     {
         _name = name;
         return this;
     }
-    
+
     public UserBuilder WithEmail(string email)
     {
         _email = new EmailAddress(email);
         return this;
     }
-    
+
     public UserBuilder Inactive()
     {
         _isActive = false;
         return this;
     }
-    
+
     public User Build()
     {
         var user = new User(_name, _email);
@@ -932,21 +932,21 @@ public class IntegrationTestBase : IAsyncLifetime
         .WithUsername("test")
         .WithPassword("test")
         .Build();
-        
+
     protected ApplicationDbContext DbContext { get; private set; } = null!;
-    
+
     public async Task InitializeAsync()
     {
         await _container.StartAsync();
-        
+
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseNpgsql(_container.GetConnectionString())
             .Options;
-            
+
         DbContext = new ApplicationDbContext(options);
         await DbContext.Database.MigrateAsync();
     }
-    
+
     public async Task DisposeAsync()
     {
         await DbContext.DisposeAsync();
@@ -1012,7 +1012,7 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(Policies.AdminOnly, policy =>
         policy.RequireRole(UserRole.Admin.Value));
-        
+
     options.AddPolicy(Policies.ProjectManager, policy =>
         policy.RequireRole(UserRole.Admin.Value, UserRole.ProjectManager.Value));
 });
@@ -1027,15 +1027,15 @@ Validate all inputs at multiple layers.
 public class EmailAddress
 {
     public string Value { get; }
-    
+
     public EmailAddress(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Email is required");
-            
+
         if (!IsValidFormat(value))
             throw new ArgumentException("Invalid email format");
-            
+
         Value = value;
     }
 }
@@ -1048,7 +1048,7 @@ public class CreateUserValidator : AbstractValidator<CreateUserCommand>
         RuleFor(x => x.Email)
             .NotEmpty()
             .EmailAddress()
-            .MustAsync(async (email, ct) => 
+            .MustAsync(async (email, ct) =>
                 await userRepository.GetByEmailAsync(new EmailAddress(email)) == null)
             .WithMessage("Email already exists");
     }
@@ -1074,10 +1074,10 @@ builder.Configuration.AddAzureKeyVault(
 public class JwtService
 {
     private readonly string _secretKey;
-    
+
     public JwtService(IConfiguration configuration)
     {
-        _secretKey = configuration["Jwt:Key"] 
+        _secretKey = configuration["Jwt:Key"]
             ?? throw new InvalidOperationException("JWT key not configured");
     }
 }
@@ -1093,7 +1093,7 @@ public class PasswordService
 {
     public string HashPassword(string password)
         => BCrypt.Net.BCrypt.HashPassword(password, 12);
-        
+
     public bool VerifyPassword(string password, string hash)
         => BCrypt.Net.BCrypt.Verify(password, hash);
 }
@@ -1187,21 +1187,21 @@ public class CachedUserRepository : IUserRepository
     private readonly IUserRepository _innerRepository;
     private readonly IMemoryCache _cache;
     private readonly TimeSpan _cacheExpiry = TimeSpan.FromMinutes(5);
-    
+
     public async Task<User?> GetByIdAsync(UserId id)
     {
         var cacheKey = $"user:{id.Value}";
-        
+
         if (_cache.TryGetValue(cacheKey, out User? cachedUser))
             return cachedUser;
-            
+
         var user = await _innerRepository.GetByIdAsync(id);
-        
+
         if (user != null)
         {
             _cache.Set(cacheKey, user, _cacheExpiry);
         }
-        
+
         return user;
     }
 }
@@ -1232,13 +1232,13 @@ public record PagedResponse<T>(
 public async Task<PagedResponse<User>> GetUsersPagedAsync(PagedRequest request)
 {
     var totalCount = await _context.Users.CountAsync();
-    
+
     var users = await _context.Users
         .OrderBy(u => u.Name)
         .Skip(request.Skip)
         .Take(request.PageSize)
         .ToListAsync();
-        
+
     return new PagedResponse<User>(users, totalCount, request.Page, request.PageSize);
 }
 ```
@@ -1319,7 +1319,7 @@ Implement consistent error handling patterns.
 public class DomainException : Exception
 {
     public DomainException(string message) : base(message) { }
-    public DomainException(string message, Exception innerException) 
+    public DomainException(string message, Exception innerException)
         : base(message, innerException) { }
 }
 
@@ -1335,19 +1335,19 @@ public class Result<T>
     public bool IsSuccess { get; }
     public T? Value { get; }
     public string? Error { get; }
-    
+
     private Result(T value)
     {
         IsSuccess = true;
         Value = value;
     }
-    
+
     private Result(string error)
     {
         IsSuccess = false;
         Error = error;
     }
-    
+
     public static Result<T> Success(T value) => new(value);
     public static Result<T> Failure(string error) => new(error);
 }
@@ -1361,19 +1361,19 @@ Implement structured logging with appropriate levels.
 public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, UserResponse>
 {
     private readonly ILogger<CreateUserCommandHandler> _logger;
-    
+
     public async Task<UserResponse> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Creating user with email {Email}", request.Email);
-        
+
         try
         {
             var user = new User(request.Name, new EmailAddress(request.Email));
             await _userRepository.AddAsync(user);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-            
+
             _logger.LogInformation("Successfully created user {UserId}", user.Id);
-            
+
             return UserMapper.ToResponse(user);
         }
         catch (Exception ex)
@@ -1516,7 +1516,7 @@ public class UserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IEmailService _emailService;
-    
+
     public UserService(IUserRepository userRepository, IEmailService emailService)
     {
         _userRepository = userRepository;
@@ -1553,11 +1553,11 @@ public class UserService
 
 ---
 
-> **Note:**  
+> **Note:**
 > These principles are living guidelines. When deviating from these patterns, document the reasoning and discuss with the team. The goal is maintainable, secure, and performant code that serves the business needs effectively.
 
 ---
 
-**Last Updated:** July 31, 2025  
-**Version:** 1.0  
+**Last Updated:** July 31, 2025
+**Version:** 1.0
 **Project:** DotNetSkills - Project Management API

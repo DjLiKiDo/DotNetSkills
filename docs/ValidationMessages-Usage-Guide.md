@@ -15,17 +15,17 @@ Used across multiple entities for common validation scenarios:
 ```csharp
 // Simple parameter substitution
 throw new ArgumentException(
-    ValidationMessages.Formatting.Format(ValidationMessages.Common.CannotBeEmpty, "User name"), 
+    ValidationMessages.Formatting.Format(ValidationMessages.Common.CannotBeEmpty, "User name"),
     nameof(name));
 
 // Multiple parameters
 throw new ArgumentException(
-    ValidationMessages.Formatting.Format(ValidationMessages.Common.ExceedsMaxLength, "Task title", 200), 
+    ValidationMessages.Formatting.Format(ValidationMessages.Common.ExceedsMaxLength, "Task title", 200),
     nameof(title));
 
 // Range validation
 throw new ArgumentException(
-    ValidationMessages.Formatting.Format(ValidationMessages.Common.MustBeInRange, "Priority", 1, 5), 
+    ValidationMessages.Formatting.Format(ValidationMessages.Common.MustBeInRange, "Priority", 1, 5),
     nameof(priority));
 ```
 
@@ -40,7 +40,7 @@ throw new DomainException(ValidationMessages.User.AlreadyTeamMember);
 
 // Parameterized usage with common templates
 throw new ArgumentException(
-    ValidationMessages.Formatting.Format(ValidationMessages.Common.CannotBeEmpty, "User name"), 
+    ValidationMessages.Formatting.Format(ValidationMessages.Common.CannotBeEmpty, "User name"),
     nameof(name));
 ```
 
@@ -92,12 +92,12 @@ throw new ArgumentException(ValidationMessages.ValueObjects.InvalidEmailFormat, 
 
 // Parameterized email length validation
 throw new ArgumentException(
-    ValidationMessages.Formatting.Format(ValidationMessages.ValueObjects.EmailTooLong, 254), 
+    ValidationMessages.Formatting.Format(ValidationMessages.ValueObjects.EmailTooLong, 254),
     nameof(value));
 
 // Strongly-typed ID validation
 throw new ArgumentException(
-    ValidationMessages.Formatting.Format(ValidationMessages.ValueObjects.InvalidStronglyTypedId, "UserId", value), 
+    ValidationMessages.Formatting.Format(ValidationMessages.ValueObjects.InvalidStronglyTypedId, "UserId", value),
     nameof(value));
 ```
 
@@ -107,23 +107,23 @@ throw new ArgumentException(
 // Authorization failures
 throw new DomainException(
     ValidationMessages.Formatting.Format(
-        ValidationMessages.BusinessRules.InsufficientPermissions, 
-        user.Role, 
+        ValidationMessages.BusinessRules.InsufficientPermissions,
+        user.Role,
         "create new users"));
 
 // State transitions
 throw new DomainException(
     ValidationMessages.Formatting.Format(
-        ValidationMessages.BusinessRules.InvalidStateTransition, 
-        "Project", 
-        currentStatus, 
+        ValidationMessages.BusinessRules.InvalidStateTransition,
+        "Project",
+        currentStatus,
         targetStatus));
 
 // Business rule violations
 throw new DomainException(
     ValidationMessages.Formatting.Format(
-        ValidationMessages.BusinessRules.BusinessRuleViolation, 
-        "Maximum team size exceeded", 
+        ValidationMessages.BusinessRules.BusinessRuleViolation,
+        "Maximum team size exceeded",
         $"Current team has {memberCount} members"));
 ```
 
@@ -135,7 +135,7 @@ The `ValidationMessages.Formatting` class provides type-safe methods for paramet
 
 ```csharp
 var message = ValidationMessages.Formatting.Format(
-    ValidationMessages.Common.MustBePositive, 
+    ValidationMessages.Common.MustBePositive,
     "Estimated hours");
 // Result: "Estimated hours must be positive"
 ```
@@ -144,8 +144,8 @@ var message = ValidationMessages.Formatting.Format(
 
 ```csharp
 var message = ValidationMessages.Formatting.Format(
-    ValidationMessages.Common.ExceedsMaxLength, 
-    "Task title", 
+    ValidationMessages.Common.ExceedsMaxLength,
+    "Task title",
     200);
 // Result: "Task title cannot exceed 200 characters"
 ```
@@ -154,9 +154,9 @@ var message = ValidationMessages.Formatting.Format(
 
 ```csharp
 var message = ValidationMessages.Formatting.Format(
-    ValidationMessages.Common.MustBeInRange, 
-    "Priority level", 
-    1, 
+    ValidationMessages.Common.MustBeInRange,
+    "Priority level",
+    1,
     5);
 // Result: "Priority level must be between 1 and 5"
 ```
@@ -165,9 +165,9 @@ var message = ValidationMessages.Formatting.Format(
 
 ```csharp
 var message = ValidationMessages.Formatting.Format(
-    "User {0} has {1} tasks and joined on {2}", 
-    userName, 
-    taskCount, 
+    "User {0} has {1} tasks and joined on {2}",
+    userName,
+    taskCount,
     joinDate);
 // Result: "User John Doe has 5 tasks and joined on 1/15/2023 12:00:00 AM"
 ```
@@ -189,7 +189,7 @@ throw new DomainException("Cannot assign completed tasks");
 ```csharp
 // ✅ Good - Use common template
 throw new ArgumentException(
-    ValidationMessages.Formatting.Format(ValidationMessages.Common.CannotBeEmpty, "User name"), 
+    ValidationMessages.Formatting.Format(ValidationMessages.Common.CannotBeEmpty, "User name"),
     nameof(name));
 
 // ❌ Avoid - Different wording for same concept
@@ -213,7 +213,7 @@ if (createdByUser.Role != UserRole.Admin)
 ```csharp
 // ✅ Good - Include parameter name
 throw new ArgumentException(
-    ValidationMessages.Formatting.Format(ValidationMessages.Common.MustBePositive, "Estimated hours"), 
+    ValidationMessages.Formatting.Format(ValidationMessages.Common.MustBePositive, "Estimated hours"),
     nameof(estimatedHours));
 
 // ❌ Avoid - Missing parameter name
@@ -228,8 +228,8 @@ Here's how to use ValidationMessages in a complete entity constructor:
 ```csharp
 public class Task : AggregateRoot<TaskId>
 {
-    public Task(string title, string? description, ProjectId projectId, TaskPriority priority, 
-                TaskId? parentTaskId, int? estimatedHours, DateTime? dueDate, User createdBy) 
+    public Task(string title, string? description, ProjectId projectId, TaskPriority priority,
+                TaskId? parentTaskId, int? estimatedHours, DateTime? dueDate, User createdBy)
         : base(TaskId.New())
     {
         // Input validation using ArgumentException

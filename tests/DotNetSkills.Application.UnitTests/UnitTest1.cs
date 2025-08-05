@@ -1,4 +1,4 @@
-﻿namespace DotNetSkills.Application.UnitTests
+namespace DotNetSkills.Application.UnitTests
 {
     public class UnitTest1
     {

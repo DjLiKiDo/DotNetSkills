@@ -1,8 +1,8 @@
 # Product Requirements Document (PRD) - DotNetSkills: Project Management API (MVP)
 
-**Version:** 2.0  
-**Date:** July 30, 2025  
-**Status:** Draft  
+**Version:** 2.0
+**Date:** July 30, 2025
+**Status:** Draft
 
 ---
 
@@ -37,8 +37,8 @@ Development teams, particularly in startups and small companies, struggle to fin
 
 ### 1.3 Target Audience
 
-**Primary Users:** Development teams within startups and small companies building products  
-**Secondary Users:** Individual developers and small project teams  
+**Primary Users:** Development teams within startups and small companies building products
+**Secondary Users:** Individual developers and small project teams
 **Use Case:** Internal collaboration, project organization, and task management
 
 ### 1.4 Success Metrics
@@ -377,7 +377,7 @@ DotNetSkills.API/
 
 #### 6.1.1 Coverage and Focus
 - **Target Coverage:** Minimum 80% for Domain and Application layers
-- **Priority Areas:** 
+- **Priority Areas:**
   - Domain entity methods
   - Business logic validation
   - Use case orchestration
@@ -779,6 +779,6 @@ The phased approach allows for incremental value delivery while maintaining focu
 
 ---
 
-*Document prepared by: Development Team*  
-*Last updated: July 30, 2025*  
+*Document prepared by: Development Team*
+*Last updated: July 30, 2025*
 *Version: 2.0*

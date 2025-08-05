@@ -115,7 +115,7 @@ public class User : AggregateRoot<UserId>
     public void ChangeRole(UserRole newRole, User changedBy)
     {
         Ensure.NotNull(changedBy, nameof(changedBy));
-        
+
         // Use BusinessRules for static authorization validation
         Ensure.BusinessRule(
             BusinessRules.Authorization.CanModifyUserRole(changedBy.Role, Role),

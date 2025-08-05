@@ -10,7 +10,7 @@ namespace DotNetSkills.Domain.TeamCollaboration.Services;
 /// - Require database access to check team dependencies
 /// - Involve cross-aggregate business logic (teams, projects, users)
 /// - Orchestrate complex team management operations
-/// 
+///
 /// Simple team business rules remain in BusinessRules.TeamManagement for performance.
 /// </remarks>
 public interface ITeamDomainService

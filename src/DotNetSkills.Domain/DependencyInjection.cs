@@ -16,13 +16,13 @@ public static class DomainServiceFactory
     {
         // Domain services that might be needed
         // Example: yield return (typeof(IDomainService), typeof(DomainService));
-        
+
         // Domain event handlers (when implemented)
         // Example: yield return (typeof(IDomainEventHandler<UserCreatedDomainEvent>), typeof(UserCreatedDomainEventHandler));
-        
+
         // Domain validators or rule engines (if needed)
         // Example: yield return (typeof(IBusinessRuleValidator), typeof(BusinessRuleValidator));
-        
+
         yield break; // Empty for now, services will be added as needed
     }
 }

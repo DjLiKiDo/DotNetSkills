@@ -81,8 +81,8 @@ public class TeamMember : BaseEntity<TeamMemberId>
             return true;
 
         // Team leads can change roles within their teams (except other team leads and project managers)
-        if (user.GetRoleInTeam(TeamId) == TeamRole.TeamLead && 
-            Role != TeamRole.TeamLead && 
+        if (user.GetRoleInTeam(TeamId) == TeamRole.TeamLead &&
+            Role != TeamRole.TeamLead &&
             Role != TeamRole.ProjectManager)
             return true;
 
@@ -104,8 +104,8 @@ public class TeamMember : BaseEntity<TeamMemberId>
     /// <returns>True if the member can be assigned tasks, false otherwise.</returns>
     public bool CanBeAssignedTasks()
     {
-        return Role == TeamRole.Developer || 
-               Role == TeamRole.ProjectManager || 
+        return Role == TeamRole.Developer ||
+               Role == TeamRole.ProjectManager ||
                Role == TeamRole.TeamLead;
     }
 

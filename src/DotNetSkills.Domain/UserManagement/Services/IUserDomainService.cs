@@ -10,7 +10,7 @@ namespace DotNetSkills.Domain.UserManagement.Services;
 /// - Require database access (email uniqueness validation)
 /// - Involve cross-aggregate business logic
 /// - Orchestrate complex domain operations
-/// 
+///
 /// Simple authorization rules remain in BusinessRules.Authorization for performance
 /// and to maintain domain independence.
 /// </remarks>
