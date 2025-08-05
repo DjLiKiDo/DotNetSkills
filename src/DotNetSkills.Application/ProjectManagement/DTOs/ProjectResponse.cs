@@ -20,9 +20,9 @@ public record ProjectResponse(
     /// <summary>
     /// Gets whether the project is overdue.
     /// </summary>
-    public bool IsOverdue => PlannedEndDate.HasValue && 
-                            PlannedEndDate.Value < DateTime.UtcNow && 
-                            Status != "Completed" && 
+    public bool IsOverdue => PlannedEndDate.HasValue &&
+                            PlannedEndDate.Value < DateTime.UtcNow &&
+                            Status != "Completed" &&
                             Status != "Cancelled";
 
     /// <summary>

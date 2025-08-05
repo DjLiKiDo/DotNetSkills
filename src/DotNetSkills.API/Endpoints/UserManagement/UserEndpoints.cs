@@ -140,7 +140,7 @@ public static class UserEndpoints
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(query);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             var placeholderResponse = new PagedUserResponse(
                 Users: new List<UserResponse>(),

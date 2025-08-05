@@ -121,7 +121,7 @@ public static class TeamMemberEndpoints
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(query, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("GetTeamMembers requires Application layer implementation");
@@ -176,13 +176,13 @@ public static class TeamMemberEndpoints
 
             // Create and validate command
             var command = new AddTeamMemberCommand(
-                new TeamId(teamId), 
-                new UserId(request.UserId), 
+                new TeamId(teamId),
+                new UserId(request.UserId),
                 request.Role);
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("AddTeamMember requires Application layer implementation");
@@ -246,12 +246,12 @@ public static class TeamMemberEndpoints
 
             // Create and validate command
             var command = new RemoveTeamMemberCommand(
-                new TeamId(teamGuid), 
+                new TeamId(teamGuid),
                 new UserId(userGuid));
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("RemoveTeamMember requires Application layer implementation");
@@ -316,13 +316,13 @@ public static class TeamMemberEndpoints
 
             // Create and validate command
             var command = new UpdateMemberRoleCommand(
-                new TeamId(teamGuid), 
-                new UserId(userGuid), 
+                new TeamId(teamGuid),
+                new UserId(userGuid),
                 request.Role);
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("UpdateMemberRole requires Application layer implementation");

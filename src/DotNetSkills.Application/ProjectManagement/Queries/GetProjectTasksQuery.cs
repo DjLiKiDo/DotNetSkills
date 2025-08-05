@@ -77,7 +77,7 @@ public class GetProjectTasksQueryHandler : IRequestHandler<GetProjectTasksQuery,
         // TODO: Implement actual query handling with repository
         // This is a placeholder implementation
         await Task.CompletedTask;
-        
+
         return new PagedProjectTaskResponse(
             Tasks: new List<ProjectTaskResponse>(),
             TotalCount: 0,

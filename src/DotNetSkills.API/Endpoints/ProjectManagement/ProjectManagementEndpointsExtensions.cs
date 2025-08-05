@@ -16,10 +16,10 @@ public static class ProjectManagementEndpointsExtensions
     {
         // Register Project CRUD endpoints
         app.MapProjectEndpoints();
-        
+
         // Register Project-Task relationship endpoints
         app.MapProjectTaskEndpoints();
-        
+
         return app;
     }
 }

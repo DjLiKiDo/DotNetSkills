@@ -18,10 +18,10 @@ public record CreateUserCommand(
     {
         if (string.IsNullOrWhiteSpace(Name))
             throw new ArgumentException("Name is required", nameof(Name));
-        
+
         if (string.IsNullOrWhiteSpace(Email))
             throw new ArgumentException("Email is required", nameof(Email));
-        
+
         if (string.IsNullOrWhiteSpace(Role))
             throw new ArgumentException("Role is required", nameof(Role));
     }

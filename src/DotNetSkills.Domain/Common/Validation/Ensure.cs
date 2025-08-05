@@ -229,7 +229,7 @@ public static class Ensure
     /// Ensure.BusinessRule(
     ///     user.Role == UserRole.Admin,
     ///     ValidationMessages.User.OnlyAdminCanCreate);
-    /// 
+    ///
     /// Ensure.BusinessRule(
     ///     _teamMemberships.Count &lt; ValidationConstants.Numeric.TeamMaxMembers,
     ///     ValidationMessages.Team.MaxMembersExceeded);
@@ -254,7 +254,7 @@ public static class Ensure
     public static void BusinessRule(Func<bool> condition, string message)
     {
         ArgumentNullException.ThrowIfNull(condition);
-        
+
         if (!condition())
         {
             throw new DomainException(message);

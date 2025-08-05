@@ -5,8 +5,8 @@ namespace DotNetSkills.Application.ProjectManagement.Queries;
 /// Supports filtering by team, status, date ranges, and search.
 /// </summary>
 public record GetProjectsQuery(
-    int Page, 
-    int PageSize, 
+    int Page,
+    int PageSize,
     TeamId? TeamId,
     ProjectStatus? Status,
     DateTime? StartDateFrom,
@@ -49,7 +49,7 @@ public class GetProjectsQueryHandler : IRequestHandler<GetProjectsQuery, PagedPr
         // 4. Apply date range filters if provided
         // 5. Apply search filter if provided
         // 6. Map to DTOs and return paginated response
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("GetProjectsQueryHandler requires Infrastructure layer implementation");
     }

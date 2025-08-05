@@ -16,10 +16,10 @@ public static class UserManagementEndpointsExtensions
     {
         // Register User CRUD endpoints
         app.MapUserEndpoints();
-        
+
         // Register User Account management endpoints
         app.MapUserAccountEndpoints();
-        
+
         return app;
     }
 }

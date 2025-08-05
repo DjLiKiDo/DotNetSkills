@@ -24,7 +24,7 @@ public class GetProjectByIdQueryHandler : IRequestHandler<GetProjectByIdQuery, P
         // 1. Get project from repository by ID
         // 2. Return null if not found
         // 3. Map to DTO and return
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("GetProjectByIdQueryHandler requires Infrastructure layer implementation");
     }

@@ -1,5 +1,4 @@
 using DotNetSkills.Application;
-using DotNetSkills.Domain;
 using DotNetSkills.Infrastructure;
 
 namespace DotNetSkills.API;
@@ -25,24 +24,24 @@ public static class DependencyInjection
         // Note: Domain services are registered through Application layer
         services.AddApplicationServices();
         services.AddInfrastructureServices(configuration);
-        
+
         // Configure comprehensive Swagger/OpenAPI documentation
         services.AddSwaggerDocumentation(configuration);
-        
+
         // Configure JSON serialization options for strongly-typed IDs and domain types
         services.ConfigureHttpJsonOptions(options =>
         {
             options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             options.SerializerOptions.WriteIndented = true;
             options.SerializerOptions.PropertyNameCaseInsensitive = true;
-            
+
             // Add custom converters for strongly-typed IDs when needed
             // options.SerializerOptions.Converters.Add(new UserIdJsonConverter());
             // options.SerializerOptions.Converters.Add(new TeamIdJsonConverter());
             // options.SerializerOptions.Converters.Add(new ProjectIdJsonConverter());
             // options.SerializerOptions.Converters.Add(new TaskIdJsonConverter());
         });
-        
+
         // Configure model binding for minimal APIs
         services.Configure<JsonOptions>(options =>
         {
@@ -50,7 +49,7 @@ public static class DependencyInjection
             options.JsonSerializerOptions.WriteIndented = true;
             options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         });
-        
+
         // Problem Details configuration for consistent error responses
         services.AddProblemDetails(options =>
         {
@@ -61,19 +60,19 @@ public static class DependencyInjection
                 context.ProblemDetails.Extensions["timestamp"] = DateTime.UtcNow;
             };
         });
-        
+
         // FluentValidation integration for endpoint validation
         // Will be activated when Application layer implements validators
         // services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
         // services.AddFluentValidationAutoValidation();
         // services.AddFluentValidationClientsideAdapters();
-        
+
         // FluentValidation integration for endpoint validation
         // Will be activated when Application layer implements validators
         // services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
         // services.AddFluentValidationAutoValidation();
         // services.AddFluentValidationClientsideAdapters();
-        
+
         // Authentication & Authorization (when implemented)
         // services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         //     .AddJwtBearer(options =>
@@ -90,14 +89,14 @@ public static class DependencyInjection
         //                 Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
         //         };
         //     });
-        
+
         // services.AddAuthorization(options =>
         // {
         //     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-        //     options.AddPolicy("ProjectManager", policy => 
+        //     options.AddPolicy("ProjectManager", policy =>
         //         policy.RequireRole("Admin", "ProjectManager"));
         // });
-        
+
         // CORS configuration
         services.AddCors(options =>
         {
@@ -107,10 +106,10 @@ public static class DependencyInjection
                     .AllowAnyMethod()
                     .AllowAnyHeader());
         });
-        
+
         // Health checks
         services.AddHealthChecks();
-        
+
         // Rate limiting configuration (when needed)
         // services.AddRateLimiter(options =>
         // {
@@ -124,7 +123,7 @@ public static class DependencyInjection
         //                 Window = TimeSpan.FromMinutes(1)
         //             }));
         // });
-        
+
         // Output caching configuration (when needed)
         // services.AddOutputCache(options =>
         // {
@@ -133,10 +132,10 @@ public static class DependencyInjection
         //               .Expire(TimeSpan.FromMinutes(5))
         //               .SetVaryByHeader("Accept", "Accept-Language"));
         // });
-        
+
         // Request decompression (for handling compressed requests)
         services.AddRequestDecompression();
-        
+
         // Response compression
         services.AddResponseCompression(options =>
         {
@@ -145,14 +144,14 @@ public static class DependencyInjection
             // options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
             //     new[] { "application/json", "text/json" });
         });
-        
+
         // Model binding configuration
         services.Configure<RouteOptions>(options =>
         {
             options.LowercaseUrls = true;
             options.LowercaseQueryStrings = true;
         });
-        
+
         // API versioning (when needed)
         // services.AddApiVersioning(options =>
         // {
@@ -162,7 +161,7 @@ public static class DependencyInjection
         //         new UrlSegmentApiVersionReader(),
         //         new HeaderApiVersionReader("X-Version"));
         // });
-        
+
         return services;
     }
 }

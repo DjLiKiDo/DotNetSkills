@@ -11,7 +11,7 @@ public class UpdateUserRoleCommandHandler : IRequestHandler<UpdateUserRoleComman
         // 2. Call user.UpdateRole() domain method
         // 3. Save changes
         // 4. Map to DTO and return
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("UpdateUserRoleCommandHandler requires Infrastructure layer implementation");
     }

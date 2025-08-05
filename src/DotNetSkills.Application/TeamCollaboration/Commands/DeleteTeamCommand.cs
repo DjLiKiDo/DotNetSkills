@@ -15,7 +15,7 @@ public class DeleteTeamCommandHandler : IRequestHandler<DeleteTeamCommand>
         // 3. Check business rules (no active projects, etc.)
         // 4. Remove team from repository
         // 5. Dispatch domain events if needed
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("DeleteTeamCommandHandler requires Infrastructure layer implementation");
     }

@@ -71,10 +71,10 @@ public static class UserAccountEndpoints
             }
 
             var command = new ActivateUserCommand(new UserId(userId));
-            
+
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("ActivateUserAsync requires Application layer implementation");
@@ -121,10 +121,10 @@ public static class UserAccountEndpoints
             }
 
             var command = new DeactivateUserCommand(new UserId(userId));
-            
+
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("DeactivateUserAsync requires Application layer implementation");
@@ -172,10 +172,10 @@ public static class UserAccountEndpoints
             }
 
             var command = new UpdateUserRoleCommand(new UserId(userId), request.Role);
-            
+
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("UpdateUserRoleAsync requires Application layer implementation");
@@ -222,10 +222,10 @@ public static class UserAccountEndpoints
             }
 
             var query = new GetUserTeamMembershipsQuery(new UserId(userId));
-            
+
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(query, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("GetUserTeamMembershipsAsync requires Application layer implementation");

@@ -9,7 +9,7 @@ public class CommonResponsesOperationFilter : IOperationFilter
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         // Add common error responses that apply to all endpoints
-        
+
         // 500 Internal Server Error - always possible
         if (!operation.Responses.ContainsKey("500"))
         {
@@ -85,7 +85,7 @@ public class CommonResponsesOperationFilter : IOperationFilter
         // Enhance operation descriptions with bounded context information
         var routePath = context.ApiDescription.RelativePath ?? "";
         var boundedContext = GetBoundedContextFromRoute(routePath);
-        
+
         if (!string.IsNullOrEmpty(boundedContext) && !string.IsNullOrEmpty(operation.Description))
         {
             operation.Description = $"{operation.Description}\n\n**Bounded Context**: {boundedContext}";
@@ -105,7 +105,7 @@ public class CommonResponsesOperationFilter : IOperationFilter
         return routePath switch
         {
             var route when route.Contains("/users") => "User Management",
-            var route when route.Contains("/teams") => "Team Collaboration", 
+            var route when route.Contains("/teams") => "Team Collaboration",
             var route when route.Contains("/projects") => "Project Management",
             var route when route.Contains("/tasks") => "Task Execution",
             _ => ""

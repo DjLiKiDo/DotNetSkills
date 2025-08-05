@@ -61,14 +61,14 @@ public class Project : AggregateRoot<ProjectId>
     /// <exception cref="ArgumentException">Thrown when name is empty or whitespace.</exception>
     /// <exception cref="ArgumentNullException">Thrown when teamId or createdBy is null.</exception>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
-    public Project(string name, string? description, TeamId teamId, DateTime? plannedEndDate, User createdBy) 
+    public Project(string name, string? description, TeamId teamId, DateTime? plannedEndDate, User createdBy)
         : base(ProjectId.New())
     {
         Ensure.NotNullOrWhiteSpace(name, nameof(name));
         Ensure.NotNull(teamId, nameof(teamId));
         Ensure.NotNull(createdBy, nameof(createdBy));
         Ensure.BusinessRule(createdBy.CanManageProjects(), ValidationMessages.Project.NoPermissionToCreate);
-        
+
         if (plannedEndDate.HasValue)
         {
             Ensure.FutureDate(plannedEndDate.Value, nameof(plannedEndDate));
@@ -114,7 +114,7 @@ public class Project : AggregateRoot<ProjectId>
         Ensure.NotNull(updatedBy, nameof(updatedBy));
         Ensure.BusinessRule(CanModifyProject(updatedBy), ValidationMessages.Project.NoPermissionToModify);
         Ensure.BusinessRule(Status != ProjectStatus.Completed, ValidationMessages.Project.CannotModifyCompleted);
-        
+
         if (plannedEndDate.HasValue && Status != ProjectStatus.Completed)
         {
             Ensure.FutureDate(plannedEndDate.Value, nameof(plannedEndDate));
@@ -135,7 +135,7 @@ public class Project : AggregateRoot<ProjectId>
     {
         Ensure.NotNull(startedBy, nameof(startedBy));
         Ensure.BusinessRule(CanModifyProject(startedBy), ValidationMessages.Project.NoPermissionToStart);
-        Ensure.BusinessRule(CanTransitionTo(ProjectStatus.Active), 
+        Ensure.BusinessRule(CanTransitionTo(ProjectStatus.Active),
             ValidationMessages.Formatting.Format(ValidationMessages.Common.InvalidStatusTransition, "project", Status.ToString(), ProjectStatus.Active.ToString()));
 
         var previousStatus = Status;
@@ -156,7 +156,7 @@ public class Project : AggregateRoot<ProjectId>
     {
         Ensure.NotNull(pausedBy, nameof(pausedBy));
         Ensure.BusinessRule(CanModifyProject(pausedBy), ValidationMessages.Project.NoPermissionToModify);
-        Ensure.BusinessRule(CanTransitionTo(ProjectStatus.OnHold), 
+        Ensure.BusinessRule(CanTransitionTo(ProjectStatus.OnHold),
             ValidationMessages.Formatting.Format(ValidationMessages.Common.InvalidStatusTransition, "project", Status.ToString(), ProjectStatus.OnHold.ToString()));
 
         var previousStatus = Status;
@@ -196,7 +196,7 @@ public class Project : AggregateRoot<ProjectId>
     {
         Ensure.NotNull(completedBy, nameof(completedBy));
         Ensure.BusinessRule(CanModifyProject(completedBy), ValidationMessages.Project.NoPermissionToComplete);
-        Ensure.BusinessRule(CanTransitionTo(ProjectStatus.Completed), 
+        Ensure.BusinessRule(CanTransitionTo(ProjectStatus.Completed),
             ValidationMessages.Formatting.Format(ValidationMessages.Common.InvalidStatusTransition, "project", Status.ToString(), ProjectStatus.Completed.ToString()));
         Ensure.BusinessRule(!hasActiveTasks, ValidationMessages.Project.CannotCompleteWithActiveTasks);
 
@@ -262,8 +262,8 @@ public class Project : AggregateRoot<ProjectId>
     /// <returns>True if the project is overdue, false otherwise.</returns>
     public bool IsOverdue()
     {
-        return PlannedEndDate.HasValue && 
-               PlannedEndDate.Value < DateTime.UtcNow && 
+        return PlannedEndDate.HasValue &&
+               PlannedEndDate.Value < DateTime.UtcNow &&
                Status != ProjectStatus.Completed &&
                Status != ProjectStatus.Cancelled;
     }

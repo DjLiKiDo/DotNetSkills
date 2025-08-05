@@ -16,10 +16,10 @@ public static class TaskExecutionEndpointsExtensions
     {
         // Register Task CRUD endpoints
         app.MapTaskEndpoints();
-        
+
         // Register Task Assignment and Subtask endpoints
         app.MapTaskAssignmentEndpoints();
-        
+
         return app;
     }
 }

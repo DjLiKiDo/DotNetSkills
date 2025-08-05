@@ -128,7 +128,7 @@ public static class TeamEndpoints
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(query, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             var placeholderResponse = new PagedTeamResponse(
                 Teams: new List<TeamResponse>(),
@@ -180,7 +180,7 @@ public static class TeamEndpoints
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(query, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("GetTeamById requires Application layer implementation");
@@ -226,7 +226,7 @@ public static class TeamEndpoints
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("CreateTeam requires Application layer implementation");
@@ -283,7 +283,7 @@ public static class TeamEndpoints
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("UpdateTeam requires Application layer implementation");
@@ -339,7 +339,7 @@ public static class TeamEndpoints
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("DeleteTeam requires Application layer implementation");

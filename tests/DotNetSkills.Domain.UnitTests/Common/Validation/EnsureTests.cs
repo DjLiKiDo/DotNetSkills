@@ -18,12 +18,12 @@ public class EnsureTests
     {
         // Arrange
         var validString = "Valid content";
-        
+
         // Act & Assert
         var action = () => Ensure.NotNullOrWhiteSpace(validString, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -38,44 +38,44 @@ public class EnsureTests
               .WithParameterName("testParam")
               .WithMessage("*testParam cannot be null or whitespace*");
     }
-    
+
     [Fact]
     public void NotNullOrWhiteSpace_WithCustomMessage_ShouldUseCustomMessage()
     {
         // Arrange
         var customMessage = "Custom validation message";
-        
+
         // Act & Assert
         var action = () => Ensure.NotNullOrWhiteSpace("", "testParam", customMessage);
         action.Should().Throw<ArgumentException>()
               .WithParameterName("testParam")
               .WithMessage($"{customMessage}*");
     }
-    
+
     [Fact]
     public void HasMaxLength_WithValidLength_ShouldNotThrow()
     {
         // Arrange
         var validString = "Short";
-        
+
         // Act & Assert
         var action = () => Ensure.HasMaxLength(validString, 10, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void HasMaxLength_WithExceedingLength_ShouldThrowArgumentException()
     {
         // Arrange
         var longString = "This is a very long string that exceeds the limit";
-        
+
         // Act & Assert
         var action = () => Ensure.HasMaxLength(longString, 10, "testParam");
         action.Should().Throw<ArgumentException>()
               .WithParameterName("testParam")
               .WithMessage("*testParam cannot exceed 10 characters*");
     }
-    
+
     [Fact]
     public void HasMaxLength_WithNullString_ShouldNotThrow()
     {
@@ -83,24 +83,24 @@ public class EnsureTests
         var action = () => Ensure.HasMaxLength(null, 10, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void HasMinLength_WithValidLength_ShouldNotThrow()
     {
         // Arrange
         var validString = "Valid string";
-        
+
         // Act & Assert
         var action = () => Ensure.HasMinLength(validString, 5, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void HasMinLength_WithShortLength_ShouldThrowArgumentException()
     {
         // Arrange
         var shortString = "Hi";
-        
+
         // Act & Assert
         var action = () => Ensure.HasMinLength(shortString, 5, "testParam");
         action.Should().Throw<ArgumentException>()
@@ -122,7 +122,7 @@ public class EnsureTests
         var action = () => Ensure.Positive(positiveValue, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -136,7 +136,7 @@ public class EnsureTests
               .WithParameterName("testParam")
               .WithMessage("*testParam must be positive*");
     }
-    
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -148,7 +148,7 @@ public class EnsureTests
         var action = () => Ensure.PositiveOrZero(validValue, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Theory]
     [InlineData(-1)]
     [InlineData(-100)]
@@ -161,7 +161,7 @@ public class EnsureTests
               .WithParameterName("testParam")
               .WithMessage("*testParam must be positive or zero*");
     }
-    
+
     [Theory]
     [InlineData(5, 1, 10)]
     [InlineData(1, 1, 10)]
@@ -172,7 +172,7 @@ public class EnsureTests
         var action = () => Ensure.InRange(value, min, max, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Theory]
     [InlineData(0, 1, 10)]
     [InlineData(11, 1, 10)]
@@ -195,38 +195,38 @@ public class EnsureTests
     {
         // Arrange
         var futureDate = DateTime.UtcNow.AddDays(1);
-        
+
         // Act & Assert
         var action = () => Ensure.FutureDate(futureDate, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void FutureDate_WithPastDate_ShouldThrowArgumentException()
     {
         // Arrange
         var pastDate = DateTime.UtcNow.AddDays(-1);
-        
+
         // Act & Assert
         var action = () => Ensure.FutureDate(pastDate, "testParam");
         action.Should().Throw<ArgumentException>()
               .WithParameterName("testParam")
               .WithMessage("*testParam must be in the future*");
     }
-    
+
     [Fact]
     public void FutureDate_WithCurrentTime_ShouldThrowArgumentException()
     {
         // Arrange
         var currentTime = DateTime.UtcNow;
-        
+
         // Act & Assert
         var action = () => Ensure.FutureDate(currentTime, "testParam");
         action.Should().Throw<ArgumentException>()
               .WithParameterName("testParam")
               .WithMessage("*testParam must be in the future*");
     }
-    
+
     [Fact]
     public void FutureDateOrNull_WithNullValue_ShouldNotThrow()
     {
@@ -234,48 +234,48 @@ public class EnsureTests
         var action = () => Ensure.FutureDateOrNull(null, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void FutureDateOrNull_WithFutureDate_ShouldNotThrow()
     {
         // Arrange
         var futureDate = DateTime.UtcNow.AddDays(1);
-        
+
         // Act & Assert
         var action = () => Ensure.FutureDateOrNull(futureDate, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void FutureDateOrNull_WithPastDate_ShouldThrowArgumentException()
     {
         // Arrange
         var pastDate = DateTime.UtcNow.AddDays(-1);
-        
+
         // Act & Assert
         var action = () => Ensure.FutureDateOrNull(pastDate, "testParam");
         action.Should().Throw<ArgumentException>()
               .WithParameterName("testParam")
               .WithMessage("*testParam must be in the future*");
     }
-    
+
     [Fact]
     public void PastDate_WithPastDate_ShouldNotThrow()
     {
         // Arrange
         var pastDate = DateTime.UtcNow.AddDays(-1);
-        
+
         // Act & Assert
         var action = () => Ensure.PastDate(pastDate, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void PastDate_WithFutureDate_ShouldThrowArgumentException()
     {
         // Arrange
         var futureDate = DateTime.UtcNow.AddDays(1);
-        
+
         // Act & Assert
         var action = () => Ensure.PastDate(futureDate, "testParam");
         action.Should().Throw<ArgumentException>()
@@ -292,31 +292,31 @@ public class EnsureTests
     {
         // Arrange
         var validObject = new object();
-        
+
         // Act & Assert
         var action = () => Ensure.NotNull(validObject, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void NotNull_WithNullObject_ShouldThrowArgumentNullException()
     {
         // Arrange
         object? nullObject = null;
-        
+
         // Act & Assert
         var action = () => Ensure.NotNull(nullObject, "testParam");
         action.Should().Throw<ArgumentNullException>()
               .WithParameterName("testParam");
     }
-    
+
     [Fact]
     public void NotNull_WithCustomMessage_ShouldUseCustomMessage()
     {
         // Arrange
         object? nullObject = null;
         var customMessage = "Custom null validation message";
-        
+
         // Act & Assert
         var action = () => Ensure.NotNull(nullObject, "testParam", customMessage);
         action.Should().Throw<ArgumentNullException>()
@@ -335,19 +335,19 @@ public class EnsureTests
         var action = () => Ensure.BusinessRule(true, "This should not throw");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void BusinessRule_WithFalseCondition_ShouldThrowDomainException()
     {
         // Arrange
         var errorMessage = "Business rule violation";
-        
+
         // Act & Assert
         var action = () => Ensure.BusinessRule(false, errorMessage);
         action.Should().Throw<DomainException>()
               .WithMessage(errorMessage);
     }
-    
+
     [Fact]
     public void BusinessRule_WithFunctionReturningTrue_ShouldNotThrow()
     {
@@ -355,25 +355,25 @@ public class EnsureTests
         var action = () => Ensure.BusinessRule(() => true, "This should not throw");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void BusinessRule_WithFunctionReturningFalse_ShouldThrowDomainException()
     {
         // Arrange
         var errorMessage = "Business rule violation from function";
-        
+
         // Act & Assert
         var action = () => Ensure.BusinessRule(() => false, errorMessage);
         action.Should().Throw<DomainException>()
               .WithMessage(errorMessage);
     }
-    
+
     [Fact]
     public void BusinessRule_WithNullFunction_ShouldThrowArgumentNullException()
     {
         // Arrange
         Func<bool>? nullFunction = null;
-        
+
         // Act & Assert
         var action = () => Ensure.BusinessRule(nullFunction!, "Message");
         action.Should().Throw<ArgumentNullException>();
@@ -388,79 +388,79 @@ public class EnsureTests
     {
         // Arrange
         var collection = new List<string> { "item1", "item2" };
-        
+
         // Act & Assert
         var action = () => Ensure.NotEmpty(collection, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void NotEmpty_WithEmptyCollection_ShouldThrowArgumentException()
     {
         // Arrange
         var emptyCollection = new List<string>();
-        
+
         // Act & Assert
         var action = () => Ensure.NotEmpty(emptyCollection, "testParam");
         action.Should().Throw<ArgumentException>()
               .WithParameterName("testParam")
               .WithMessage("*testParam cannot be empty*");
     }
-    
+
     [Fact]
     public void NotEmpty_WithNullCollection_ShouldThrowArgumentException()
     {
         // Arrange
         List<string>? nullCollection = null;
-        
+
         // Act & Assert
         var action = () => Ensure.NotEmpty(nullCollection, "testParam");
         action.Should().Throw<ArgumentException>()
               .WithParameterName("testParam")
               .WithMessage("*testParam cannot be empty*");
     }
-    
+
     [Fact]
     public void MaxCount_WithCollectionBelowLimit_ShouldNotThrow()
     {
         // Arrange
         var collection = new List<string> { "item1", "item2" };
-        
+
         // Act & Assert
         var action = () => Ensure.MaxCount(collection, 5, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void MaxCount_WithCollectionAtLimit_ShouldNotThrow()
     {
         // Arrange
         var collection = new List<string> { "item1", "item2", "item3" };
-        
+
         // Act & Assert
         var action = () => Ensure.MaxCount(collection, 3, "testParam");
         action.Should().NotThrow();
     }
-    
+
     [Fact]
     public void MaxCount_WithCollectionExceedingLimit_ShouldThrowArgumentException()
     {
         // Arrange
         var collection = new List<string> { "item1", "item2", "item3", "item4" };
-        
+
         // Act & Assert
         var action = () => Ensure.MaxCount(collection, 2, "testParam");
         action.Should().Throw<ArgumentException>()
               .WithParameterName("testParam")
               .WithMessage("*testParam cannot have more than 2 items*");
     }
-    
+
     [Fact]
     public void MaxCount_WithNullCollection_ShouldNotThrow()
     {
         // Arrange
         List<string>? nullCollection = null;
-        
+
         // Act & Assert
         var action = () => Ensure.MaxCount(nullCollection, 5, "testParam");
         action.Should().NotThrow();
@@ -476,34 +476,34 @@ public class EnsureTests
         // Act & Assert - Should not throw for parameter name handling
         var action1 = () => Ensure.NotNullOrWhiteSpace("valid", " paramWithSpaces ");
         var action2 = () => Ensure.Positive(5, "param\twith\ttabs");
-        
+
         action1.Should().NotThrow();
         action2.Should().NotThrow();
     }
-    
+
     [Fact]
     public void ValidationMethods_WithEmptyParameterNames_ShouldHandleGracefully()
     {
         // Act & Assert - Should not throw for empty parameter names
         var action1 = () => Ensure.NotNullOrWhiteSpace("valid", "");
         var action2 = () => Ensure.Positive(5, "");
-        
+
         action1.Should().NotThrow();
         action2.Should().NotThrow();
     }
-    
+
     [Fact]
     public void BusinessRule_WithComplexCondition_ShouldEvaluateCorrectly()
     {
         // Arrange
         var user = new { Role = "Admin", IsActive = true };
         var team = new { MemberCount = 5, MaxMembers = 10 };
-        
+
         // Act & Assert
         var action = () => Ensure.BusinessRule(
             user.Role == "Admin" && user.IsActive && team.MemberCount < team.MaxMembers,
             "Complex business rule validation failed");
-            
+
         action.Should().NotThrow();
     }
 

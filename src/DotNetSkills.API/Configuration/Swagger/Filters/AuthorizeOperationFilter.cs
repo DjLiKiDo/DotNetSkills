@@ -21,7 +21,7 @@ public class AuthorizeOperationFilter : IOperationFilter
         {
             // Add security requirement for JWT Bearer token
             operation.Security ??= new List<OpenApiSecurityRequirement>();
-            
+
             var jwtSecurityRequirement = new OpenApiSecurityRequirement
             {
                 {
@@ -52,12 +52,12 @@ public class AuthorizeOperationFilter : IOperationFilter
                 operation.Description = (operation.Description ?? "") + authDescription;
 
                 // Add to operation extensions for programmatic access
-                operation.Extensions.TryAdd("x-authorization-policy", 
+                operation.Extensions.TryAdd("x-authorization-policy",
                     new Microsoft.OpenApi.Any.OpenApiString(authorizationInfo));
             }
 
             // Add lock icon indicator for Swagger UI
-            operation.Extensions.TryAdd("x-security-scopes", 
+            operation.Extensions.TryAdd("x-security-scopes",
                 new Microsoft.OpenApi.Any.OpenApiArray());
         }
     }
@@ -65,16 +65,16 @@ public class AuthorizeOperationFilter : IOperationFilter
     private static bool IsAuthorizeAttribute(object attribute)
     {
         var attributeTypeName = attribute.GetType().Name;
-        return attributeTypeName == "AuthorizeAttribute" || 
+        return attributeTypeName == "AuthorizeAttribute" ||
                attributeTypeName.EndsWith("AuthorizeAttribute");
     }
 
     private static bool IsEndpointProtected(OperationFilterContext context)
     {
-        // This is a heuristic check - in a real implementation, you might need to 
+        // This is a heuristic check - in a real implementation, you might need to
         // examine the endpoint metadata more thoroughly
         var apiDescription = context.ApiDescription;
-        
+
         // Check for authorization metadata in endpoint
         return apiDescription.ActionDescriptor.EndpointMetadata?
             .Any(metadata => metadata.GetType().Name.Contains("Authorize")) ?? false;
@@ -100,7 +100,7 @@ public class AuthorizeOperationFilter : IOperationFilter
         {
             // Use reflection to extract policy and roles information
             var attrType = attr.GetType();
-            
+
             var policyProperty = attrType.GetProperty("Policy");
             if (policyProperty?.GetValue(attr) is string policy && !string.IsNullOrEmpty(policy))
             {
@@ -115,7 +115,7 @@ public class AuthorizeOperationFilter : IOperationFilter
         }
 
         var authInfo = new List<string>();
-        
+
         if (policies.Any())
         {
             authInfo.Add($"Policies: {string.Join(", ", policies)}");

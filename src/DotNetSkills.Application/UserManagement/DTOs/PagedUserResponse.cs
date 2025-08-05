@@ -14,12 +14,12 @@ public record PagedUserResponse(
     /// Total number of pages based on page size.
     /// </summary>
     public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
-    
+
     /// <summary>
     /// Indicates whether there is a next page available.
     /// </summary>
     public bool HasNextPage => Page < TotalPages;
-    
+
     /// <summary>
     /// Indicates whether there is a previous page available.
     /// </summary>

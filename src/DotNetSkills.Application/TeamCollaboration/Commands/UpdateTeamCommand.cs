@@ -15,7 +15,7 @@ public class UpdateTeamCommandHandler : IRequestHandler<UpdateTeamCommand, TeamR
         // 3. Call team.UpdateInfo() domain method
         // 4. Save changes to repository
         // 5. Map to DTO and return
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("UpdateTeamCommandHandler requires Infrastructure layer implementation");
     }

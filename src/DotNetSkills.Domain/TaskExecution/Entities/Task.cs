@@ -1,3 +1,5 @@
+
+using DotNetSkills.Domain.Common.Validation;
 namespace DotNetSkills.Domain.TaskExecution.Entities;
 
 /// <summary>
@@ -96,8 +98,8 @@ public class Task : AggregateRoot<TaskId>
     /// <exception cref="ArgumentException">Thrown when title is empty or whitespace.</exception>
     /// <exception cref="ArgumentNullException">Thrown when projectId or createdBy is null.</exception>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
-    public Task(string title, string? description, ProjectId projectId, TaskPriority priority, 
-                TaskId? parentTaskId, int? estimatedHours, DateTime? dueDate, User createdBy) 
+    public Task(string title, string? description, ProjectId projectId, TaskPriority priority,
+                TaskId? parentTaskId, int? estimatedHours, DateTime? dueDate, User createdBy)
         : base(TaskId.New())
     {
         Ensure.NotNullOrWhiteSpace(title, nameof(title));
@@ -159,7 +161,7 @@ public class Task : AggregateRoot<TaskId>
     /// <exception cref="ArgumentException">Thrown when title is empty or whitespace.</exception>
     /// <exception cref="ArgumentNullException">Thrown when updatedBy is null.</exception>
     /// <exception cref="DomainException">Thrown when business rules are violated.</exception>
-    public void UpdateInfo(string title, string? description, TaskPriority priority, 
+    public void UpdateInfo(string title, string? description, TaskPriority priority,
                           int? estimatedHours, DateTime? dueDate, User updatedBy)
     {
         Ensure.NotNullOrWhiteSpace(title, nameof(title));
@@ -194,17 +196,18 @@ public class Task : AggregateRoot<TaskId>
         ArgumentNullException.ThrowIfNull(assignee);
         ArgumentNullException.ThrowIfNull(assignedBy);
 
+
         if (Status == TaskStatus.Done)
-            throw new DomainException("Cannot assign completed tasks");
+            throw new DomainException(ValidationMessages.Task.CannotAssignCompleted);
 
         if (Status == TaskStatus.Cancelled)
-            throw new DomainException("Cannot assign cancelled tasks");
+            throw new DomainException(ValidationMessages.Task.CannotAssignCancelled);
 
         if (!assignee.CanBeAssignedTasks())
-            throw new DomainException("User cannot be assigned tasks");
+            throw new DomainException(ValidationMessages.Task.CannotBeAssignedTasks);
 
         if (AssignedUserId == assignee.Id)
-            throw new DomainException("Task is already assigned to this user");
+            throw new DomainException(ValidationMessages.Task.AlreadyAssignedToUser);
 
         AssignedUserId = assignee.Id;
 
@@ -222,11 +225,12 @@ public class Task : AggregateRoot<TaskId>
     {
         ArgumentNullException.ThrowIfNull(unassignedBy);
 
+
         if (AssignedUserId == null)
-            throw new DomainException("Task is not assigned to anyone");
+            throw new DomainException(ValidationMessages.Task.NotAssignedToAnyone);
 
         if (Status == TaskStatus.Done)
-            throw new DomainException("Cannot unassign completed tasks");
+            throw new DomainException(ValidationMessages.Task.CannotUnassignCompleted);
 
         AssignedUserId = null;
     }
@@ -241,11 +245,13 @@ public class Task : AggregateRoot<TaskId>
     {
         ArgumentNullException.ThrowIfNull(startedBy);
 
+
         if (!CanTransitionTo(TaskStatus.InProgress))
-            throw new DomainException($"Cannot start task from {Status} status");
+            throw new DomainException(
+                ValidationMessages.Formatting.Format(ValidationMessages.Task.CannotStartFrom, Status.ToString()));
 
         if (AssignedUserId != null && AssignedUserId != startedBy.Id)
-            throw new DomainException("Only the assigned user can start this task");
+            throw new DomainException(ValidationMessages.Task.OnlyAssignedUserCanStart);
 
         if (AssignedUserId == null)
         {
@@ -272,11 +278,13 @@ public class Task : AggregateRoot<TaskId>
     {
         ArgumentNullException.ThrowIfNull(submittedBy);
 
+
         if (!CanTransitionTo(TaskStatus.InReview))
-            throw new DomainException($"Cannot submit task for review from {Status} status");
+            throw new DomainException(
+                ValidationMessages.Formatting.Format(ValidationMessages.Task.InvalidStatusTransition, Status.ToString()));
 
         if (AssignedUserId != null && AssignedUserId != submittedBy.Id)
-            throw new DomainException("Only the assigned user can submit this task for review");
+            throw new DomainException(ValidationMessages.Task.OnlyAssignedUserCanSubmit);
 
         var previousStatus = Status;
         Status = TaskStatus.InReview;
@@ -327,8 +335,9 @@ public class Task : AggregateRoot<TaskId>
     {
         ArgumentNullException.ThrowIfNull(cancelledBy);
 
+
         if (Status == TaskStatus.Done)
-            throw new DomainException("Cannot cancel completed tasks");
+            throw new DomainException(ValidationMessages.Task.CannotCancelCompleted);
 
         var previousStatus = Status;
         Status = TaskStatus.Cancelled;
@@ -353,8 +362,9 @@ public class Task : AggregateRoot<TaskId>
     {
         ArgumentNullException.ThrowIfNull(reopenedBy);
 
+
         if (Status != TaskStatus.Done && Status != TaskStatus.Cancelled)
-            throw new DomainException("Can only reopen completed or cancelled tasks");
+            throw new DomainException(ValidationMessages.Task.CanOnlyReopenCompletedOrCancelled);
 
         var previousStatus = Status;
         Status = StartedAt.HasValue ? TaskStatus.InProgress : TaskStatus.ToDo;
@@ -375,14 +385,15 @@ public class Task : AggregateRoot<TaskId>
     {
         ArgumentNullException.ThrowIfNull(subtask);
 
+
         if (ParentTaskId != null)
-            throw new DomainException("Subtasks cannot have their own subtasks (only single-level nesting allowed)");
+            throw new DomainException(ValidationMessages.Task.SubtaskNestingLimit);
 
         if (subtask.ParentTaskId != Id)
-            throw new DomainException("Subtask parent ID does not match this task");
+            throw new DomainException(ValidationMessages.Task.SubtaskParentIdMismatch);
 
         if (_subtasks.Any(st => st.Id == subtask.Id))
-            throw new DomainException("Subtask is already added to this task");
+            throw new DomainException(ValidationMessages.Task.SubtaskAlreadyAdded);
 
         _subtasks.Add(subtask);
     }
@@ -393,8 +404,8 @@ public class Task : AggregateRoot<TaskId>
     /// <returns>True if the task is overdue, false otherwise.</returns>
     public bool IsOverdue()
     {
-        return DueDate.HasValue && 
-               DueDate.Value < DateTime.UtcNow && 
+        return DueDate.HasValue &&
+               DueDate.Value < DateTime.UtcNow &&
                Status != TaskStatus.Done &&
                Status != TaskStatus.Cancelled;
     }

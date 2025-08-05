@@ -27,7 +27,7 @@ public class GetTeamsQueryHandler : IRequestHandler<GetTeamsQuery, PagedTeamResp
         // 1. Get teams from repository with pagination
         // 2. Apply search filter if provided
         // 3. Map to DTO and return paginated response
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("GetTeamsQueryHandler requires Infrastructure layer implementation");
     }

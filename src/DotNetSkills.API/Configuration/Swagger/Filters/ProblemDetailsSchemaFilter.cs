@@ -31,10 +31,10 @@ public class ProblemDetailsSchemaFilter : ISchemaFilter
                     }
                 }
             };
-            
+
             schema.Description = """
                 RFC 7807 Problem Details response format.
-                
+
                 Provides structured error information including:
                 - type: URI identifying the problem type
                 - title: Short, human-readable summary

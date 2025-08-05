@@ -15,7 +15,7 @@ public class CreateTeamCommandHandler : IRequestHandler<CreateTeamCommand, TeamR
         // 3. Create team using Team.Create() domain method
         // 4. Save to repository
         // 5. Map to DTO and return
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("CreateTeamCommandHandler requires Infrastructure layer implementation");
     }

@@ -13,7 +13,7 @@ public class GetTeamMembersQueryHandler : IRequestHandler<GetTeamMembersQuery, T
         // 1. Get team from repository by ID with members included
         // 2. Map to TeamMembersResponse DTO
         // 3. Return response with member details
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("GetTeamMembersQueryHandler requires Infrastructure layer implementation");
     }

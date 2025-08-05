@@ -16,7 +16,7 @@ public class UpdateMemberRoleCommandHandler : IRequestHandler<UpdateMemberRoleCo
         // 4. Call team.ChangeMemberRole() domain method (enforces business rules)
         // 5. Save changes to repository
         // 6. Map updated member to TeamMemberResponse DTO and return
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("UpdateMemberRoleCommandHandler requires Infrastructure layer implementation");
     }

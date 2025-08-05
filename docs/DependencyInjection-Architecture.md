@@ -121,7 +121,7 @@ graph TD
 ### Domain
 - ✅ Solo .NET 9 base (no dependencias externas)
 
-### Application  
+### Application
 - `Microsoft.Extensions.DependencyInjection.Abstractions`
 - MediatR (pendiente)
 - AutoMapper (pendiente)

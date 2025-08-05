@@ -69,7 +69,7 @@ public class BoundedContextDocumentFilter : IDocumentFilter
                 .OrderBy(tag => GetTagOrder(tag.Name))
                 .ThenBy(tag => tag.Name)
                 .ToList();
-            
+
             swaggerDoc.Tags = sortedTags;
         }
 
@@ -80,7 +80,7 @@ public class BoundedContextDocumentFilter : IDocumentFilter
             {
                 // Add common headers
                 operation.Parameters ??= new List<OpenApiParameter>();
-                
+
                 // Request ID header for tracking
                 if (!operation.Parameters.Any(p => p.Name == "X-Request-ID"))
                 {

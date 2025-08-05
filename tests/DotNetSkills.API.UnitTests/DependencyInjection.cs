@@ -19,12 +19,12 @@ public static class DependencyInjection
     {
         // Mock application services for endpoint testing
         // services.AddTransient<Mock<IMediator>>();
-        
+
         // Mock authentication for testing protected endpoints
         // services.AddAuthentication("Test")
         //     .AddScheme<AuthenticationSchemeOptions, TestAuthenticationSchemeHandler>(
         //         "Test", options => { });
-        
+
         // Test-specific configurations
         // services.Configure<JwtSettings>(options =>
         // {
@@ -32,13 +32,13 @@ public static class DependencyInjection
         //     options.Issuer = "test-issuer";
         //     options.Audience = "test-audience";
         // });
-        
+
         // HttpClient factory for integration tests
         // services.AddHttpClient();
-        
+
         return services;
     }
-    
+
     /// <summary>
     /// Configures test application for integration testing.
     /// </summary>
@@ -54,7 +54,7 @@ public static class DependencyInjection
             new KeyValuePair<string, string?>("Jwt:Audience", "test-audience"),
             new KeyValuePair<string, string?>("ConnectionStrings:DefaultConnection", "DataSource=:memory:")
         });
-        
+
         return builder;
     }
 }

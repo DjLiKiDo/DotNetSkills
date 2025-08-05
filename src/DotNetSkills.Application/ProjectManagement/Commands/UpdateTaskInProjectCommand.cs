@@ -77,7 +77,7 @@ public class UpdateTaskInProjectCommandHandler : IRequestHandler<UpdateTaskInPro
         // 4. Update task using domain methods
         // 5. Save task through repository
         // 6. Map to response DTO and return
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("UpdateTaskInProjectCommand requires Infrastructure layer implementation");
     }

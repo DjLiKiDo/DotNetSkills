@@ -17,11 +17,11 @@ public record GetUsersQuery(
     {
         if (Page <= 0)
             throw new ArgumentException("Page must be greater than 0", nameof(Page));
-        
+
         if (PageSize <= 0 || PageSize > 100)
             throw new ArgumentException("PageSize must be between 1 and 100", nameof(PageSize));
     }
-    
+
     /// <summary>
     /// Gets the number of items to skip for pagination.
     /// </summary>

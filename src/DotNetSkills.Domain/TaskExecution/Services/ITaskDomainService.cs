@@ -10,7 +10,7 @@ namespace DotNetSkills.Domain.TaskExecution.Services;
 /// - Require database access to check task dependencies
 /// - Involve cross-aggregate business logic (tasks, users, projects)
 /// - Orchestrate complex task assignment and management operations
-/// 
+///
 /// Simple task business rules remain in BusinessRules.TaskStatus for performance.
 /// </remarks>
 public interface ITaskDomainService

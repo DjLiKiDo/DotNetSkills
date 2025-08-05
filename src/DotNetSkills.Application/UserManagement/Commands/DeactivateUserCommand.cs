@@ -11,7 +11,7 @@ public class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserComman
         // 2. Call user.Deactivate() domain method
         // 3. Save changes
         // 4. Map to DTO and return
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("DeactivateUserCommandHandler requires Infrastructure layer implementation");
     }

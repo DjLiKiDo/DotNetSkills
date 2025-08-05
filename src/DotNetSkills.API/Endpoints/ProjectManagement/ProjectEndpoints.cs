@@ -135,8 +135,8 @@ public static class ProjectEndpoints
         {
             // Create and validate query
             var query = new GetProjectsQuery(
-                page, 
-                pageSize, 
+                page,
+                pageSize,
                 teamId.HasValue ? new TeamId(teamId.Value) : null,
                 status,
                 startDateFrom,
@@ -144,12 +144,12 @@ public static class ProjectEndpoints
                 endDateFrom,
                 endDateTo,
                 search);
-            
+
             query.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(query, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             var placeholderResponse = new PagedProjectResponse(
                 Projects: new List<ProjectResponse>(),
@@ -201,7 +201,7 @@ public static class ProjectEndpoints
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(query, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("GetProjectById requires Application layer implementation");
@@ -245,18 +245,18 @@ public static class ProjectEndpoints
         {
             // TODO: Get current user ID from authentication context
             var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
-            
+
             // Create and validate command
             var command = new CreateProjectCommand(
-                request.Name, 
-                request.Description, 
+                request.Name,
+                request.Description,
                 new TeamId(request.TeamId),
                 request.PlannedEndDate,
                 currentUserId);
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("CreateProject requires Application layer implementation");
@@ -310,18 +310,18 @@ public static class ProjectEndpoints
 
             // TODO: Get current user ID from authentication context
             var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
-            
+
             // Create and validate command
             var command = new UpdateProjectCommand(
-                new ProjectId(projectId), 
-                request.Name, 
+                new ProjectId(projectId),
+                request.Name,
                 request.Description,
                 request.PlannedEndDate,
                 currentUserId);
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("UpdateProject requires Application layer implementation");
@@ -375,13 +375,13 @@ public static class ProjectEndpoints
 
             // TODO: Get current user ID from authentication context
             var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
-            
+
             // Create and validate command
             var command = new ArchiveProjectCommand(new ProjectId(projectId), currentUserId);
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
-            
+
             // Placeholder response - TODO: Replace with actual implementation
             await Task.CompletedTask;
             throw new NotImplementedException("ArchiveProject requires Application layer implementation");

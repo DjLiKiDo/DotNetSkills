@@ -20,13 +20,13 @@ public static class DependencyInjection
         // Example: services.AddTransient<TeamBuilder>();
         // Example: services.AddTransient<ProjectBuilder>();
         // Example: services.AddTransient<TaskBuilder>();
-        
+
         // Test data providers
         // Example: services.AddTransient<ITestDataProvider, TestDataProvider>();
-        
+
         // Domain service mocks (if needed for complex scenarios)
         // Example: services.AddTransient<IDomainService, MockDomainService>();
-        
+
         return services;
     }
 }

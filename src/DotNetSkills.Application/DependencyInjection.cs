@@ -1,6 +1,6 @@
+using DotNetSkills.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
-using DotNetSkills.Domain;
 
 namespace DotNetSkills.Application;
 
@@ -18,31 +18,31 @@ public static class DependencyInjection
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         var assembly = Assembly.GetExecutingAssembly();
-        
+
         // Register domain services using the factory pattern
         foreach (var (serviceType, implementationType) in DomainServiceFactory.GetDomainServices())
         {
             services.AddTransient(serviceType, implementationType);
         }
-        
+
         // MediatR registration for CQRS pattern
         // services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
-        
+
         // AutoMapper registration for entity ↔ DTO mapping
         // services.AddAutoMapper(assembly);
-        
+
         // FluentValidation registration
         // services.AddValidatorsFromAssembly(assembly);
-        
+
         // Application services registration
         // Example: services.AddTransient<IApplicationService, ApplicationService>();
-        
+
         // Command and Query handlers (automatically registered by MediatR)
         // Example: services.AddTransient<IRequestHandler<CreateUserCommand, UserResponse>, CreateUserCommandHandler>();
-        
+
         // Domain event dispatchers (when implemented)
         // Example: services.AddTransient<IDomainEventDispatcher, DomainEventDispatcher>();
-        
+
         return services;
     }
 }

@@ -46,7 +46,7 @@ public class CreateProjectCommandHandler : IRequestHandler<CreateProjectCommand,
         // 3. Create project using domain factory method
         // 4. Save project to repository
         // 5. Map to DTO and return
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("CreateProjectCommandHandler requires Infrastructure layer implementation");
     }

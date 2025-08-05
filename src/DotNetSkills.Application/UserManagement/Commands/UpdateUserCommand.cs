@@ -18,10 +18,10 @@ public record UpdateUserCommand(
     {
         if (UserId == Guid.Empty)
             throw new ArgumentException("UserId cannot be empty", nameof(UserId));
-        
+
         if (string.IsNullOrWhiteSpace(Name))
             throw new ArgumentException("Name is required", nameof(Name));
-        
+
         if (string.IsNullOrWhiteSpace(Email))
             throw new ArgumentException("Email is required", nameof(Email));
     }

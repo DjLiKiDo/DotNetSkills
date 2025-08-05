@@ -16,7 +16,7 @@ public class RemoveTeamMemberCommandHandler : IRequestHandler<RemoveTeamMemberCo
         // 4. Call team.RemoveMember() domain method (enforces business rules)
         // 5. Save changes to repository
         // 6. Dispatch domain events if needed
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("RemoveTeamMemberCommandHandler requires Infrastructure layer implementation");
     }

@@ -11,7 +11,7 @@ public class ActivateUserCommandHandler : IRequestHandler<ActivateUserCommand, U
         // 2. Call user.Activate() domain method
         // 3. Save changes
         // 4. Map to DTO and return
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("ActivateUserCommandHandler requires Infrastructure layer implementation");
     }

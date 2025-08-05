@@ -17,7 +17,7 @@ public class AddTeamMemberCommandHandler : IRequestHandler<AddTeamMemberCommand,
         // 4. Call team.AddMember() domain method (enforces business rules)
         // 5. Save changes to repository
         // 6. Map to TeamMemberResponse DTO and return
-        
+
         await Task.CompletedTask;
         throw new NotImplementedException("AddTeamMemberCommandHandler requires Infrastructure layer implementation");
     }

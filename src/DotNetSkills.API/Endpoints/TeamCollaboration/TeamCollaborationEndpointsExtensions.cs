@@ -16,10 +16,10 @@ public static class TeamCollaborationEndpointsExtensions
     {
         // Register Team CRUD endpoints
         app.MapTeamEndpoints();
-        
+
         // Register Team Member management endpoints
         app.MapTeamMemberEndpoints();
-        
+
         return app;
     }
 }
