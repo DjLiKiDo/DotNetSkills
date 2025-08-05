@@ -1,0 +1,2 @@
+check if the current solution paths follow best practices for project organization, discoverability and semantic namespacing.
+Analyze the current solution structure and provide recommendations for improvements with a detailed task list to implement the changes and a prompt for asking the AI to implement the changes.

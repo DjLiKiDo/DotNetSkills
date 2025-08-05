@@ -6,23 +6,37 @@ global using System.Linq;
 global using System.Threading;
 global using System.Threading.Tasks;
 
+// Microsoft Extensions for logging
+global using Microsoft.Extensions.Logging;
+
 // Application layer specific globals - Common interfaces
-global using DotNetSkills.Application.Common;
+// Removed global using DotNetSkills.Application.Common to avoid conflicts with MediatR
+// Use fully qualified names when needed: DotNetSkills.Application.Common.IRequest
 
 
-// Application layer specific globals - MediatR (when added)
-// global using MediatR;
+// Application layer specific globals - MediatR
+global using MediatR;
 
-// Application layer specific globals - AutoMapper (when added)
-// global using AutoMapper;
+// Application layer specific globals - AutoMapper
+global using AutoMapper;
 
-// Application layer specific globals - FluentValidation (when added)
-// global using FluentValidation;
+// Application layer specific globals - FluentValidation
+global using FluentValidation;
+global using FluentValidation.Results;
+// Note: Using FluentValidation main namespace for validators and ValidationContext
+
+// Application layer specific globals - Application Common
+global using DotNetSkills.Application.Common.Behaviors;
+global using DotNetSkills.Application.Common.Interfaces;
+global using DotNetSkills.Application.Common.Models;
 
 // Application layer specific globals - Domain references
+global using DotNetSkills.Domain.Common;
 global using DotNetSkills.Domain.Common.Entities;
 global using DotNetSkills.Domain.Common.Events;
 global using DotNetSkills.Domain.Common.Exceptions;
+global using DotNetSkills.Domain.Common.Rules;
+global using DotNetSkills.Domain.Common.Validation;
 
 // User Management Domain references
 global using DotNetSkills.Domain.UserManagement.Entities;

@@ -1,18 +1,8 @@
 namespace DotNetSkills.Application.UserManagement.Queries;
 
 /// <summary>
-/// Query to get a user by their ID.
-/// This query returns a single user or null if not found.
-/// TODO: Implement IRequest&lt;UserResponse?&gt; when MediatR is added.
+/// Query to retrieve a user by their unique identifier.
+/// Returns null if the user is not found, wrapped in a Result pattern.
 /// </summary>
-public record GetUserByIdQuery(Guid UserId)
-{
-    /// <summary>
-    /// Validates that required properties have values.
-    /// </summary>
-    public void Validate()
-    {
-        if (UserId == Guid.Empty)
-            throw new ArgumentException("UserId cannot be empty", nameof(UserId));
-    }
-}
+/// <param name="UserId">The unique identifier of the user to retrieve.</param>
+public record GetUserByIdQuery(UserId UserId) : IRequest<Result<UserResponse?>>;

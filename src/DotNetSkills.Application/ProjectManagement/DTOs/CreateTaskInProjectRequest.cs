@@ -82,7 +82,7 @@ public record CreateTaskInProjectRequest
             errors.Add("Assigned user ID cannot be empty GUID.");
 
         if (errors.Count > 0)
-            throw new ValidationException(string.Join(" ", errors));
+            throw new System.ComponentModel.DataAnnotations.ValidationException(string.Join(" ", errors));
     }
 
     /// <summary>

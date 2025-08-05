@@ -1,18 +1,13 @@
 namespace DotNetSkills.Application.UserManagement.Commands;
 
-public record UpdateUserRoleCommand(UserId UserId, UserRole Role) : IRequest<UserResponse>;
-
-public class UpdateUserRoleCommandHandler : IRequestHandler<UpdateUserRoleCommand, UserResponse>
-{
-    public async Task<UserResponse> Handle(UpdateUserRoleCommand request, CancellationToken cancellationToken)
-    {
-        // TODO: Implement user role update logic
-        // 1. Get user from repository
-        // 2. Call user.UpdateRole() domain method
-        // 3. Save changes
-        // 4. Map to DTO and return
-
-        await Task.CompletedTask;
-        throw new NotImplementedException("UpdateUserRoleCommandHandler requires Infrastructure layer implementation");
-    }
-}
+/// <summary>
+/// Command for updating a user's role in the system.
+/// Implements CQRS pattern with MediatR and Result pattern for error handling.
+/// </summary>
+/// <param name="UserId">The ID of the user whose role is being changed.</param>
+/// <param name="Role">The new role to assign to the user.</param>
+/// <param name="ChangedById">The ID of the user performing the role change (required for authorization).</param>
+public record UpdateUserRoleCommand(
+    UserId UserId,
+    UserRole Role,
+    UserId ChangedById) : IRequest<Result<UserResponse>>;

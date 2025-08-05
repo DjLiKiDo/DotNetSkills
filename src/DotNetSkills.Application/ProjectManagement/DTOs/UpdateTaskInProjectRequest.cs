@@ -64,7 +64,7 @@ public record UpdateTaskInProjectRequest
         // since completed tasks can have past due dates
 
         if (errors.Count > 0)
-            throw new ValidationException(string.Join(" ", errors));
+            throw new System.ComponentModel.DataAnnotations.ValidationException(string.Join(" ", errors));
     }
 
     /// <summary>

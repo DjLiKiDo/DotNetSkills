@@ -1,17 +1,8 @@
 namespace DotNetSkills.Application.UserManagement.Queries;
 
-public record GetUserTeamMembershipsQuery(UserId UserId) : IRequest<TeamMembershipListDto>;
-
-public class GetUserTeamMembershipsQueryHandler : IRequestHandler<GetUserTeamMembershipsQuery, TeamMembershipListDto>
-{
-    public async Task<TeamMembershipListDto> Handle(GetUserTeamMembershipsQuery request, CancellationToken cancellationToken)
-    {
-        // TODO: Implement user team memberships retrieval logic
-        // 1. Get user from repository with team memberships
-        // 2. Map team memberships to DTO
-        // 3. Return list of team memberships
-
-        await Task.CompletedTask;
-        throw new NotImplementedException("GetUserTeamMembershipsQueryHandler requires Infrastructure layer implementation");
-    }
-}
+/// <summary>
+/// Query to retrieve all team memberships for a specific user.
+/// Returns a list of teams the user belongs to along with their roles and membership details.
+/// </summary>
+/// <param name="UserId">The unique identifier of the user whose team memberships to retrieve.</param>
+public record GetUserTeamMembershipsQuery(UserId UserId) : IRequest<Result<TeamMembershipListDto>>;

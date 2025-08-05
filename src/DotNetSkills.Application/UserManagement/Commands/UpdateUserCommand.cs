@@ -1,28 +1,15 @@
 namespace DotNetSkills.Application.UserManagement.Commands;
 
 /// <summary>
-/// Command to update an existing user in the system.
-/// This command represents a request to update user profile information.
-/// TODO: Implement IRequest&lt;UserResponse&gt; when MediatR is added.
+/// Command for updating user profile information (name and email).
+/// Implements CQRS pattern with MediatR and Result pattern for error handling.
 /// </summary>
+/// <param name="UserId">The ID of the user to update.</param>
+/// <param name="Name">The new name for the user.</param>
+/// <param name="Email">The new email address for the user.</param>
+/// <param name="UpdatedById">The ID of the user performing the update (optional for authorization).</param>
 public record UpdateUserCommand(
-    Guid UserId,
+    UserId UserId,
     string Name,
-    string Email)
-{
-    /// <summary>
-    /// Validates that required properties have values.
-    /// TODO: Implement proper FluentValidation when validator is created.
-    /// </summary>
-    public void Validate()
-    {
-        if (UserId == Guid.Empty)
-            throw new ArgumentException("UserId cannot be empty", nameof(UserId));
-
-        if (string.IsNullOrWhiteSpace(Name))
-            throw new ArgumentException("Name is required", nameof(Name));
-
-        if (string.IsNullOrWhiteSpace(Email))
-            throw new ArgumentException("Email is required", nameof(Email));
-    }
-}
+    string Email,
+    UserId? UpdatedById = null) : IRequest<Result<UserResponse>>;
