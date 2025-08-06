@@ -4,17 +4,17 @@
 
 This is a .NET 9 project management API demonstrating **Clean Architecture** and **Domain-Driven Design** principles. The project showcases enterprise-grade development practices with modern .NET patterns.
 
-**Current State**: Rich domain layer with 4 bounded contexts implemented. Application and Infrastructure layers are placeholder classes awaiting implementation.
+**Current State**: **Comprehensive implementation in progress** - Domain layer complete with 4 bounded contexts, Application layer has CQRS + MediatR structure with commands/queries/validators, Infrastructure layer with EF Core repositories and SQL Server setup, API layer with organized Minimal API endpoints.
 
 ## Architecture & Core Patterns
 
 ### Clean Architecture Structure (Dependency Rule: API → Application → Domain)
 ```
 src/
-├── DotNetSkills.API/           # Minimal API with weather template (replace with real endpoints)
-├── DotNetSkills.Application/   # Placeholder Class1.cs (implement CQRS + MediatR)
+├── DotNetSkills.API/           # ✅ Minimal APIs with organized endpoints by bounded context
+├── DotNetSkills.Application/   # ✅ CQRS with MediatR, AutoMapper, FluentValidation pipelines
 ├── DotNetSkills.Domain/        # ✅ Complete - 4 bounded contexts with rich domain models
-└── DotNetSkills.Infrastructure/ # Placeholder Class1.cs (implement EF Core repositories)
+└── DotNetSkills.Infrastructure/ # ✅ EF Core with SQL Server, repositories, configurations
 ```
 
 ### Domain-Driven Design Implementation
@@ -23,6 +23,32 @@ src/
 - **Strongly-Typed IDs**: All entities use `record UserId(Guid Value) : IStronglyTypedId<Guid>` pattern with implicit Guid conversion
 - **Domain Events**: Raised via `AggregateRoot<TId>.RaiseDomainEvent()` - stored in private `_domainEvents` list, cleared manually
 - **Aggregate Boundaries**: `User`, `Team`, `Project`, `Task` are separate roots; `TeamMember` is part of Team aggregate
+
+### Dependency Injection Architecture
+Each layer has a `DependencyInjection.cs` file with extension methods:
+```csharp
+// Program.cs - One line registers entire system
+builder.Services.AddApiServices(builder.Configuration);
+
+// Chain: API → Application → Infrastructure → Domain (via factory)
+builder.Services.AddApplicationServices();    // MediatR, AutoMapper, FluentValidation
+services.AddInfrastructureServices(config);   // EF Core, Repositories
+DomainServiceFactory.GetDomainServices();     // Domain services (no DI dependency)
+```
+**Pattern**: Each layer's `DependencyInjection.cs` calls lower layers automatically. Tests have their own DI configurations.
+
+### CQRS + MediatR Implementation Pattern
+```csharp
+// Command structure: Application/Features/{Context}/{Operation}/
+// Example: Application/UserManagement/Features/CreateUser/
+├── CreateUserCommand.cs           # IRequest<Result<UserResponse>>
+├── CreateUserCommandHandler.cs    # IRequestHandler implementation
+└── CreateUserCommandValidator.cs  # FluentValidation rules
+
+// Usage in endpoints:
+var result = await mediator.Send(new CreateUserCommand(name, email, role));
+return result.IsSuccess ? Results.Created() : Results.Problem();
+```
 
 ### Key Domain Patterns (Follow These Exactly)
 ```csharp
@@ -63,15 +89,19 @@ global using DotNetSkills.Domain.UserManagement.ValueObjects;
 # Build entire solution
 dotnet build
 
-# Run API (currently placeholder weather API at https://localhost:7240)
+# Run API with organized endpoints (not weather template anymore)
 dotnet run --project src/DotNetSkills.API
+# Access at https://localhost:7240 - Swagger available at /swagger
 
-# Run tests (domain logic tests exist but minimal)
-dotnet test
-dotnet test tests/DotNetSkills.Domain.UnitTests
+# Run tests by layer
+dotnet test tests/DotNetSkills.Domain.UnitTests      # Domain business logic
+dotnet test tests/DotNetSkills.Application.UnitTests # CQRS handlers + validation  
+dotnet test tests/DotNetSkills.Infrastructure.UnitTests # Repository integration
+dotnet test tests/DotNetSkills.API.UnitTests         # Endpoint integration
 
-# EF migrations (when Infrastructure layer is implemented)
+# EF Core migrations (SQL Server configured)
 dotnet ef migrations add <Name> --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
+dotnet ef database update --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
 ```
 
 ## Critical Business Rules & Constraints
@@ -89,20 +119,21 @@ dotnet ef migrations add <Name> --project src/DotNetSkills.Infrastructure --star
 - **Project ownership**: Each project belongs to exactly one team
 - **Status transitions**: Business rules prevent invalid state changes
 
-### Validation Patterns (Current Focus)
-- **Input validation**: Use `ArgumentException` for parameter validation
-- **Business rules**: Use `DomainException` for domain constraint violations
-- **Consistency**: Follow patterns in `CurrentTask.md` for validation standardization
+### Validation Patterns (Implemented)
+- **Input validation**: FluentValidation integrated with MediatR pipeline via `ValidationBehavior<TRequest, TResponse>`
+- **Business rules**: Use `DomainException` for domain constraint violations in entities
+- **Command validation**: Each command has a corresponding `*Validator.cs` using FluentValidation
+- **Result pattern**: Commands return `Result<T>` for success/failure with error messages
 
 ## Implementation Status & Next Steps
 
-**Current State**: Domain layer complete with 4 bounded contexts. Working on validation standardization (see `CurrentTask.md`).
+**Current State**: Domain layer complete with 4 bounded contexts. Application layer has CQRS commands/queries with MediatR + FluentValidation. Infrastructure has EF Core repositories and SQL Server integration. API has organized endpoints by bounded context.
 
 **Implementation Priority** (based on `plan/feature-dotnetskills-mvp-1.md`):
-1. **Infrastructure Layer**: EF Core DbContext, repository implementations, entity configurations
-2. **Application Layer**: MediatR commands/queries, DTOs, FluentValidation, AutoMapper
-3. **API Layer**: Replace weather template with real endpoints using Minimal API extension methods
-4. **Authentication**: JWT middleware and user management endpoints
+1. **Authentication**: JWT middleware and role-based authorization policies
+2. **API Integration**: Complete endpoint implementations and Swagger documentation
+3. **Testing**: Expand unit/integration test coverage across all layers
+4. **Performance**: Optimize queries, add caching, implement pagination
 
 ## Key Files & Patterns to Reference
 
@@ -125,15 +156,15 @@ dotnet ef migrations add <Name> --project src/DotNetSkills.Infrastructure --star
 - **Primary Constructors**: Used in record types and some entities with C# 13 features
 - **Domain Event Pattern**: `RaiseDomainEvent()` in aggregate roots, `ClearDomainEvents()` after processing
 
-## Technology Stack
+### Technology Stack
 
 - **.NET 9** with C# 13, nullable reference types enabled, primary constructors
-- **Minimal APIs** (currently placeholder weather endpoint - needs real implementation)
-- **Entity Framework Core** (not yet configured - Infrastructure layer is Class1.cs placeholder)
-- **MediatR** for CQRS (planned for Application layer)
-- **AutoMapper** for entity ↔ DTO mapping (planned)
-- **FluentValidation** for input validation (planned)
-- **Global using statements** per layer (see `Domain/GlobalUsings.cs` pattern)
+- **Minimal APIs** with organized endpoint groups per bounded context
+- **Entity Framework Core** with SQL Server, strongly-typed configurations
+- **MediatR** for CQRS with pipeline behaviors (validation, logging, performance)
+- **AutoMapper** for entity ↔ DTO mapping with configured profiles
+- **FluentValidation** for command/query validation with async rules
+- **Centralized DI** with layer-specific `DependencyInjection.cs` files
 
 ## Current Development Context
 

@@ -2,137 +2,133 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Essential Commands
+## Commands
 
-### Build and Test
+### Build & Test
 ```bash
-# Build entire solution
+# Restore dependencies
+dotnet restore
+
+# Build solution
 dotnet build
 
 # Run all tests
 dotnet test
 
-# Run specific test project
-dotnet test tests/DotNetSkills.Domain.UnitTests
-
 # Run tests with coverage
 dotnet test --collect:"XPlat Code Coverage"
 
-# Run API (currently placeholder weather endpoint at https://localhost:7240)
+# Run specific test project
+dotnet test tests/DotNetSkills.Domain.UnitTests
+
+# Start API in development mode
 dotnet run --project src/DotNetSkills.API
+
+# Hot reload during development
+dotnet watch run --project src/DotNetSkills.API
 ```
 
-### Database Operations (When Infrastructure is implemented)
+### Database Operations
 ```bash
-# Add migration
-dotnet ef migrations add <Name> --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
-
-# Update database
+# Apply migrations
 dotnet ef database update --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
+
+# Add new migration
+dotnet ef migrations add MigrationName --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
 ```
 
 ## Architecture Overview
 
-This is a .NET 9 project management API built with **Clean Architecture** and **Domain-Driven Design** principles.
+This codebase implements **Clean Architecture** with **Domain-Driven Design** patterns:
 
-### Clean Architecture Layers
-- **API Layer**: `DotNetSkills.API` - Minimal APIs (currently placeholder weather endpoint)
-- **Application Layer**: `DotNetSkills.Application` - Currently placeholder `Class1.cs`, will contain CQRS with MediatR
-- **Domain Layer**: `DotNetSkills.Domain` - **Complete** - Rich domain models with 4 bounded contexts
-- **Infrastructure Layer**: `DotNetSkills.Infrastructure` - Currently placeholder `Class1.cs`, will contain EF Core repositories
-
-### Domain Layer Structure (Complete - Follow These Patterns)
-
-The domain is organized into 4 bounded contexts:
-- `UserManagement/` - User entity with roles, status, team memberships
-- `TeamCollaboration/` - Team and TeamMember entities with membership management
-- `ProjectManagement/` - Project entities with team associations
-- `TaskExecution/` - Task entities with assignment and status management
-
-Each bounded context contains:
-- `Entities/` - Rich domain models with business logic
-- `ValueObjects/` - Strongly-typed IDs and value types
-- `Events/` - Domain events using `BaseDomainEvent` pattern
-- `Enums/` - Status and role enumerations with extension methods
-
-### Key Domain Patterns (Follow Exactly)
-
-**Strongly-Typed IDs**: All entities use this pattern:
-```csharp
-public record UserId(Guid Value) : IStronglyTypedId<Guid>
-{
-    public static UserId New() => new(Guid.NewGuid());
-    public static implicit operator Guid(UserId id) => id.Value;
-    public static explicit operator UserId(Guid value) => new(value);
-}
+```
+API Layer (Minimal APIs) → Application Layer (CQRS) → Domain Layer (Rich Models) ← Infrastructure Layer (EF Core)
 ```
 
-**Aggregate Root Pattern**: Business logic in entity methods with domain events:
-```csharp
-public class User : AggregateRoot<UserId>
-{
-    public void JoinTeam(Team team, TeamRole role)
-    {
-        // Business rule validation first
-        if (_teamMemberships.Any(m => m.TeamId == team.Id))
-            throw new DomainException("User is already a member of this team");
+### Project Structure
+- **DotNetSkills.API**: Minimal APIs, endpoints, middleware
+- **DotNetSkills.Application**: CQRS commands/queries, DTOs, validation
+- **DotNetSkills.Domain**: Entities, value objects, domain events, business rules
+- **DotNetSkills.Infrastructure**: EF Core, repositories, external services
 
-        // State change
-        var membership = new TeamMember(Id, team.Id, role);
-        _teamMemberships.Add(membership);
+### Key Patterns
+- **CQRS with MediatR**: Commands for writes, Queries for reads
+- **Rich Domain Models**: Business logic encapsulated in entities
+- **Unit of Work**: Transaction management across repositories
+- **Domain Events**: Cross-aggregate communication
+- **Repository Pattern**: Data access abstraction
 
-        // Domain event for cross-aggregate communication
-        RaiseDomainEvent(new UserJoinedTeamDomainEvent(Id, team.Id, role));
-    }
-}
+## Domain Structure
+
+The system has **4 bounded contexts**:
+
+1. **User Management**: Users, roles, authentication
+2. **Team Collaboration**: Teams, memberships, collaboration
+3. **Project Management**: Projects, lifecycle management
+4. **Task Execution**: Tasks, assignments, tracking
+
+Each context follows the same structure:
+```
+BoundedContext/
+├── Contracts/     # DTOs, repository interfaces
+├── Features/      # Commands/Queries by use case
+└── Mappings/      # AutoMapper profiles
 ```
 
-**Global Usings**: Each layer has `GlobalUsings.cs` with layer-specific imports. The domain layer includes comprehensive global usings for all bounded contexts.
-
-### Critical Business Rules (Implemented in Domain)
-
-- **Team membership limits**: `Team.MaxMembers = 50` enforced in `AddMember()`
-- **Single task assignment**: Tasks support one assignee only
-- **One-level subtask nesting**: Tasks can have subtasks, but subtasks cannot have children
-- **Project ownership**: Each project belongs to exactly one team
-- **Admin-only user creation**: User.Create() factory method enforces this rule
-
-### Technology Stack
-
-- **.NET 9** with C# 13, nullable reference types enabled, primary constructors
-- **Minimal APIs** (currently placeholder - needs real implementation)
-- **Entity Framework Core** (planned for Infrastructure layer)
-- **MediatR** for CQRS (planned for Application layer)
-- **AutoMapper** for entity ↔ DTO mapping (planned)
-- **FluentValidation** for input validation (planned)
-- **xUnit + FluentAssertions + Moq** for testing
-
-### Current Implementation Status
-
-**Domain Layer**: ✅ Complete with rich domain models, value objects, events, and business rules
-**Application Layer**: 📋 Placeholder - needs CQRS commands/queries with MediatR
-**Infrastructure Layer**: 📋 Placeholder - needs EF Core DbContext and repository implementations
-**API Layer**: 📋 Placeholder weather endpoint - needs real project management endpoints
-
-### Validation Patterns
-
-- **Input validation**: Use `ArgumentException` for parameter validation
-- **Business rules**: Use `DomainException` for domain constraint violations
-- **Validation messages**: Centralized in `ValidationMessages.cs` with formatting support
-
-### Authentication & Authorization (Planned)
-
-- **JWT-based** authentication with role hierarchy: Admin > ProjectManager > Developer > Viewer
-- **Admin-only user creation** - no self-registration in MVP
-- **Role-based access control** for all operations
+## Technology Stack
+- **.NET 9** with C# 13 features
+- **Entity Framework Core 9** with SQL Server
+- **MediatR** for CQRS implementation
+- **FluentValidation** for input validation
+- **AutoMapper** for DTO mapping
+- **xUnit, FluentAssertions, Moq** for testing
 
 ## Development Guidelines
 
-When implementing new features:
-1. Start with domain entities (rich models with business logic)
-2. Follow established patterns in existing domain contexts
-3. Use strongly-typed IDs for all entity identifiers
-4. Implement proper aggregate boundaries and domain events
-5. Follow the dependency rule: API → Application → Domain ← Infrastructure
+### Entity Framework
+- All entities inherit from `BaseEntity<TId>` or `AggregateRoot<TId>`
+- Value objects are used for strongly-typed IDs
+- Entity configurations use `IEntityTypeConfiguration<T>`
+- Domain events are automatically dispatched on SaveChanges
 
-The project follows strict SOLID principles, Clean Architecture patterns, and comprehensive Domain-Driven Design implementation as documented in the GitHub Copilot instructions.
+### CQRS Implementation
+- Commands modify state and return `Result<T>`
+- Queries return data without side effects
+- Each feature has its own folder with Command/Query/Handler/Validator
+- Use `PagedRequest/PagedResponse` for list operations
+
+### Domain Models
+- Business rules are enforced in entity methods
+- Use `Ensure.BusinessRule()` for validation
+- Domain events are raised using `RaiseDomainEvent()`
+- Value objects are immutable records
+
+### Repository Pattern
+- Each aggregate root has a corresponding repository interface
+- Repositories are accessed through `IUnitOfWork`
+- Use async methods for all database operations
+- Follow naming convention: `GetByIdAsync`, `AddAsync`, etc.
+
+### API Endpoints
+- Use Minimal APIs with extension methods for organization
+- Group endpoints by bounded context
+- Apply validation middleware and error handling
+- Return appropriate HTTP status codes
+
+## Testing Strategy
+- **Unit Tests**: Domain logic and business rules
+- **Integration Tests**: Repository and database operations
+- **API Tests**: End-to-end HTTP scenarios
+- Use test builders for complex object creation
+- Follow AAA pattern (Arrange, Act, Assert)
+
+## Configuration
+- `appsettings.json` for production settings
+- `appsettings.Development.json` for local development
+- Connection strings configured per environment
+- Swagger available at `/swagger` in development
+
+## Branch Strategy
+- **main**: Production-ready code
+- Feature branches follow naming convention
+- Current development happens on feature branches like `janitor-plan-c3`
