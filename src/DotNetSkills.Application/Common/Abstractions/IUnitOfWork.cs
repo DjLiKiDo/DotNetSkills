@@ -1,4 +1,7 @@
 using DotNetSkills.Application.UserManagement.Contracts;
+using DotNetSkills.Application.TeamCollaboration.Contracts;
+using DotNetSkills.Application.ProjectManagement.Contracts;
+using DotNetSkills.Application.TaskExecution.Contracts;
 
 namespace DotNetSkills.Application.Common.Abstractions;
 
@@ -12,6 +15,21 @@ public interface IUnitOfWork : IDisposable
     /// Gets the User repository.
     /// </summary>
     IUserRepository Users { get; }
+
+    /// <summary>
+    /// Gets the Team repository.
+    /// </summary>
+    ITeamRepository Teams { get; }
+
+    /// <summary>
+    /// Gets the Project repository.
+    /// </summary>
+    IProjectRepository Projects { get; }
+
+    /// <summary>
+    /// Gets the Task repository.
+    /// </summary>
+    ITaskRepository Tasks { get; }
 
     /// <summary>
     /// Saves all changes made in this unit of work to the underlying data store asynchronously.

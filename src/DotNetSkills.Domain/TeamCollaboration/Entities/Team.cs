@@ -24,6 +24,11 @@ public class Team : AggregateRoot<TeamId>
     public string? Description { get; private set; }
 
     /// <summary>
+    /// Gets the current status of the team.
+    /// </summary>
+    public TeamStatus Status { get; private set; }
+
+    /// <summary>
     /// Gets the read-only collection of team members.
     /// </summary>
     public IReadOnlyList<TeamMember> Members => _members.AsReadOnly();
@@ -39,6 +44,7 @@ public class Team : AggregateRoot<TeamId>
     private Team() : base(TeamId.New())
     {
         Name = string.Empty;
+        Status = TeamStatus.Active; // Default status
     }
 
     /// <summary>
@@ -61,6 +67,7 @@ public class Team : AggregateRoot<TeamId>
 
         Name = name.Trim();
         Description = description?.Trim();
+        Status = TeamStatus.Active; // New teams start as active
 
         // Raise domain event
         RaiseDomainEvent(new TeamCreatedDomainEvent(Id, Name, createdBy.Id));
@@ -286,5 +293,88 @@ public class Team : AggregateRoot<TeamId>
     public TeamMember? GetMember(UserId userId)
     {
         return _members.FirstOrDefault(m => m.UserId == userId);
+    }
+
+    /// <summary>
+    /// Changes the team status to the specified new status.
+    /// </summary>
+    /// <param name="newStatus">The new status to transition to.</param>
+    /// <param name="changedBy">The user making the status change.</param>
+    /// <exception cref="ArgumentNullException">Thrown when changedBy is null.</exception>
+    /// <exception cref="DomainException">Thrown when the status transition is invalid or user lacks permission.</exception>
+    public void ChangeStatus(TeamStatus newStatus, User changedBy)
+    {
+        Ensure.NotNull(changedBy, nameof(changedBy));
+
+        Ensure.BusinessRule(
+            changedBy.CanManageTeams(),
+            "Only users with team management privileges can change team status");
+
+        Ensure.BusinessRule(
+            Status.CanTransitionTo(newStatus),
+            $"Cannot transition team status from {Status} to {newStatus}");
+
+        if (Status == newStatus)
+            return; // No change needed
+
+        var previousStatus = Status;
+        Status = newStatus;
+
+        // Raise domain event for status change
+        RaiseDomainEvent(new TeamStatusChangedDomainEvent(Id, previousStatus, newStatus, changedBy.Id));
+    }
+
+    /// <summary>
+    /// Activates the team if it's currently inactive or pending.
+    /// </summary>
+    /// <param name="activatedBy">The user activating the team.</param>
+    public void Activate(User activatedBy)
+    {
+        ChangeStatus(TeamStatus.Active, activatedBy);
+    }
+
+    /// <summary>
+    /// Deactivates the team, preventing new members from joining.
+    /// </summary>
+    /// <param name="deactivatedBy">The user deactivating the team.</param>
+    public void Deactivate(User deactivatedBy)
+    {
+        ChangeStatus(TeamStatus.Inactive, deactivatedBy);
+    }
+
+    /// <summary>
+    /// Archives the team for historical purposes.
+    /// </summary>
+    /// <param name="archivedBy">The user archiving the team.</param>
+    public void Archive(User archivedBy)
+    {
+        ChangeStatus(TeamStatus.Archived, archivedBy);
+    }
+
+    /// <summary>
+    /// Determines if the team can accept new members based on its current status and member count.
+    /// </summary>
+    /// <returns>True if new members can join; otherwise, false.</returns>
+    public bool CanAcceptNewMembers()
+    {
+        return Status.AllowsMemberAddition() && _members.Count < MaxMembers;
+    }
+
+    /// <summary>
+    /// Determines if the team can create new projects based on its current status.
+    /// </summary>
+    /// <returns>True if new projects can be created; otherwise, false.</returns>
+    public bool CanCreateProjects()
+    {
+        return Status.AllowsProjectCreation();
+    }
+
+    /// <summary>
+    /// Determines if the team can perform operational activities based on its current status.
+    /// </summary>
+    /// <returns>True if operational activities are allowed; otherwise, false.</returns>
+    public bool IsOperational()
+    {
+        return Status.AllowsOperations();
     }
 }

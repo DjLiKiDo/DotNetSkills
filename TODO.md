@@ -10,6 +10,7 @@
 # API Layer TODOs
 
 [ ] BaseEndpoint.cs
+[ ] Review ExceptionHandlingMiddleware.cs
 [ ] API layer specific documentation
 
 # Application Layer TODOs
@@ -18,5 +19,8 @@
 
 # Infrastructure Layer TODOs
 
-[ ] BaseEndpoint.cs
+[ ] Migrations
+[ ] there are some warnings about shadow properties for TeamMember foreign keys. This is a known issue with EF Core when using strongly-typed IDs
+[ ] Database Creation: Run dotnet ef database update to create the database schema
+[ ] Production Deployment: Configure connection strings and deploy
 [ ] Infrastructure layer specific documentation

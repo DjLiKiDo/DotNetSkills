@@ -123,11 +123,13 @@ public static class UserEndpoints
     /// Handler for GET /api/v1/users endpoint.
     /// Returns paginated list of users with optional search filtering.
     /// </summary>
+    /// <param name="mediator">MediatR instance for sending queries</param>
     /// <param name="page">Page number (default: 1)</param>
     /// <param name="pageSize">Items per page (default: 20, max: 100)</param>
     /// <param name="search">Optional search term to filter users</param>
     /// <returns>Paginated user response with metadata</returns>
     private static async Task<IResult> GetUsers(
+        IMediator mediator,
         int page = 1,
         int pageSize = 20,
         string? search = null)
@@ -137,17 +139,17 @@ public static class UserEndpoints
             // Create query
             var query = new GetUsersQuery(page, pageSize, search);
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(query);
+            // Send query through MediatR
+            var result = await mediator.Send(query);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            var placeholderResponse = new PagedUserResponse(
-                Users: new List<UserResponse>(),
-                TotalCount: 0,
-                Page: page,
-                PageSize: pageSize);
-
-            return Results.Ok(placeholderResponse);
+            return result.IsSuccess 
+                ? Results.Ok(result.Value) 
+                : Results.BadRequest(new ProblemDetails
+                {
+                    Title = "Query Failed",
+                    Detail = result.Error,
+                    Status = StatusCodes.Status400BadRequest
+                });
         }
         catch (ArgumentException ex)
         {
@@ -172,28 +174,30 @@ public static class UserEndpoints
     /// Handler for GET /api/v1/users/{id} endpoint.
     /// Returns specific user details or 404 if not found.
     /// </summary>
+    /// <param name="mediator">MediatR instance for sending queries</param>
     /// <param name="id">User unique identifier</param>
     /// <returns>User details or 404 if not found</returns>
-    private static async Task<IResult> GetUserById(Guid id)
+    private static async Task<IResult> GetUserById(IMediator mediator, Guid id)
     {
         try
         {
             // Create query
             var query = new GetUserByIdQuery(new UserId(id));
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(query);
-            // if (result == null)
-            //     return Results.NotFound();
-            // return Results.Ok(result);
+            // Send query through MediatR
+            var result = await mediator.Send(query);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            return Results.NotFound(new ProblemDetails
+            if (!result.IsSuccess)
             {
-                Title = "User Not Found",
-                Detail = $"User with ID {id} was not found",
-                Status = StatusCodes.Status404NotFound
-            });
+                return Results.NotFound(new ProblemDetails
+                {
+                    Title = "User Not Found",
+                    Detail = result.Error,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
+
+            return Results.Ok(result.Value);
         }
         catch (ArgumentException ex)
         {
@@ -218,24 +222,30 @@ public static class UserEndpoints
     /// Handler for POST /api/v1/users endpoint.
     /// Creates a new user account - Admin only operation.
     /// </summary>
+    /// <param name="mediator">MediatR instance for sending commands</param>
     /// <param name="request">User creation request data</param>
     /// <returns>Created user response with 201 status</returns>
-    private static async Task<IResult> CreateUser(CreateUserRequest request)
+    private static async Task<IResult> CreateUser(IMediator mediator, CreateUserRequest request)
     {
         try
         {
             // Create command
             var command = request.ToCommand();
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command);
-            // return Results.Created($"/api/v1/users/{result.Id}", result);
+            // Send command through MediatR
+            var result = await mediator.Send(command);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            return Results.Problem(
-                title: "Not Implemented",
-                detail: "User creation functionality is not yet implemented. Application layer handlers are required.",
-                statusCode: StatusCodes.Status501NotImplemented);
+            if (!result.IsSuccess)
+            {
+                return Results.BadRequest(new ProblemDetails
+                {
+                    Title = "User Creation Failed",
+                    Detail = result.Error,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
+            return Results.Created($"/api/v1/users/{result.Value!.Id}", result.Value);
         }
         catch (ArgumentException ex)
         {
@@ -269,25 +279,31 @@ public static class UserEndpoints
     /// Handler for PUT /api/v1/users/{id} endpoint.
     /// Updates existing user profile information.
     /// </summary>
+    /// <param name="mediator">MediatR instance for sending commands</param>
     /// <param name="id">User unique identifier</param>
     /// <param name="request">User update request data</param>
     /// <returns>Updated user response</returns>
-    private static async Task<IResult> UpdateUser(Guid id, UpdateUserRequest request)
+    private static async Task<IResult> UpdateUser(IMediator mediator, Guid id, UpdateUserRequest request)
     {
         try
         {
             // Create command
             var command = request.ToCommand(new UserId(id));
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command);
-            // return Results.Ok(result);
+            // Send command through MediatR
+            var result = await mediator.Send(command);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            return Results.Problem(
-                title: "Not Implemented",
-                detail: "User update functionality is not yet implemented. Application layer handlers are required.",
-                statusCode: StatusCodes.Status501NotImplemented);
+            if (!result.IsSuccess)
+            {
+                return Results.BadRequest(new ProblemDetails
+                {
+                    Title = "User Update Failed",
+                    Detail = result.Error,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
+            return Results.Ok(result.Value);
         }
         catch (ArgumentException ex)
         {
@@ -321,26 +337,22 @@ public static class UserEndpoints
     /// Handler for DELETE /api/v1/users/{id} endpoint.
     /// Soft deletes a user by deactivating their account - Admin only operation.
     /// </summary>
+    /// <param name="mediator">MediatR instance for sending commands</param>
     /// <param name="id">User unique identifier</param>
     /// <returns>204 No Content on successful deletion</returns>
-    private static async Task<IResult> DeleteUser(Guid id)
+    private static async Task<IResult> DeleteUser(IMediator mediator, Guid id)
     {
         try
         {
             // Create and validate command
             var command = new DeleteUserCommand(new UserId(id));
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var success = await mediator.Send(command);
-            // if (!success)
-            //     return Results.NotFound();
-            // return Results.NoContent();
+            // Send command through MediatR
+            var result = await mediator.Send(command);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            return Results.Problem(
-                title: "Not Implemented",
-                detail: "User deletion functionality is not yet implemented. Application layer handlers are required.",
-                statusCode: StatusCodes.Status501NotImplemented);
+            // Since DeleteUserCommand returns UserResponse directly, not Result<UserResponse>
+            // we treat successful execution as success
+            return Results.NoContent();
         }
         catch (ArgumentException ex)
         {

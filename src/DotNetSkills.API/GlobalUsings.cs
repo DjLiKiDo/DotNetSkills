@@ -31,8 +31,8 @@ global using DotNetSkills.API.Configuration.Swagger.Filters;
 // global using Microsoft.AspNetCore.Authorization;
 // global using Microsoft.IdentityModel.Tokens;
 
-// MediatR (when added)
-// global using MediatR;
+// MediatR
+global using MediatR;
 
 // FluentValidation (when added)
 // global using FluentValidation;
@@ -90,14 +90,16 @@ global using DotNetSkills.Application.TaskExecution.Features.GetTaskSubtasks;
 global using DotNetSkills.Application.TaskExecution.Contracts.Responses;
 
 // Application layer references - Common
-// global using DotNetSkills.Application.Common.Models;
-// global using DotNetSkills.Application.Common.Interfaces;
+global using DotNetSkills.Application.Common.Models;
 
 // API layer endpoint extensions
 global using DotNetSkills.API.Endpoints.UserManagement;
 global using DotNetSkills.API.Endpoints.TeamCollaboration;
 global using DotNetSkills.API.Endpoints.ProjectManagement;
 global using DotNetSkills.API.Endpoints.TaskExecution;
+
+// API layer middleware
+global using DotNetSkills.API.Middleware;
 
 // Domain references (for basic types and exceptions)
 global using DotNetSkills.Domain.Common.Exceptions;
