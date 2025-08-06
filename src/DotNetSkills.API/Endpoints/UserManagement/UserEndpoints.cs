@@ -134,9 +134,8 @@ public static class UserEndpoints
     {
         try
         {
-            // Create and validate query
+            // Create query
             var query = new GetUsersQuery(page, pageSize, search);
-            query.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(query);
@@ -179,9 +178,8 @@ public static class UserEndpoints
     {
         try
         {
-            // Create and validate query
-            var query = new GetUserByIdQuery(id);
-            query.Validate();
+            // Create query
+            var query = new GetUserByIdQuery(new UserId(id));
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(query);
@@ -226,9 +224,8 @@ public static class UserEndpoints
     {
         try
         {
-            // Create and validate command
+            // Create command
             var command = request.ToCommand();
-            command.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command);
@@ -279,9 +276,8 @@ public static class UserEndpoints
     {
         try
         {
-            // Create and validate command
-            var command = request.ToCommand(id);
-            command.Validate();
+            // Create command
+            var command = request.ToCommand(new UserId(id));
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command);
@@ -332,8 +328,7 @@ public static class UserEndpoints
         try
         {
             // Create and validate command
-            var command = new DeleteUserCommand(id);
-            command.Validate();
+            var command = new DeleteUserCommand(new UserId(id));
 
             // TODO: Replace with MediatR.Send when implemented
             // var success = await mediator.Send(command);

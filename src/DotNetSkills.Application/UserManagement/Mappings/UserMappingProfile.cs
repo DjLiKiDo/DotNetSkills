@@ -1,4 +1,9 @@
 using DotNetSkills.Application.Common.Mappings;
+using DotNetSkills.Application.UserManagement.Features.CreateUser;
+using DotNetSkills.Application.UserManagement.Features.UpdateUser;
+using DotNetSkills.Application.UserManagement.Features.UpdateUserRole;
+using DotNetSkills.Application.UserManagement.Contracts.Requests;
+using DotNetSkills.Application.UserManagement.Contracts.Responses;
 
 namespace DotNetSkills.Application.UserManagement.Mappings;
 

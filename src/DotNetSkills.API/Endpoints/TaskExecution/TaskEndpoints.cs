@@ -139,8 +139,8 @@ public static class TaskEndpoints
             var query = new GetTasksQuery(
                 queryParams.PageNumber,
                 queryParams.PageSize,
-                queryParams.ProjectId,
-                queryParams.AssignedUserId,
+                queryParams.ProjectId.HasValue ? new ProjectId(queryParams.ProjectId.Value) : null,
+                queryParams.AssignedUserId.HasValue ? new UserId(queryParams.AssignedUserId.Value) : null,
                 queryParams.Status,
                 queryParams.Priority,
                 queryParams.DueDateFrom,
@@ -155,7 +155,6 @@ public static class TaskEndpoints
                 queryParams.SortDirection
             );
 
-            query.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(query, cancellationToken);
@@ -214,7 +213,6 @@ public static class TaskEndpoints
             var taskId = new TaskId(id);
             var query = new GetTaskByIdQuery(taskId);
 
-            query.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var task = await mediator.Send(query, cancellationToken);
@@ -248,7 +246,6 @@ public static class TaskEndpoints
     {
         try
         {
-            request.Validate();
 
             // TODO: Get current user ID from authentication context
             var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
@@ -265,7 +262,6 @@ public static class TaskEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(command, cancellationToken);
@@ -307,7 +303,6 @@ public static class TaskEndpoints
     {
         try
         {
-            request.Validate();
 
             // TODO: Get current user ID from authentication context
             var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
@@ -322,7 +317,6 @@ public static class TaskEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(command, cancellationToken);
@@ -371,7 +365,6 @@ public static class TaskEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // await mediator.Send(command, cancellationToken);
@@ -413,7 +406,6 @@ public static class TaskEndpoints
     {
         try
         {
-            request.Validate();
 
             // TODO: Get current user ID from authentication context
             var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
@@ -425,7 +417,6 @@ public static class TaskEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(command, cancellationToken);

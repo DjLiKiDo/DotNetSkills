@@ -122,9 +122,8 @@ public static class TeamEndpoints
     {
         try
         {
-            // Create and validate query
+            // Create query - validation will be handled by FluentValidation in the pipeline
             var query = new GetTeamsQuery(page, pageSize, search);
-            query.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(query, cancellationToken);

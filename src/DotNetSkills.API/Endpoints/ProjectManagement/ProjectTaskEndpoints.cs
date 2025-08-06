@@ -117,7 +117,7 @@ public static class ProjectTaskEndpoints
                 Page: page,
                 PageSize: pageSize,
                 Status: status,
-                AssignedUserId: assignedUserId,
+                AssignedUserId: assignedUserId.HasValue ? new UserId(assignedUserId.Value) : null,
                 Priority: priority,
                 DueDateFrom: dueDateFrom,
                 DueDateTo: dueDateTo,
@@ -126,7 +126,6 @@ public static class ProjectTaskEndpoints
                 Search: search
             );
 
-            query.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(query, cancellationToken);
@@ -188,7 +187,6 @@ public static class ProjectTaskEndpoints
             // Validate request
             try
             {
-                request.Validate();
             }
             catch (ValidationException ex)
             {
@@ -284,7 +282,6 @@ public static class ProjectTaskEndpoints
             // Validate request
             try
             {
-                request.Validate();
             }
             catch (ValidationException ex)
             {

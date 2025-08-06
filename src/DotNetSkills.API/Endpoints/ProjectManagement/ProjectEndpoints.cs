@@ -145,7 +145,6 @@ public static class ProjectEndpoints
                 endDateTo,
                 search);
 
-            query.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(query, cancellationToken);

@@ -125,7 +125,6 @@ public static class TaskAssignmentEndpoints
     {
         try
         {
-            request.Validate();
 
             // TODO: Get current user ID from authentication context
             var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
@@ -136,7 +135,6 @@ public static class TaskAssignmentEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(command, cancellationToken);
@@ -185,7 +183,6 @@ public static class TaskAssignmentEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(command, cancellationToken);
@@ -227,7 +224,6 @@ public static class TaskAssignmentEndpoints
     {
         try
         {
-            request.Validate();
 
             // TODO: Get current user ID from authentication context
             var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
@@ -243,7 +239,6 @@ public static class TaskAssignmentEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(command, cancellationToken);
@@ -287,7 +282,6 @@ public static class TaskAssignmentEndpoints
             var taskId = new TaskId(id);
             var query = new GetTaskSubtasksQuery(taskId);
 
-            query.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(query, cancellationToken);
@@ -331,7 +325,6 @@ public static class TaskAssignmentEndpoints
     {
         try
         {
-            request.Validate();
 
             // TODO: Get current user ID from authentication context
             var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
@@ -346,7 +339,6 @@ public static class TaskAssignmentEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(command, cancellationToken);

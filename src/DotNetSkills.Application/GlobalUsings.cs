@@ -27,7 +27,7 @@ global using FluentValidation.Results;
 
 // Application layer specific globals - Application Common
 global using DotNetSkills.Application.Common.Behaviors;
-global using DotNetSkills.Application.Common.Interfaces;
+global using DotNetSkills.Application.Common.Abstractions;
 global using DotNetSkills.Application.Common.Models;
 
 // Application layer specific globals - Domain references
@@ -44,10 +44,16 @@ global using DotNetSkills.Domain.UserManagement.ValueObjects;
 global using DotNetSkills.Domain.UserManagement.Enums;
 global using DotNetSkills.Domain.UserManagement.Events;
 
-// User Management Application references
-global using DotNetSkills.Application.UserManagement.Commands;
-global using DotNetSkills.Application.UserManagement.Queries;
-global using DotNetSkills.Application.UserManagement.DTOs;
+// User Management Application references - Feature Slices
+global using DotNetSkills.Application.UserManagement.Features.CreateUser;
+global using DotNetSkills.Application.UserManagement.Features.UpdateUser;
+global using DotNetSkills.Application.UserManagement.Features.UpdateUserRole;
+global using DotNetSkills.Application.UserManagement.Features.DeactivateUser;
+global using DotNetSkills.Application.UserManagement.Features.GetUser;
+global using DotNetSkills.Application.UserManagement.Features.GetUsers;
+global using DotNetSkills.Application.UserManagement.Contracts;
+global using DotNetSkills.Application.UserManagement.Contracts.Requests;
+global using DotNetSkills.Application.UserManagement.Contracts.Responses;
 
 // Team Collaboration Domain references
 global using DotNetSkills.Domain.TeamCollaboration.Entities;
@@ -55,10 +61,19 @@ global using DotNetSkills.Domain.TeamCollaboration.ValueObjects;
 global using DotNetSkills.Domain.TeamCollaboration.Enums;
 global using DotNetSkills.Domain.TeamCollaboration.Events;
 
-// Team Collaboration Application references
-global using DotNetSkills.Application.TeamCollaboration.Commands;
-global using DotNetSkills.Application.TeamCollaboration.Queries;
-global using DotNetSkills.Application.TeamCollaboration.DTOs;
+// Team Collaboration Application references - Feature Slices
+global using DotNetSkills.Application.TeamCollaboration.Features.CreateTeam;
+global using DotNetSkills.Application.TeamCollaboration.Features.UpdateTeam;
+global using DotNetSkills.Application.TeamCollaboration.Features.DeleteTeam;
+global using DotNetSkills.Application.TeamCollaboration.Features.GetTeam;
+global using DotNetSkills.Application.TeamCollaboration.Features.GetTeams;
+global using DotNetSkills.Application.TeamCollaboration.Features.AddTeamMember;
+global using DotNetSkills.Application.TeamCollaboration.Features.RemoveTeamMember;
+global using DotNetSkills.Application.TeamCollaboration.Features.UpdateMemberRole;
+global using DotNetSkills.Application.TeamCollaboration.Features.GetTeamMembers;
+global using DotNetSkills.Application.TeamCollaboration.Contracts;
+global using DotNetSkills.Application.TeamCollaboration.Contracts.Requests;
+global using DotNetSkills.Application.TeamCollaboration.Contracts.Responses;
 
 // Project Management Domain references
 global using DotNetSkills.Domain.ProjectManagement.Entities;
@@ -66,10 +81,18 @@ global using DotNetSkills.Domain.ProjectManagement.ValueObjects;
 global using DotNetSkills.Domain.ProjectManagement.Enums;
 global using DotNetSkills.Domain.ProjectManagement.Events;
 
-// Project Management Application references
-global using DotNetSkills.Application.ProjectManagement.Commands;
-global using DotNetSkills.Application.ProjectManagement.Queries;
-global using DotNetSkills.Application.ProjectManagement.DTOs;
+// Project Management Application references - Feature Slices
+global using DotNetSkills.Application.ProjectManagement.Features.CreateProject;
+global using DotNetSkills.Application.ProjectManagement.Features.UpdateProject;
+global using DotNetSkills.Application.ProjectManagement.Features.ArchiveProject;
+global using DotNetSkills.Application.ProjectManagement.Features.GetProject;
+global using DotNetSkills.Application.ProjectManagement.Features.GetProjects;
+global using DotNetSkills.Application.ProjectManagement.Features.GetProjectTasks;
+global using DotNetSkills.Application.ProjectManagement.Features.CreateTaskInProject;
+global using DotNetSkills.Application.ProjectManagement.Features.UpdateTaskInProject;
+global using DotNetSkills.Application.ProjectManagement.Contracts;
+global using DotNetSkills.Application.ProjectManagement.Contracts.Requests;
+global using DotNetSkills.Application.ProjectManagement.Contracts.Responses;
 
 // Task Execution Domain references (aliased to avoid conflicts)
 global using DomainTask = DotNetSkills.Domain.TaskExecution.Entities.Task;
@@ -77,7 +100,14 @@ global using DotNetSkills.Domain.TaskExecution.ValueObjects;
 global using DotNetSkills.Domain.TaskExecution.Enums;
 global using DotNetSkills.Domain.TaskExecution.Events;
 
-// Task Execution Application references
-global using DotNetSkills.Application.TaskExecution.Commands;
-global using DotNetSkills.Application.TaskExecution.Queries;
-global using DotNetSkills.Application.TaskExecution.DTOs;
+// Task Execution Application references - Feature Slices
+global using DotNetSkills.Application.TaskExecution.Features.CreateTask;
+global using DotNetSkills.Application.TaskExecution.Features.UpdateTask;
+global using DotNetSkills.Application.TaskExecution.Features.DeleteTask;
+global using DotNetSkills.Application.TaskExecution.Features.GetTask;
+global using DotNetSkills.Application.TaskExecution.Features.GetTasks;
+global using DotNetSkills.Application.TaskExecution.Features.AssignTask;
+global using DotNetSkills.Application.TaskExecution.Features.UpdateTaskStatus;
+global using DotNetSkills.Application.TaskExecution.Features.GetTaskSubtasks;
+global using DotNetSkills.Application.TaskExecution.Contracts;
+global using DotNetSkills.Application.TaskExecution.Contracts.Responses;
