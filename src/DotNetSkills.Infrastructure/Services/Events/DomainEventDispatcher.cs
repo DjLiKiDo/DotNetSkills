@@ -88,7 +88,7 @@ public class DomainEventDispatcher : IDomainEventDispatcher
             eventsList.Count);
 
         var dispatchedCount = 0;
-        var failedEvents = new List<(IDomainEvent Event, Exception Exception)>();
+        List<(IDomainEvent Event, Exception Exception)> failedEvents = [];
 
         foreach (var domainEvent in eventsList)
         {
@@ -250,8 +250,8 @@ public class DomainEventDispatcher : IDomainEventDispatcher
         }
 
         // Collect all domain events from all aggregates
-        var allDomainEvents = new List<IDomainEvent>();
-        var aggregatesWithEvents = new List<AggregateRoot<IStronglyTypedId<Guid>>>();
+        List<IDomainEvent> allDomainEvents = [];
+        List<AggregateRoot<IStronglyTypedId<Guid>>> aggregatesWithEvents = [];
 
         foreach (var aggregate in aggregatesList)
         {

@@ -287,19 +287,13 @@ public static class BusinessRules
         public static bool CanAddMemberToTeam(UserStatus userStatus, UserRole userRole,
                                             int currentMemberCount, UserRole requestorRole)
         {
-            // Check if requestor has permission to manage teams
-            if (!Authorization.CanManageTeam(requestorRole))
-                return false;
-
-            // Check if user is active
-            if (userStatus != UserStatus.Active)
-                return false;
-
-            // Check team size limits
-            if (currentMemberCount >= ValidationConstants.Numeric.TeamMaxMembers)
-                return false;
-
-            return true;
+            return (requestorRole, userStatus, currentMemberCount) switch
+            {
+                var (role, status, count) when !Authorization.CanManageTeam(role) => false,
+                var (_, status, _) when status != UserStatus.Active => false,
+                var (_, _, count) when count >= ValidationConstants.Numeric.TeamMaxMembers => false,
+                _ => true
+            };
         }
 
         /// <summary>
@@ -369,23 +363,14 @@ public static class BusinessRules
                                        UserRole assigneeRole, UserStatus assigneeStatus,
                                        UserRole assignerRole, bool isAlreadyAssigned)
         {
-            // Check if assigner has permission to assign tasks
-            if (!Authorization.CanAssignTasks(assignerRole))
-                return false;
-
-            // Check if task is in a state that allows assignment
-            if (!TaskStatus.CanBeAssigned(taskStatus))
-                return false;
-
-            // Check if assignee can be assigned tasks
-            if (!Authorization.CanBeAssignedTasks(assigneeRole))
-                return false;
-
-            // Check if assignee is active
-            if (assigneeStatus != UserStatus.Active)
-                return false;
-
-            return true;
+            return (assignerRole, taskStatus, assigneeRole, assigneeStatus) switch
+            {
+                var (role, _, _, _) when !Authorization.CanAssignTasks(role) => false,
+                var (_, status, _, _) when !TaskStatus.CanBeAssigned(status) => false,
+                var (_, _, role, _) when !Authorization.CanBeAssignedTasks(role) => false,
+                var (_, _, _, status) when status != UserStatus.Active => false,
+                _ => true
+            };
         }
 
         /// <summary>
@@ -438,21 +423,15 @@ public static class BusinessRules
         /// <returns>True if the due date is valid, false otherwise.</returns>
         public static bool IsValidDueDate(DateTime? dueDate, string entityType)
         {
-            if (!dueDate.HasValue)
-                return true; // Null due dates are allowed
-
             var now = DateTime.UtcNow.AddMinutes(ValidationConstants.DateTimes.FutureDateBufferMinutes);
-
-            // Due date must be in the future
-            if (dueDate.Value <= now)
-                return false;
-
-            // Check entity-specific constraints
-            return entityType.ToLowerInvariant() switch
+            
+            return (dueDate, entityType?.ToLowerInvariant()) switch
             {
-                "task" => IsValidTaskDueDate(dueDate.Value, now),
-                "project" => IsValidProjectDueDate(dueDate.Value, now),
-                _ => IsValidGenericDueDate(dueDate.Value, now)
+                (null, _) => true, // Null due dates are allowed
+                (var date, _) when date <= now => false, // Due date must be in the future
+                (var date, "task") => IsValidTaskDueDate(date.Value, now),
+                (var date, "project") => IsValidProjectDueDate(date.Value, now),
+                (var date, _) => IsValidGenericDueDate(date.Value, now)
             };
         }
 
@@ -491,19 +470,14 @@ public static class BusinessRules
         /// <returns>True if the estimation is valid, false otherwise.</returns>
         public static bool IsValidEstimatedHours(int? estimatedHours, int? parentEstimatedHours)
         {
-            if (!estimatedHours.HasValue)
-                return true; // Null estimates are allowed
-
-            // Basic range validation
-            if (estimatedHours.Value < ValidationConstants.Numeric.TaskMinEstimatedHours ||
-                estimatedHours.Value > ValidationConstants.Numeric.TaskMaxEstimatedHours)
-                return false;
-
-            // Subtask estimates should not exceed parent task estimates
-            if (parentEstimatedHours.HasValue && estimatedHours.Value > parentEstimatedHours.Value)
-                return false;
-
-            return true;
+            return (estimatedHours, parentEstimatedHours) switch
+            {
+                (null, _) => true, // Null estimates are allowed
+                (var hours, _) when hours < ValidationConstants.Numeric.TaskMinEstimatedHours ||
+                                    hours > ValidationConstants.Numeric.TaskMaxEstimatedHours => false,
+                (var hours, var parent) when parent.HasValue && hours > parent.Value => false,
+                _ => true
+            };
         }
     }
 }

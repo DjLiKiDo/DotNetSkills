@@ -52,7 +52,7 @@ public record CreateTaskInProjectRequest
     /// <exception cref="ValidationException">Thrown when validation fails.</exception>
     public void Validate()
     {
-        var errors = new List<string>();
+        List<string> errors = [];
 
         if (string.IsNullOrWhiteSpace(Title))
             errors.Add("Task title is required and cannot be empty.");

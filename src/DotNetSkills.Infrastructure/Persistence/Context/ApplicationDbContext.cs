@@ -148,7 +148,7 @@ public class ApplicationDbContext : DbContext
             .Where(e => e.Entity.DomainEvents.Any())
             .Select(e => e.Entity);
 
-        var domainEvents = new List<(AggregateRoot<IStronglyTypedId<Guid>>, List<IDomainEvent>)>();
+        List<(AggregateRoot<IStronglyTypedId<Guid>>, List<IDomainEvent>)> domainEvents = [];
 
         foreach (var aggregate in aggregateRoots)
         {

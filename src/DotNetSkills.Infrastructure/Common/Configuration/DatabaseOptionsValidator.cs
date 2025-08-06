@@ -14,7 +14,7 @@ public class DatabaseOptionsValidator : IValidateOptions<DatabaseOptions>
             return ValidateOptionsResult.Fail("DatabaseOptions cannot be null");
         }
 
-        var failures = new List<string>();
+        List<string> failures = [];
 
         if (string.IsNullOrWhiteSpace(options.ConnectionString))
         {
