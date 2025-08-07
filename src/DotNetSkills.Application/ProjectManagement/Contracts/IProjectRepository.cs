@@ -2,25 +2,34 @@ namespace DotNetSkills.Application.ProjectManagement.Contracts;
 
 /// <summary>
 /// Repository interface specific to Project entities.
-/// Extends the generic repository with Project-specific query methods for project management operations.
+/// Extends the generic repository with Project-specific query methods.
 /// </summary>
 public interface IProjectRepository : IRepository<Project, ProjectId>
 {
     /// <summary>
-    /// Gets projects by their associated team asynchronously.
+    /// Gets a project by its name asynchronously.
+    /// </summary>
+    /// <param name="name">The project name.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The project if found, otherwise null.</returns>
+    Task<Project?> GetByNameAsync(string name, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Checks if a project with the specified name exists.
+    /// </summary>
+    /// <param name="name">The project name to check.</param>
+    /// <param name="excludeProjectId">Optional project ID to exclude from the check (for updates).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if a project with the name exists, otherwise false.</returns>
+    Task<bool> ExistsByNameAsync(string name, ProjectId? excludeProjectId = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets projects by team ID asynchronously.
     /// </summary>
     /// <param name="teamId">The team ID to filter by.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A collection of projects belonging to the specified team.</returns>
     Task<IEnumerable<Project>> GetByTeamIdAsync(TeamId teamId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets a project with its tasks included asynchronously.
-    /// </summary>
-    /// <param name="id">The project ID.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The project with tasks if found, otherwise null.</returns>
-    Task<Project?> GetWithTasksAsync(ProjectId id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets projects by their status asynchronously.
@@ -31,21 +40,6 @@ public interface IProjectRepository : IRepository<Project, ProjectId>
     Task<IEnumerable<Project>> GetByStatusAsync(ProjectStatus status, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Checks if a project with the specified name exists within a team scope.
-    /// Project names must be unique within each team.
-    /// </summary>
-    /// <param name="name">The project name to check.</param>
-    /// <param name="teamId">The team ID for scoping the uniqueness check.</param>
-    /// <param name="excludeProjectId">Optional project ID to exclude from the check (for updates).</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if a project with the name exists in the team, otherwise false.</returns>
-    Task<bool> ExistsByNameInTeamAsync(
-        string name, 
-        TeamId teamId, 
-        ProjectId? excludeProjectId = null, 
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Gets projects with pagination support asynchronously.
     /// </summary>
     /// <param name="pageNumber">The page number (1-based).</param>
@@ -53,89 +47,66 @@ public interface IProjectRepository : IRepository<Project, ProjectId>
     /// <param name="searchTerm">Optional search term to filter by name or description.</param>
     /// <param name="teamId">Optional team filter.</param>
     /// <param name="status">Optional status filter.</param>
-    /// <param name="startDateFrom">Optional start date range filter (from).</param>
-    /// <param name="startDateTo">Optional start date range filter (to).</param>
-    /// <param name="endDateFrom">Optional end date range filter (from).</param>
-    /// <param name="endDateTo">Optional end date range filter (to).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A paginated collection of projects with task counts.</returns>
+    /// <returns>A paginated collection of projects.</returns>
     Task<(IEnumerable<Project> Projects, int TotalCount)> GetPagedAsync(
         int pageNumber,
         int pageSize,
         string? searchTerm = null,
         TeamId? teamId = null,
         ProjectStatus? status = null,
-        DateTime? startDateFrom = null,
-        DateTime? startDateTo = null,
-        DateTime? endDateFrom = null,
-        DateTime? endDateTo = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets projects with their task counts asynchronously.
-    /// Optimized for dashboard and reporting scenarios.
+    /// Gets projects by team ID as an async enumerable for streaming large result sets.
+    /// Memory-efficient for processing many projects for a specific team.
     /// </summary>
-    /// <param name="teamId">Optional team filter.</param>
-    /// <param name="status">Optional status filter.</param>
+    /// <param name="teamId">The team ID to filter by.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A collection of projects with task count information.</returns>
-    Task<IEnumerable<(Project Project, int TotalTasks, int CompletedTasks, int ActiveTasks)>> GetWithTaskCountsAsync(
-        TeamId? teamId = null,
-        ProjectStatus? status = null,
-        CancellationToken cancellationToken = default);
+    /// <returns>An async enumerable of projects for the specified team.</returns>
+    IAsyncEnumerable<Project> GetByTeamIdAsyncEnumerable(TeamId teamId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets projects that are overdue (past their planned end date).
+    /// Gets projects by their status as an async enumerable for streaming large result sets.
+    /// Memory-efficient for processing many projects with the specified status.
     /// </summary>
-    /// <param name="teamId">Optional team filter.</param>
+    /// <param name="status">The project status to filter by.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A collection of overdue projects.</returns>
-    Task<IEnumerable<Project>> GetOverdueProjectsAsync(TeamId? teamId = null, CancellationToken cancellationToken = default);
+    /// <returns>An async enumerable of projects with the specified status.</returns>
+    IAsyncEnumerable<Project> GetByStatusAsyncEnumerable(ProjectStatus status, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets projects that are approaching their deadline within the specified number of days.
+    /// Gets all active projects as an async enumerable for bulk operations.
+    /// Optimized for memory efficiency when processing large numbers of active projects.
     /// </summary>
-    /// <param name="daysUntilDeadline">The number of days before deadline to consider.</param>
-    /// <param name="teamId">Optional team filter.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A collection of projects approaching their deadline.</returns>
-    Task<IEnumerable<Project>> GetProjectsApproachingDeadlineAsync(
-        int daysUntilDeadline,
-        TeamId? teamId = null,
-        CancellationToken cancellationToken = default);
+    /// <returns>An async enumerable of active projects.</returns>
+    IAsyncEnumerable<Project> GetActiveProjectsAsyncEnumerable(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets projects by date range for reporting and analytics.
+    /// Gets a project with its tasks eagerly loaded.
+    /// Prevents N+1 query problems when accessing task data.
     /// </summary>
-    /// <param name="startDate">The start date of the range.</param>
-    /// <param name="endDate">The end date of the range.</param>
-    /// <param name="dateType">The type of date to filter by (Created, Started, or Planned End).</param>
+    /// <param name="id">The project ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A collection of projects within the specified date range.</returns>
-    Task<IEnumerable<Project>> GetByDateRangeAsync(
-        DateTime startDate,
-        DateTime endDate,
-        ProjectDateFilterType dateType = ProjectDateFilterType.Created,
-        CancellationToken cancellationToken = default);
-}
-
-/// <summary>
-/// Enumeration for different date filter types when querying projects.
-/// </summary>
-public enum ProjectDateFilterType
-{
-    /// <summary>
-    /// Filter by project creation date.
-    /// </summary>
-    Created,
+    /// <returns>The project with tasks if found, otherwise null.</returns>
+    Task<Project?> GetWithTasksAsync(ProjectId id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Filter by project start date.
+    /// Gets a project with its team information eagerly loaded.
+    /// Optimized for scenarios that need team context.
     /// </summary>
-    Started,
+    /// <param name="id">The project ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The project with team information if found, otherwise null.</returns>
+    Task<Project?> GetWithTeamAsync(ProjectId id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Filter by project planned end date.
+    /// Gets projects with their task counts for dashboard scenarios.
+    /// Prevents N+1 problems when displaying project statistics.
     /// </summary>
-    PlannedEnd
+    /// <param name="teamId">Optional team ID filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Projects with task count information.</returns>
+    Task<IEnumerable<(Project Project, int TaskCount)>> GetWithTaskCountsAsync(TeamId? teamId = null, CancellationToken cancellationToken = default);
 }

@@ -1,3 +1,5 @@
+using DotNetSkills.Application.TaskExecution.Projections;
+
 namespace DotNetSkills.Infrastructure.Repositories.TaskExecution;
 
 /// <summary>
@@ -432,6 +434,301 @@ public class TaskRepository : BaseRepository<DotNetSkills.Domain.TaskExecution.E
         return await DbSet
             .AsNoTracking()
             .AnyAsync(t => t.ParentTaskId == taskId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Gets tasks by their associated project as an async enumerable for streaming large result sets.
+    /// Memory-efficient for processing many tasks in a project.
+    /// </summary>
+    /// <param name="projectId">The project ID to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of tasks belonging to the specified project.</returns>
+    public IAsyncEnumerable<DotNetSkills.Domain.TaskExecution.Entities.Task> GetByProjectIdAsyncEnumerable(
+        ProjectId projectId, 
+        CancellationToken cancellationToken = default)
+    {
+        if (projectId == null)
+            throw new ArgumentNullException(nameof(projectId));
+
+        return DbSet
+            .AsNoTracking()
+            .Where(t => t.ProjectId == projectId)
+            .OrderBy(t => t.Title)
+            .AsAsyncEnumerable();
+    }
+
+    /// <summary>
+    /// Gets tasks assigned to a specific user as an async enumerable.
+    /// Memory-efficient for users with many assigned tasks.
+    /// </summary>
+    /// <param name="userId">The user ID to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of tasks assigned to the specified user.</returns>
+    public IAsyncEnumerable<DotNetSkills.Domain.TaskExecution.Entities.Task> GetByAssigneeIdAsyncEnumerable(
+        UserId userId, 
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == null)
+            throw new ArgumentNullException(nameof(userId));
+
+        return DbSet
+            .AsNoTracking()
+            .Where(t => t.AssignedUserId == userId)
+            .OrderBy(t => t.Priority)
+            .ThenBy(t => t.DueDate ?? DateTime.MaxValue)
+            .AsAsyncEnumerable();
+    }
+
+    /// <summary>
+    /// Gets tasks by their status as an async enumerable for bulk operations.
+    /// Optimized for memory efficiency when processing large numbers of tasks with specific status.
+    /// </summary>
+    /// <param name="status">The task status to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of tasks with the specified status.</returns>
+    public IAsyncEnumerable<DotNetSkills.Domain.TaskExecution.Entities.Task> GetByStatusAsyncEnumerable(
+        DotNetSkills.Domain.TaskExecution.Enums.TaskStatus status, 
+        CancellationToken cancellationToken = default)
+    {
+        return DbSet
+            .AsNoTracking()
+            .Where(t => t.Status == status)
+            .OrderBy(t => t.Priority)
+            .ThenBy(t => t.DueDate ?? DateTime.MaxValue)
+            .AsAsyncEnumerable();
+    }
+
+    // Strategic Include Methods
+
+    /// <summary>
+    /// Gets a task with its project information included.
+    /// Prevents N+1 queries when project details are needed.
+    /// </summary>
+    /// <param name="id">The task ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The task with project information if found, otherwise null.</returns>
+    public async Task<DotNetSkills.Domain.TaskExecution.Entities.Task?> GetWithProjectAsync(
+        TaskId id, 
+        CancellationToken cancellationToken = default)
+    {
+        // For now, return without Include since navigation properties aren't configured
+        // This method serves as a placeholder for future EF Core navigation property configuration
+        return await DbSet
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets tasks with their assigned user information included.
+    /// Optimized for scenarios where user details are needed.
+    /// </summary>
+    /// <param name="projectId">The project ID to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of tasks with assigned user information.</returns>
+    public async Task<IEnumerable<DotNetSkills.Domain.TaskExecution.Entities.Task>> GetProjectTasksWithAssigneesAsync(
+        ProjectId projectId, 
+        CancellationToken cancellationToken = default)
+    {
+        // For now, return without Include since navigation properties aren't configured
+        // This method serves as a placeholder for future EF Core navigation property configuration
+        return await DbSet
+            .AsNoTracking()
+            .Where(t => t.ProjectId == projectId)
+            .OrderBy(t => t.Priority)
+            .ThenBy(t => t.DueDate ?? DateTime.MaxValue)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets a task with complete hierarchy (parent and subtasks) included.
+    /// Prevents multiple queries for task hierarchy operations.
+    /// Uses split queries for optimal performance with multiple collections.
+    /// </summary>
+    /// <param name="id">The task ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The task with complete hierarchy if found, otherwise null.</returns>
+    public async Task<DotNetSkills.Domain.TaskExecution.Entities.Task?> GetWithCompleteHierarchyAsync(
+        TaskId id, 
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AsSplitQuery() // Use split queries for better performance with multiple collections
+            .Include(t => t.Subtasks)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    // Projection Methods
+
+    /// <summary>
+    /// Gets task summaries with optimized projection for read-only scenarios.
+    /// Minimizes data transfer by selecting only required fields.
+    /// </summary>
+    /// <param name="projectId">Optional project filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of task summary projections.</returns>
+    public async Task<IEnumerable<TaskSummaryProjection>> GetTaskSummariesAsync(
+        ProjectId? projectId = null, 
+        CancellationToken cancellationToken = default)
+    {
+        var query = DbSet.AsNoTracking();
+
+        if (projectId != null)
+            query = query.Where(t => t.ProjectId == projectId);
+
+        return await query
+            .Select(t => new TaskSummaryProjection
+            {
+                Id = t.Id.Value,
+                Title = t.Title,
+                Description = t.Description ?? string.Empty,
+                Status = t.Status.ToString(),
+                Priority = t.Priority.ToString(),
+                CreatedAt = t.CreatedAt,
+                DueDate = t.DueDate,
+                ProjectId = t.ProjectId.Value,
+                ProjectName = Context.Set<Project>().Where(p => p.Id == t.ProjectId).Select(p => p.Name).FirstOrDefault() ?? string.Empty,
+                AssignedUserId = t.AssignedUserId != null ? t.AssignedUserId.Value : null,
+                AssignedUserName = t.AssignedUserId != null ? Context.Set<User>().Where(u => u.Id == t.AssignedUserId).Select(u => u.Name).FirstOrDefault() : null,
+                SubtaskCount = t.Subtasks.Count
+            })
+            .OrderBy(t => t.Priority)
+            .ThenBy(t => t.DueDate ?? DateTime.MaxValue)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets task dashboard information with aggregated data.
+    /// Optimized for dashboard scenarios with minimal queries.
+    /// </summary>
+    /// <param name="userId">Optional user filter for assigned tasks.</param>
+    /// <param name="projectId">Optional project filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of task dashboard projections.</returns>
+    public async Task<IEnumerable<TaskDashboardProjection>> GetTaskDashboardDataAsync(
+        UserId? userId = null,
+        ProjectId? projectId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var query = DbSet.AsNoTracking();
+
+        if (userId != null)
+            query = query.Where(t => t.AssignedUserId == userId);
+
+        if (projectId != null)
+            query = query.Where(t => t.ProjectId == projectId);
+
+        return await query
+            .Select(t => new TaskDashboardProjection
+            {
+                Id = t.Id.Value,
+                Title = t.Title,
+                Description = t.Description ?? string.Empty,
+                Status = t.Status.ToString(),
+                Priority = t.Priority.ToString(),
+                CreatedAt = t.CreatedAt,
+                UpdatedAt = t.UpdatedAt,
+                DueDate = t.DueDate,
+                ProjectId = t.ProjectId.Value,
+                ProjectName = Context.Set<Project>().Where(p => p.Id == t.ProjectId).Select(p => p.Name).FirstOrDefault() ?? string.Empty,
+                AssignedUserId = t.AssignedUserId != null ? t.AssignedUserId.Value : null,
+                AssignedUserName = t.AssignedUserId != null ? Context.Set<User>().Where(u => u.Id == t.AssignedUserId).Select(u => u.Name).FirstOrDefault() : null,
+                ParentTaskId = t.ParentTaskId != null ? t.ParentTaskId.Value : null,
+                ParentTaskTitle = t.ParentTaskId != null ? Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>().Where(pt => pt.Id == t.ParentTaskId).Select(pt => pt.Title).FirstOrDefault() : null,
+                SubtaskCount = t.Subtasks.Count,
+                CompletedSubtaskCount = t.Subtasks.Count(sub => sub.Status == DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done),
+                CompletionPercentage = t.Subtasks.Count > 0 
+                    ? (decimal)t.Subtasks.Count(sub => sub.Status == DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done) / t.Subtasks.Count * 100
+                    : (t.Status == DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done ? 100 : 0),
+                IsOverdue = t.DueDate.HasValue && t.DueDate.Value < DateTime.UtcNow && t.Status != DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done
+            })
+            .OrderBy(t => t.Priority)
+            .ThenBy(t => t.DueDate ?? DateTime.MaxValue)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets task selection data for dropdowns and selection lists.
+    /// Minimal projection for UI scenarios.
+    /// </summary>
+    /// <param name="projectId">Optional project filter.</param>
+    /// <param name="assignableOnly">Whether to return only assignable tasks (unassigned or current user).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of task selection projections.</returns>
+    public async Task<IEnumerable<TaskSelectionProjection>> GetTaskSelectionsAsync(
+        ProjectId? projectId = null,
+        bool assignableOnly = false,
+        CancellationToken cancellationToken = default)
+    {
+        var query = DbSet.AsNoTracking();
+
+        if (projectId != null)
+            query = query.Where(t => t.ProjectId == projectId);
+
+        if (assignableOnly)
+            query = query.Where(t => t.AssignedUserId == null || t.Status != DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done);
+
+        return await query
+            .Select(t => new TaskSelectionProjection
+            {
+                Id = t.Id.Value,
+                Title = t.Title,
+                Status = t.Status.ToString(),
+                Priority = t.Priority.ToString(),
+                ProjectId = t.ProjectId.Value,
+                ProjectName = Context.Set<Project>().Where(p => p.Id == t.ProjectId).Select(p => p.Name).FirstOrDefault() ?? string.Empty,
+                CanHaveSubtasks = t.ParentTaskId == null // Only root tasks can have subtasks
+            })
+            .OrderBy(t => t.Priority)
+            .ThenBy(t => t.Title)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets task assignment information for a specific user.
+    /// Shows tasks assigned to the user with context.
+    /// </summary>
+    /// <param name="userId">The user ID to get task assignments for.</param>
+    /// <param name="includeCompleted">Whether to include completed tasks.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of task assignment projections.</returns>
+    public async Task<IEnumerable<TaskAssignmentProjection>> GetUserTaskAssignmentsAsync(
+        UserId userId, 
+        bool includeCompleted = false,
+        CancellationToken cancellationToken = default)
+    {
+        var query = DbSet
+            .AsNoTracking()
+            .Where(t => t.AssignedUserId == userId);
+
+        if (!includeCompleted)
+            query = query.Where(t => t.Status != DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done);
+
+        return await query
+            .Select(t => new TaskAssignmentProjection
+            {
+                Id = t.Id.Value,
+                Title = t.Title,
+                Status = t.Status.ToString(),
+                Priority = t.Priority.ToString(),
+                DueDate = t.DueDate,
+                ProjectId = t.ProjectId.Value,
+                ProjectName = Context.Set<Project>().Where(p => p.Id == t.ProjectId).Select(p => p.Name).FirstOrDefault() ?? string.Empty,
+                AssignedUserId = t.AssignedUserId!.Value,
+                AssignedUserName = Context.Set<User>().Where(u => u.Id == t.AssignedUserId).Select(u => u.Name).FirstOrDefault() ?? string.Empty,
+                AssignedUserEmail = Context.Set<User>().Where(u => u.Id == t.AssignedUserId).Select(u => u.Email).FirstOrDefault() ?? string.Empty,
+                CreatedAt = t.CreatedAt,
+                EstimatedHours = t.EstimatedHours ?? 0,
+                IsOverdue = t.DueDate.HasValue && t.DueDate.Value < DateTime.UtcNow && t.Status != DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done
+            })
+            .OrderBy(t => t.Priority)
+            .ThenBy(t => t.DueDate ?? DateTime.MaxValue)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>

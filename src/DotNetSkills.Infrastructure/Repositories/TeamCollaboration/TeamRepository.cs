@@ -1,3 +1,15 @@
+using DotNetSkills.Application.TeamCollaboration.Contracts;
+using DotNetSkills.Application.TeamCollaboration.Projections;
+using DotNetSkills.Domain.ProjectManagement.Entities;
+using DotNetSkills.Domain.ProjectManagement.Enums;
+using DotNetSkills.Domain.TeamCollaboration.Entities;
+using DotNetSkills.Domain.TeamCollaboration.Enums;
+using DotNetSkills.Domain.TeamCollaboration.ValueObjects;
+using DotNetSkills.Domain.UserManagement.ValueObjects;
+using DotNetSkills.Infrastructure.Persistence;
+using DotNetSkills.Infrastructure.Repositories.Common;
+using Microsoft.EntityFrameworkCore;
+
 namespace DotNetSkills.Infrastructure.Repositories.TeamCollaboration;
 
 /// <summary>
@@ -258,6 +270,166 @@ public class TeamRepository : BaseRepository<Team, TeamId>, ITeamRepository
             .ThenByDescending(t => t.Members.Count())
             .ThenBy(t => t.Name)
             .ToListAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Gets teams by their status as an async enumerable for streaming large result sets.
+    /// Memory-efficient for processing many teams with the specified status.
+    /// </summary>
+    /// <param name="status">The team status to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of teams with the specified status.</returns>
+    public IAsyncEnumerable<Team> GetByStatusAsyncEnumerable(TeamStatus status, CancellationToken cancellationToken = default)
+    {
+        return DbSet
+            .AsNoTracking()
+            .Where(t => t.Status == status)
+            .OrderBy(t => t.Name)
+            .AsAsyncEnumerable();
+    }
+
+    /// <summary>
+    /// Gets teams that a specific user is a member of as an async enumerable.
+    /// Memory-efficient for users who are members of many teams.
+    /// </summary>
+    /// <param name="userId">The user ID to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of teams the user is a member of.</returns>
+    public IAsyncEnumerable<Team> GetByUserMembershipAsyncEnumerable(UserId userId, CancellationToken cancellationToken = default)
+    {
+        return DbSet
+            .AsNoTracking()
+            .Where(t => t.Members.Any(m => m.UserId == userId))
+            .OrderBy(t => t.Name)
+            .AsAsyncEnumerable();
+    }
+
+    /// <summary>
+    /// Gets all active teams as an async enumerable for bulk operations.
+    /// Optimized for memory efficiency when processing large numbers of active teams.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of active teams.</returns>
+    public IAsyncEnumerable<Team> GetActiveTeamsAsyncEnumerable(CancellationToken cancellationToken = default)
+    {
+        return DbSet
+            .AsNoTracking()
+            .Where(t => t.Status == TeamStatus.Active)
+            .OrderBy(t => t.Name)
+            .AsAsyncEnumerable();
+    }
+
+    /// <summary>
+    /// Gets team summaries with optimized projection for read-only scenarios.
+    /// Minimizes data transfer by selecting only required fields.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of team summary projections.</returns>
+    public async Task<IEnumerable<TeamSummaryProjection>> GetTeamSummariesAsync(CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Select(t => new TeamSummaryProjection
+            {
+                Id = t.Id.Value,
+                Name = t.Name,
+                Description = t.Description ?? string.Empty,
+                Status = t.Status.ToString(),
+                CreatedAt = t.CreatedAt,
+                MemberCount = t.Members.Count,
+                ProjectCount = Context.Set<Project>().Count(p => p.TeamId == t.Id)
+            })
+            .OrderBy(t => t.Name)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets team dashboard information with aggregated data.
+    /// Optimized for dashboard scenarios with minimal queries.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of team dashboard projections.</returns>
+    public async Task<IEnumerable<TeamDashboardProjection>> GetTeamDashboardDataAsync(CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Where(t => t.Status == TeamStatus.Active)
+            .Select(t => new TeamDashboardProjection
+            {
+                Id = t.Id.Value,
+                Name = t.Name,
+                Description = t.Description ?? string.Empty,
+                Status = t.Status.ToString(),
+                MemberCount = t.Members.Count,
+                ActiveProjectCount = Context.Set<Project>().Count(p => p.TeamId == t.Id && p.Status == ProjectStatus.Active),
+                CompletedProjectCount = Context.Set<Project>().Count(p => p.TeamId == t.Id && p.Status == ProjectStatus.Completed),
+                ActiveTaskCount = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                    .Count(task => Context.Set<Project>().Any(p => p.TeamId == t.Id && p.Id == task.ProjectId) 
+                                   && task.Status != DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done),
+                CompletedTaskCount = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                    .Count(task => Context.Set<Project>().Any(p => p.TeamId == t.Id && p.Id == task.ProjectId) 
+                                   && task.Status == DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done),
+                CreatedAt = t.CreatedAt,
+                UpdatedAt = t.UpdatedAt
+            })
+            .OrderBy(t => t.Name)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets team selection data for dropdowns and selection lists.
+    /// Minimal projection for UI scenarios.
+    /// </summary>
+    /// <param name="activeOnly">Whether to return only active teams.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of team selection projections.</returns>
+    public async Task<IEnumerable<TeamSelectionProjection>> GetTeamSelectionsAsync(bool activeOnly = true, CancellationToken cancellationToken = default)
+    {
+        var query = DbSet.AsNoTracking();
+
+        if (activeOnly)
+            query = query.Where(t => t.Status == TeamStatus.Active);
+
+        return await query
+            .Select(t => new TeamSelectionProjection
+            {
+                Id = t.Id.Value,
+                Name = t.Name,
+                Status = t.Status.ToString(),
+                IsActive = t.Status == TeamStatus.Active,
+                MemberCount = t.Members.Count
+            })
+            .OrderBy(t => t.Name)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets team membership information for a specific user.
+    /// Shows teams the user belongs to with role context.
+    /// </summary>
+    /// <param name="userId">The user ID to get team memberships for.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of team membership projections.</returns>
+    public async Task<IEnumerable<TeamMembershipProjection>> GetUserTeamMembershipsAsync(UserId userId, CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Where(t => t.Members.Any(m => m.UserId == userId))
+            .Select(t => new TeamMembershipProjection
+            {
+                TeamId = t.Id.Value,
+                TeamName = t.Name,
+                TeamStatus = t.Status.ToString(),
+                MemberRole = t.Members.First(m => m.UserId == userId).Role.ToString(),
+                JoinedAt = t.Members.First(m => m.UserId == userId).CreatedAt,
+                TotalMembers = t.Members.Count
+            })
+            .OrderBy(t => t.TeamName)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>

@@ -448,8 +448,18 @@ public class Task : AggregateRoot<TaskId>
             return Status == TaskStatus.Done ? 100m : 0m;
         }
 
-        var completedSubtasks = _subtasks.Count(st => st.Status == TaskStatus.Done);
-        return _subtasks.Count == 0 ? 0m : (decimal)completedSubtasks / _subtasks.Count * 100m;
+        // Optimize: Use single enumeration instead of calling Count() twice
+        var totalSubtasks = _subtasks.Count;
+        if (totalSubtasks == 0) return 0m;
+
+        var completedSubtasks = 0;
+        for (int i = 0; i < totalSubtasks; i++)
+        {
+            if (_subtasks[i].Status == TaskStatus.Done)
+                completedSubtasks++;
+        }
+
+        return (decimal)completedSubtasks / totalSubtasks * 100m;
     }
 
     /// <summary>

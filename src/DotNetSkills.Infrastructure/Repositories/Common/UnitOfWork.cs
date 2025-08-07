@@ -105,7 +105,7 @@ public class UnitOfWork : IUnitOfWork
             }
 
             // Save changes to the database
-            var affectedRows = await _context.SaveChangesAsync(cancellationToken);
+            var affectedRows = await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             
             _logger.LogDebug("SaveChanges completed successfully, affected {RowCount} rows", affectedRows);
 

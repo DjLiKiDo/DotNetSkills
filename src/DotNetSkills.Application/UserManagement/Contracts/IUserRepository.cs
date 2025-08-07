@@ -1,4 +1,4 @@
-namespace DotNetSkills.Application.UserManagement.Contracts;
+using DotNetSkills.Application.UserManagement.Projections;
 
 /// <summary>
 /// Repository interface specific to User entities.
@@ -63,4 +63,55 @@ public interface IUserRepository : IRepository<User, UserId>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A collection of users who are members of the specified team.</returns>
     Task<IEnumerable<User>> GetByTeamMembershipAsync(TeamId teamId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets users by their role as an async enumerable for streaming large result sets.
+    /// Memory-efficient for processing many users with the specified role.
+    /// </summary>
+    /// <param name="role">The user role to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of users with the specified role.</returns>
+    IAsyncEnumerable<User> GetByRoleAsyncEnumerable(UserRole role, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets users by their status as an async enumerable for streaming large result sets.
+    /// Memory-efficient for processing many users with the specified status.
+    /// </summary>
+    /// <param name="status">The user status to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of users with the specified status.</returns>
+    IAsyncEnumerable<User> GetByStatusAsyncEnumerable(UserStatus status, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all active users as an async enumerable for bulk operations.
+    /// Optimized for memory efficiency when processing large numbers of active users.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of active users.</returns>
+    IAsyncEnumerable<User> GetActiveUsersAsyncEnumerable(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets user summaries with optimized projection for read-only scenarios.
+    /// Minimizes data transfer by selecting only required fields.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of user summary projections.</returns>
+    Task<IEnumerable<UserSummaryProjection>> GetUserSummariesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets user dashboard information with aggregated data.
+    /// Optimized for dashboard scenarios with minimal queries.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of user dashboard projections.</returns>
+    Task<IEnumerable<UserDashboardProjection>> GetUserDashboardDataAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets user selection data for dropdowns and selection lists.
+    /// Minimal projection for UI scenarios.
+    /// </summary>
+    /// <param name="activeOnly">Whether to return only active users.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of user selection projections.</returns>
+    Task<IEnumerable<UserSelectionProjection>> GetUserSelectionsAsync(bool activeOnly = true, CancellationToken cancellationToken = default);
 }

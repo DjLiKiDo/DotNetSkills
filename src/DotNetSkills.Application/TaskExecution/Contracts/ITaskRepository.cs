@@ -1,3 +1,5 @@
+using DotNetSkills.Application.TaskExecution.Projections;
+
 namespace DotNetSkills.Application.TaskExecution.Contracts;
 
 /// <summary>
@@ -170,4 +172,124 @@ public interface ITaskRepository : IRepository<DotNetSkills.Domain.TaskExecution
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if the task has subtasks, otherwise false.</returns>
     Task<bool> HasSubtasksAsync(TaskId taskId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets tasks by their associated project as an async enumerable for streaming large result sets.
+    /// Memory-efficient for processing many tasks in a project.
+    /// </summary>
+    /// <param name="projectId">The project ID to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of tasks belonging to the specified project.</returns>
+    IAsyncEnumerable<DotNetSkills.Domain.TaskExecution.Entities.Task> GetByProjectIdAsyncEnumerable(
+        ProjectId projectId, 
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets tasks assigned to a specific user as an async enumerable.
+    /// Memory-efficient for users with many assigned tasks.
+    /// </summary>
+    /// <param name="userId">The user ID to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of tasks assigned to the specified user.</returns>
+    IAsyncEnumerable<DotNetSkills.Domain.TaskExecution.Entities.Task> GetByAssigneeIdAsyncEnumerable(
+        UserId userId, 
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets tasks by their status as an async enumerable for bulk operations.
+    /// Optimized for memory efficiency when processing large numbers of tasks with specific status.
+    /// </summary>
+    /// <param name="status">The task status to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of tasks with the specified status.</returns>
+    IAsyncEnumerable<DotNetSkills.Domain.TaskExecution.Entities.Task> GetByStatusAsyncEnumerable(
+        DotNetSkills.Domain.TaskExecution.Enums.TaskStatus status, 
+        CancellationToken cancellationToken = default);
+
+    // Strategic Include Methods
+
+    /// <summary>
+    /// Gets a task with its project information included.
+    /// Prevents N+1 queries when project details are needed.
+    /// </summary>
+    /// <param name="id">The task ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The task with project information if found, otherwise null.</returns>
+    Task<DotNetSkills.Domain.TaskExecution.Entities.Task?> GetWithProjectAsync(
+        TaskId id, 
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets tasks with their assigned user information included.
+    /// Optimized for scenarios where user details are needed.
+    /// </summary>
+    /// <param name="projectId">The project ID to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of tasks with assigned user information.</returns>
+    Task<IEnumerable<DotNetSkills.Domain.TaskExecution.Entities.Task>> GetProjectTasksWithAssigneesAsync(
+        ProjectId projectId, 
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a task with complete hierarchy (parent and subtasks) included.
+    /// Prevents multiple queries for task hierarchy operations.
+    /// </summary>
+    /// <param name="id">The task ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The task with complete hierarchy if found, otherwise null.</returns>
+    Task<DotNetSkills.Domain.TaskExecution.Entities.Task?> GetWithCompleteHierarchyAsync(
+        TaskId id, 
+        CancellationToken cancellationToken = default);
+
+    // Projection Methods
+
+    /// <summary>
+    /// Gets task summaries with optimized projection for read-only scenarios.
+    /// Minimizes data transfer by selecting only required fields.
+    /// </summary>
+    /// <param name="projectId">Optional project filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of task summary projections.</returns>
+    Task<IEnumerable<TaskSummaryProjection>> GetTaskSummariesAsync(
+        ProjectId? projectId = null, 
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets task dashboard information with aggregated data.
+    /// Optimized for dashboard scenarios with minimal queries.
+    /// </summary>
+    /// <param name="userId">Optional user filter for assigned tasks.</param>
+    /// <param name="projectId">Optional project filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of task dashboard projections.</returns>
+    Task<IEnumerable<TaskDashboardProjection>> GetTaskDashboardDataAsync(
+        UserId? userId = null,
+        ProjectId? projectId = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets task selection data for dropdowns and selection lists.
+    /// Minimal projection for UI scenarios.
+    /// </summary>
+    /// <param name="projectId">Optional project filter.</param>
+    /// <param name="assignableOnly">Whether to return only assignable tasks (unassigned or current user).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of task selection projections.</returns>
+    Task<IEnumerable<TaskSelectionProjection>> GetTaskSelectionsAsync(
+        ProjectId? projectId = null,
+        bool assignableOnly = false,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets task assignment information for a specific user.
+    /// Shows tasks assigned to the user with context.
+    /// </summary>
+    /// <param name="userId">The user ID to get task assignments for.</param>
+    /// <param name="includeCompleted">Whether to include completed tasks.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of task assignment projections.</returns>
+    Task<IEnumerable<TaskAssignmentProjection>> GetUserTaskAssignmentsAsync(
+        UserId userId, 
+        bool includeCompleted = false,
+        CancellationToken cancellationToken = default);
 }

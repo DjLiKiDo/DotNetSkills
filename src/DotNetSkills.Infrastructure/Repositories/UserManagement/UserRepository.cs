@@ -1,4 +1,4 @@
-namespace DotNetSkills.Infrastructure.Repositories.UserManagement;
+using DotNetSkills.Application.UserManagement.Projections;
 
 /// <summary>
 /// Entity Framework Core implementation of the IUserRepository interface.
@@ -28,7 +28,8 @@ public class UserRepository : BaseRepository<User, UserId>, IUserRepository
 
         return await DbSet
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email.Value == email.Value, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Email.Value == email.Value, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>
@@ -45,7 +46,8 @@ public class UserRepository : BaseRepository<User, UserId>, IUserRepository
 
         return await DbSet
             .AsNoTracking()
-            .AnyAsync(u => u.Email.Value == email.Value, cancellationToken);
+            .AnyAsync(u => u.Email.Value == email.Value, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>
@@ -215,6 +217,193 @@ public class UserRepository : BaseRepository<User, UserId>, IUserRepository
             .GroupBy(u => new { u.Role, u.Status })
             .Select(g => new ValueTuple<UserRole, UserStatus, int>(g.Key.Role, g.Key.Status, g.Count()))
             .ToListAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Gets users by their role as an async enumerable for streaming large result sets.
+    /// Memory-efficient for processing many users with the specified role.
+    /// </summary>
+    /// <param name="role">The user role to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of users with the specified role.</returns>
+    public IAsyncEnumerable<User> GetByRoleAsyncEnumerable(UserRole role, CancellationToken cancellationToken = default)
+    {
+        return DbSet
+            .AsNoTracking()
+            .Where(u => u.Role == role)
+            .OrderBy(u => u.Name)
+            .AsAsyncEnumerable();
+    }
+
+    /// <summary>
+    /// Gets users by their status as an async enumerable for streaming large result sets.
+    /// Memory-efficient for processing many users with the specified status.
+    /// </summary>
+    /// <param name="status">The user status to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of users with the specified status.</returns>
+    public IAsyncEnumerable<User> GetByStatusAsyncEnumerable(UserStatus status, CancellationToken cancellationToken = default)
+    {
+        return DbSet
+            .AsNoTracking()
+            .Where(u => u.Status == status)
+            .OrderBy(u => u.Name)
+            .AsAsyncEnumerable();
+    }
+
+    /// <summary>
+    /// Gets all active users as an async enumerable for bulk operations.
+    /// Optimized for memory efficiency when processing large numbers of active users.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of active users.</returns>
+    public IAsyncEnumerable<User> GetActiveUsersAsyncEnumerable(CancellationToken cancellationToken = default)
+    {
+        return DbSet
+            .AsNoTracking()
+            .Where(u => u.Status == UserStatus.Active)
+            .OrderBy(u => u.Name)
+            .AsAsyncEnumerable();
+    }
+
+    /// <summary>
+    /// Gets user summaries with optimized projection for read-only scenarios.
+    /// Minimizes data transfer by selecting only required fields.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of user summary projections.</returns>
+    public async Task<IEnumerable<UserSummaryProjection>> GetUserSummariesAsync(CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Select(u => new UserSummaryProjection
+            {
+                Id = u.Id.Value,
+                Name = u.Name,
+                Email = u.Email.Value,
+                Role = u.Role.ToString(),
+                Status = u.Status.ToString(),
+                CreatedAt = u.CreatedAt,
+                TeamMembershipCount = u.TeamMemberships.Count
+            })
+            .OrderBy(u => u.Name)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets user dashboard information with aggregated data.
+    /// Optimized for dashboard scenarios with minimal queries.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of user dashboard projections.</returns>
+    public async Task<IEnumerable<UserDashboardProjection>> GetUserDashboardDataAsync(CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AsNoTracking()
+            .Where(u => u.Status == UserStatus.Active)
+            .Select(u => new UserDashboardProjection
+            {
+                Id = u.Id.Value,
+                Name = u.Name,
+                Email = u.Email.Value,
+                Role = u.Role.ToString(),
+                Status = u.Status.ToString(),
+                ActiveTeamCount = u.TeamMemberships.Count(tm => 
+                    Context.Set<Team>().Any(t => t.Id == tm.TeamId && t.Status == TeamStatus.Active)),
+                AssignedTaskCount = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                    .Count(t => t.AssignedUserId == u.Id && t.Status != DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done),
+                CompletedTaskCount = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                    .Count(t => t.AssignedUserId == u.Id && t.Status == DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done),
+                LastLoginAt = null // TODO: Add LastLoginAt to User entity if needed
+            })
+            .OrderBy(u => u.Name)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets user selection data for dropdowns and selection lists.
+    /// Minimal projection for UI scenarios.
+    /// </summary>
+    /// <param name="activeOnly">Whether to return only active users.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of user selection projections.</returns>
+    public async Task<IEnumerable<UserSelectionProjection>> GetUserSelectionsAsync(bool activeOnly = true, CancellationToken cancellationToken = default)
+    {
+        var query = DbSet.AsNoTracking();
+
+        if (activeOnly)
+            query = query.Where(u => u.Status == UserStatus.Active);
+
+        return await query
+            .Select(u => new UserSelectionProjection
+            {
+                Id = u.Id.Value,
+                Name = u.Name,
+                Email = u.Email.Value,
+                Role = u.Role.ToString(),
+                IsActive = u.Status == UserStatus.Active
+            })
+            .OrderBy(u => u.Name)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets a user with their team memberships and team details eagerly loaded.
+    /// Optimized for scenarios that need full team context.
+    /// </summary>
+    /// <param name="id">The user ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The user with complete team information if found, otherwise null.</returns>
+    public async Task<User?> GetWithTeamsAsync(UserId id, CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .Include(u => u.TeamMemberships)
+                .ThenInclude(tm => Context.Set<Team>()
+                    .Where(t => t.Id == tm.TeamId)
+                    .Select(t => new { t.Id, t.Name, t.Status }))
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets users with their team memberships for a batch operation.
+    /// Prevents N+1 problems when loading multiple users with teams.
+    /// Uses split queries for optimal performance with multiple collections.
+    /// </summary>
+    /// <param name="userIds">The user IDs to load.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Users with their team memberships.</returns>
+    public async Task<IEnumerable<User>> GetBatchWithTeamMembershipsAsync(IEnumerable<UserId> userIds, CancellationToken cancellationToken = default)
+    {
+        var userIdValues = userIds.Select(id => id.Value).ToList();
+        
+        return await DbSet
+            .AsSplitQuery() // Use split queries for better performance with collections
+            .Include(u => u.TeamMemberships)
+            .Where(u => userIdValues.Contains(u.Id.Value))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets all active users with their team memberships in a single query.
+    /// Optimized for dashboard and reporting scenarios.
+    /// Uses split queries for optimal performance with multiple collections.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Active users with team memberships.</returns>
+    public async Task<IEnumerable<User>> GetActiveUsersWithTeamsAsync(CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AsSplitQuery() // Use split queries for better performance with collections
+            .Include(u => u.TeamMemberships)
+            .Where(u => u.Status == UserStatus.Active)
+            .OrderBy(u => u.Name)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>

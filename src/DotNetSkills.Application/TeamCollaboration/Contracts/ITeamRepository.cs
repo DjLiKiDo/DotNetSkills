@@ -1,4 +1,4 @@
-namespace DotNetSkills.Application.TeamCollaboration.Contracts;
+using DotNetSkills.Application.TeamCollaboration.Projections;
 
 /// <summary>
 /// Repository interface specific to Team entities.
@@ -90,4 +90,64 @@ public interface ITeamRepository : IRepository<Team, TeamId>
         TeamId teamId, 
         TeamRole? role = null, 
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets teams by their status as an async enumerable for streaming large result sets.
+    /// Memory-efficient for processing many teams with the specified status.
+    /// </summary>
+    /// <param name="status">The team status to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of teams with the specified status.</returns>
+    IAsyncEnumerable<Team> GetByStatusAsyncEnumerable(DotNetSkills.Domain.TeamCollaboration.Enums.TeamStatus status, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets teams that a specific user is a member of as an async enumerable.
+    /// Memory-efficient for users who are members of many teams.
+    /// </summary>
+    /// <param name="userId">The user ID to filter by.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of teams the user is a member of.</returns>
+    IAsyncEnumerable<Team> GetByUserMembershipAsyncEnumerable(UserId userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all active teams as an async enumerable for bulk operations.
+    /// Optimized for memory efficiency when processing large numbers of active teams.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of active teams.</returns>
+    IAsyncEnumerable<Team> GetActiveTeamsAsyncEnumerable(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets team summaries with optimized projection for read-only scenarios.
+    /// Minimizes data transfer by selecting only required fields.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of team summary projections.</returns>
+    Task<IEnumerable<TeamSummaryProjection>> GetTeamSummariesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets team dashboard information with aggregated data.
+    /// Optimized for dashboard scenarios with minimal queries.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of team dashboard projections.</returns>
+    Task<IEnumerable<TeamDashboardProjection>> GetTeamDashboardDataAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets team selection data for dropdowns and selection lists.
+    /// Minimal projection for UI scenarios.
+    /// </summary>
+    /// <param name="activeOnly">Whether to return only active teams.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of team selection projections.</returns>
+    Task<IEnumerable<TeamSelectionProjection>> GetTeamSelectionsAsync(bool activeOnly = true, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets team membership information for a specific user.
+    /// Shows teams the user belongs to with role context.
+    /// </summary>
+    /// <param name="userId">The user ID to get team memberships for.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of team membership projections.</returns>
+    Task<IEnumerable<TeamMembershipProjection>> GetUserTeamMembershipsAsync(UserId userId, CancellationToken cancellationToken = default);
 }

@@ -44,7 +44,8 @@ public abstract class BaseRepository<TEntity, TId> : IRepository<TEntity, TId>
 
         return await DbSet
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id.Equals(id), cancellationToken);
+            .FirstOrDefaultAsync(e => e.Id.Equals(id), cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>
@@ -57,7 +58,54 @@ public abstract class BaseRepository<TEntity, TId> : IRepository<TEntity, TId>
         return await DbSet
             .AsNoTracking()
             .OrderBy(GetDefaultOrderingExpression())
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets all entities as an async enumerable for streaming large result sets.
+    /// This method is memory-efficient for large collections as it streams results.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of entities.</returns>
+    public virtual IAsyncEnumerable<TEntity> GetAllAsyncEnumerable(CancellationToken cancellationToken = default)
+    {
+        return DbSet
+            .AsNoTracking()
+            .OrderBy(GetDefaultOrderingExpression())
+            .AsAsyncEnumerable();
+    }
+
+    /// <summary>
+    /// Gets entities in batches as an async enumerable for memory-efficient processing.
+    /// </summary>
+    /// <param name="batchSize">The size of each batch (defaults to 1000).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of entity batches.</returns>
+    public virtual async IAsyncEnumerable<IEnumerable<TEntity>> GetBatchedAsync(int batchSize = 1000, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (batchSize <= 0)
+            throw new ArgumentException("Batch size must be greater than zero.", nameof(batchSize));
+
+        var skip = 0;
+        List<TEntity> batch;
+
+        do
+        {
+            batch = await DbSet
+                .AsNoTracking()
+                .OrderBy(GetDefaultOrderingExpression())
+                .Skip(skip)
+                .Take(batchSize)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (batch.Count > 0)
+                yield return batch;
+
+            skip += batchSize;
+        }
+        while (batch.Count == batchSize);
     }
 
     /// <summary>
@@ -128,7 +176,8 @@ public abstract class BaseRepository<TEntity, TId> : IRepository<TEntity, TId>
 
         return await DbSet
             .AsNoTracking()
-            .AnyAsync(e => e.Id.Equals(id), cancellationToken);
+            .AnyAsync(e => e.Id.Equals(id), cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>
@@ -188,6 +237,25 @@ public abstract class BaseRepository<TEntity, TId> : IRepository<TEntity, TId>
     }
 
     /// <summary>
+    /// Creates a queryable for the entity with Include operations for related data using split queries.
+    /// Use this method for queries with multiple collections that would benefit from split queries.
+    /// Split queries are optimal when loading multiple collections to avoid Cartesian explosion.
+    /// </summary>
+    /// <param name="includeExpressions">The Include expressions for related data.</param>
+    /// <returns>An IQueryable with the specified includes using split queries.</returns>
+    protected IQueryable<TEntity> QueryWithIncludesSplit(params Expression<Func<TEntity, object>>[] includeExpressions)
+    {
+        var query = DbSet.AsNoTracking().AsSplitQuery();
+        
+        foreach (var includeExpression in includeExpressions)
+        {
+            query = query.Include(includeExpression);
+        }
+
+        return query;
+    }
+
+    /// <summary>
     /// Gets a paginated result set with the specified query.
     /// </summary>
     /// <param name="query">The base query to paginate.</param>
@@ -207,12 +275,13 @@ public abstract class BaseRepository<TEntity, TId> : IRepository<TEntity, TId>
         if (pageSize <= 0)
             throw new ArgumentException("Page size must be greater than zero.", nameof(pageSize));
 
-        var totalCount = await query.CountAsync(cancellationToken);
+        var totalCount = await query.CountAsync(cancellationToken).ConfigureAwait(false);
 
         var items = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 
         return ((IEnumerable<TEntity>)items, totalCount);
     }

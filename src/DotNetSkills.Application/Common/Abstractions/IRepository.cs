@@ -26,6 +26,22 @@ public interface IRepository<TEntity, TId>
     Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets all entities as an async enumerable for streaming large result sets.
+    /// This method is memory-efficient for large collections as it streams results.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of entities.</returns>
+    IAsyncEnumerable<TEntity> GetAllAsyncEnumerable(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets entities in batches as an async enumerable for memory-efficient processing.
+    /// </summary>
+    /// <param name="batchSize">The size of each batch (defaults to 1000).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of entity batches.</returns>
+    IAsyncEnumerable<IEnumerable<TEntity>> GetBatchedAsync(int batchSize = 1000, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Adds a new entity to the repository.
     /// Note: Changes are not persisted until UnitOfWork.SaveChangesAsync is called.
     /// </summary>

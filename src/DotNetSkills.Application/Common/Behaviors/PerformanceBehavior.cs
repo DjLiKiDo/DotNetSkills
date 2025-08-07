@@ -1,95 +1,155 @@
-using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace DotNetSkills.Application.Common.Behaviors;
 
 /// <summary>
-/// MediatR pipeline behavior that monitors and logs slow-performing operations.
-/// Tracks execution time and logs warnings for operations that exceed the configured threshold (500ms).
-/// Provides performance metrics and monitoring capabilities for identifying bottlenecks.
+/// MediatR pipeline behavior for monitoring and logging performance of commands and queries.
+/// Measures execution time and logs slow operations based on configurable thresholds.
 /// </summary>
-/// <typeparam name="TRequest">The type of the request being monitored.</typeparam>
-/// <typeparam name="TResponse">The type of the response from the handler.</typeparam>
+/// <typeparam name="TRequest">The request type</typeparam>
+/// <typeparam name="TResponse">The response type</typeparam>
 public class PerformanceBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
-    where TResponse : class
 {
     private readonly ILogger<PerformanceBehavior<TRequest, TResponse>> _logger;
-    private readonly Stopwatch _timer;
+    private readonly PerformanceBehaviorOptions _options;
 
-    /// <summary>
-    /// The threshold in milliseconds above which operations are considered slow.
-    /// Operations exceeding this threshold will be logged as warnings.
-    /// </summary>
-    private const int SlowOperationThresholdMs = 500;
-
-    /// <summary>
-    /// Initializes a new instance of the PerformanceBehavior class.
-    /// </summary>
-    /// <param name="logger">The logger instance for performance monitoring.</param>
-    public PerformanceBehavior(ILogger<PerformanceBehavior<TRequest, TResponse>> logger)
+    public PerformanceBehavior(
+        ILogger<PerformanceBehavior<TRequest, TResponse>> logger,
+        IOptions<PerformanceBehaviorOptions> options)
     {
         _logger = logger;
-        _timer = new Stopwatch();
+        _options = options.Value;
     }
 
-    /// <summary>
-    /// Monitors the execution time of the request and logs performance metrics.
-    /// </summary>
-    /// <param name="request">The request being processed.</param>
-    /// <param name="next">The next handler in the pipeline.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The response from the next handler.</returns>
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    public async Task<TResponse> Handle(
+        TRequest request,
+        RequestHandlerDelegate<TResponse> next,
+        CancellationToken cancellationToken)
     {
-        var requestName = typeof(TRequest).Name;
+        var requestName = GetRequestName(request);
         
-        _timer.Start();
+        // Skip monitoring for excluded patterns
+        if (ShouldExcludeRequest(requestName))
+        {
+            return await next().ConfigureAwait(false);
+        }
+
+        var stopwatch = Stopwatch.StartNew();
         
         try
         {
+            _logger.LogDebug("Starting execution of {RequestName}", requestName);
+            
             var response = await next().ConfigureAwait(false);
             
-            _timer.Stop();
-            var elapsedMs = _timer.ElapsedMilliseconds;
+            stopwatch.Stop();
+            var elapsedMilliseconds = stopwatch.ElapsedMilliseconds;
             
-            LogPerformanceMetrics(requestName, elapsedMs);
+            LogPerformanceResult(requestName, elapsedMilliseconds, success: true);
             
             return response;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            _timer.Stop();
-            var elapsedMs = _timer.ElapsedMilliseconds;
+            stopwatch.Stop();
+            var elapsedMilliseconds = stopwatch.ElapsedMilliseconds;
             
-            // Log performance even for failed operations
-            LogPerformanceMetrics(requestName, elapsedMs);
+            LogPerformanceResult(requestName, elapsedMilliseconds, success: false, ex);
             
             throw;
         }
-        finally
-        {
-            _timer.Reset();
-        }
     }
 
-    /// <summary>
-    /// Logs performance metrics based on execution time.
-    /// Logs warnings for slow operations and information for normal operations.
-    /// </summary>
-    /// <param name="requestName">The name of the request.</param>
-    /// <param name="elapsedMs">The elapsed time in milliseconds.</param>
-    private void LogPerformanceMetrics(string requestName, long elapsedMs)
+    private static string GetRequestName(TRequest request)
     {
-        if (elapsedMs > SlowOperationThresholdMs)
+        var requestType = request.GetType();
+        return requestType.Name;
+    }
+
+    private bool ShouldExcludeRequest(string requestName)
+    {
+        if (_options.ExcludePatterns?.Any() != true)
+            return false;
+
+        return _options.ExcludePatterns.Any(pattern => 
+            requestName.Contains(pattern, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void LogPerformanceResult(
+        string requestName, 
+        long elapsedMilliseconds, 
+        bool success, 
+        Exception? exception = null)
+    {
+        var requestCategory = GetRequestCategory(requestName);
+        
+        if (elapsedMilliseconds > _options.SlowOperationThresholdMs)
         {
-            _logger.LogWarning("Slow operation detected: {RequestName} took {ElapsedMs}ms to complete (threshold: {ThresholdMs}ms)", 
-                requestName, elapsedMs, SlowOperationThresholdMs);
+            if (success)
+            {
+                _logger.LogWarning(
+                    "Slow operation detected: {RequestName} took {ElapsedMilliseconds}ms (Category: {RequestCategory})",
+                    requestName, elapsedMilliseconds, requestCategory);
+            }
+            else
+            {
+                _logger.LogError(exception,
+                    "Slow operation failed: {RequestName} took {ElapsedMilliseconds}ms before failing (Category: {RequestCategory})",
+                    requestName, elapsedMilliseconds, requestCategory);
+            }
         }
         else
         {
-            _logger.LogInformation("Request {RequestName} completed in {ElapsedMs}ms", 
-                requestName, elapsedMs);
+            if (success)
+            {
+                _logger.LogDebug(
+                    "Completed {RequestName} in {ElapsedMilliseconds}ms (Category: {RequestCategory})",
+                    requestName, elapsedMilliseconds, requestCategory);
+            }
+            else
+            {
+                _logger.LogError(exception,
+                    "Failed {RequestName} after {ElapsedMilliseconds}ms (Category: {RequestCategory})",
+                    requestName, elapsedMilliseconds, requestCategory);
+            }
         }
     }
+
+    private static string GetRequestCategory(string requestName)
+    {
+        return requestName switch
+        {
+            var name when name.Contains("Command", StringComparison.OrdinalIgnoreCase) => "Command",
+            var name when name.Contains("Query", StringComparison.OrdinalIgnoreCase) => "Query",
+            var name when name.Contains("Handler", StringComparison.OrdinalIgnoreCase) => "Handler",
+            _ => "Unknown"
+        };
+    }
+}
+
+/// <summary>
+/// Configuration options for performance monitoring behavior.
+/// </summary>
+public class PerformanceBehaviorOptions
+{
+    /// <summary>
+    /// Threshold in milliseconds above which operations are considered slow.
+    /// Default is 500ms.
+    /// </summary>
+    public long SlowOperationThresholdMs { get; set; } = 500;
+
+    /// <summary>
+    /// Patterns to exclude from performance monitoring.
+    /// Operations matching these patterns will not be measured.
+    /// </summary>
+    public string[]? ExcludePatterns { get; set; }
+
+    /// <summary>
+    /// Whether to include detailed timing information in logs.
+    /// Default is false for production environments.
+    /// </summary>
+    public bool IncludeDetailedTiming { get; set; } = false;
 }
