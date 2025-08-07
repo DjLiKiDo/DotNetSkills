@@ -9,7 +9,7 @@ namespace DotNetSkills.Application.Common.Abstractions;
 /// Unit of Work interface for managing transactions and coordinating changes across multiple repositories.
 /// Implements the Unit of Work pattern to ensure data consistency and transaction boundaries.
 /// </summary>
-public interface IUnitOfWork : IDisposable
+public interface IUnitOfWork : IDisposable, IAsyncDisposable
 {
     /// <summary>
     /// Gets the User repository.

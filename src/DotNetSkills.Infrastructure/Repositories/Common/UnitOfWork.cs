@@ -235,8 +235,37 @@ public class UnitOfWork : IUnitOfWork
     /// </summary>
     public void Dispose()
     {
-        Dispose(true);
+        Dispose(disposing: true);
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources asynchronously.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous dispose operation.</returns>
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore().ConfigureAwait(false);
+        Dispose(disposing: false);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Asynchronously disposes the core resources of the UnitOfWork.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous dispose operation.</returns>
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        if (_currentTransaction != null)
+        {
+            _logger.LogWarning("Disposing UnitOfWork with active transaction - rolling back");
+            await _currentTransaction.RollbackAsync().ConfigureAwait(false);
+            await _currentTransaction.DisposeAsync().ConfigureAwait(false);
+            _currentTransaction = null;
+        }
+
+        // Note: We don't dispose the DbContext here as it's managed by DI container
+        _logger.LogDebug("UnitOfWork async disposed successfully");
     }
 
     /// <summary>
