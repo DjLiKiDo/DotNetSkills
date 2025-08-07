@@ -1,0 +1,1 @@
+ use @CurrentTask.md to track your progress and context that you would need to be able to continue with the task being consistent untill the task is fully completed and validated 

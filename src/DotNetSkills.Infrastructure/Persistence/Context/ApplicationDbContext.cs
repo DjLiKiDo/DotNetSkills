@@ -179,20 +179,18 @@ public class ApplicationDbContext : DbContext
 
     /// <summary>
     /// Restores domain events to aggregate roots after a failed save operation.
-    /// Note: This method has limitations due to access modifiers on RaiseDomainEvent.
-    /// In production, consider implementing a more robust event restoration mechanism.
+    /// This ensures transactional integrity by preserving domain events when
+    /// database operations fail, allowing for retry scenarios or proper error handling.
     /// </summary>
     /// <param name="domainEvents">The domain events to restore.</param>
     private void RestoreDomainEvents(List<(AggregateRoot<IStronglyTypedId<Guid>> Entity, List<IDomainEvent> Events)> domainEvents)
     {
-        // TODO: This method needs to be implemented when a proper domain event 
-        // restoration mechanism is available. For now, we accept that failed 
-        // transactions will lose their domain events, which is acceptable 
-        // since the transaction was rolled back anyway.
-        
-        // Future implementation might involve:
-        // 1. Making RaiseDomainEvent public on AggregateRoot
-        // 2. Implementing a separate event store for reliability
-        // 3. Using reflection (not recommended for production)
+        foreach (var (entity, events) in domainEvents)
+        {
+            foreach (var domainEvent in events)
+            {
+                entity.RestoreDomainEvent(domainEvent);
+            }
+        }
     }
 }
