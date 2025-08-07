@@ -1,3 +1,5 @@
+using DotNetSkills.Application.ProjectManagement.Projections;
+
 namespace DotNetSkills.Infrastructure.Repositories.ProjectManagement;
 
 /// <summary>
@@ -238,5 +240,172 @@ public class ProjectRepository : BaseRepository<Project, ProjectId>, IProjectRep
             .ConfigureAwait(false);
 
         return results.Select(r => (r.Project, r.TaskCount));
+    }
+
+    // Projection Methods
+
+    /// <summary>
+    /// Gets project summaries with optimized projection for read-only scenarios.
+    /// Minimizes data transfer by selecting only required fields.
+    /// </summary>
+    /// <param name="teamId">Optional team filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of project summary projections.</returns>
+    public async Task<IEnumerable<ProjectSummaryProjection>> GetProjectSummariesAsync(TeamId? teamId = null, CancellationToken cancellationToken = default)
+    {
+        var query = DbSet.AsNoTracking();
+
+        if (teamId != null)
+            query = query.Where(p => p.TeamId == teamId);
+
+        return await query
+            .Select(p => new ProjectSummaryProjection
+            {
+                Id = p.Id.Value,
+                Name = p.Name,
+                Description = p.Description,
+                Status = p.Status.ToString(),
+                CreatedAt = p.CreatedAt,
+                StartDate = p.StartDate,
+                EndDate = p.EndDate,
+                TeamId = p.TeamId.Value,
+                TeamName = Context.Set<Team>()
+                    .Where(t => t.Id == p.TeamId)
+                    .Select(t => t.Name)
+                    .FirstOrDefault() ?? "Unknown",
+                TaskCount = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                    .Count(t => t.ProjectId == p.Id)
+            })
+            .OrderBy(p => p.Name)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets project dashboard information with aggregated data.
+    /// Optimized for dashboard scenarios with minimal queries.
+    /// </summary>
+    /// <param name="teamId">Optional team filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of project dashboard projections.</returns>
+    public async Task<IEnumerable<ProjectDashboardProjection>> GetProjectDashboardDataAsync(TeamId? teamId = null, CancellationToken cancellationToken = default)
+    {
+        var query = DbSet.AsNoTracking();
+
+        if (teamId != null)
+            query = query.Where(p => p.TeamId == teamId);
+
+        return await query
+            .Select(p => new ProjectDashboardProjection
+            {
+                Id = p.Id.Value,
+                Name = p.Name,
+                Description = p.Description,
+                Status = p.Status.ToString(),
+                CreatedAt = p.CreatedAt,
+                StartDate = p.StartDate,
+                EndDate = p.EndDate,
+                TeamId = p.TeamId.Value,
+                TeamName = Context.Set<Team>()
+                    .Where(t => t.Id == p.TeamId)
+                    .Select(t => t.Name)
+                    .FirstOrDefault() ?? "Unknown",
+                TotalTaskCount = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                    .Count(t => t.ProjectId == p.Id),
+                CompletedTaskCount = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                    .Count(t => t.ProjectId == p.Id && t.Status == DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done),
+                InProgressTaskCount = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                    .Count(t => t.ProjectId == p.Id && t.Status == DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.InProgress),
+                PendingTaskCount = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                    .Count(t => t.ProjectId == p.Id && t.Status == DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.ToDo),
+                CompletionPercentage = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                    .Where(t => t.ProjectId == p.Id)
+                    .Count() == 0 ? 0 :
+                    (decimal)Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                        .Count(t => t.ProjectId == p.Id && t.Status == DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done) * 100 /
+                    Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                        .Count(t => t.ProjectId == p.Id)
+            })
+            .OrderBy(p => p.Name)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets project selection data for dropdowns and selection lists.
+    /// Minimal projection for UI scenarios.
+    /// </summary>
+    /// <param name="teamId">Optional team filter.</param>
+    /// <param name="activeOnly">Whether to return only active projects.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of project selection projections.</returns>
+    public async Task<IEnumerable<ProjectSelectionProjection>> GetProjectSelectionsAsync(TeamId? teamId = null, bool activeOnly = true, CancellationToken cancellationToken = default)
+    {
+        var query = DbSet.AsNoTracking();
+
+        if (teamId != null)
+            query = query.Where(p => p.TeamId == teamId);
+
+        if (activeOnly)
+            query = query.Where(p => p.Status == ProjectStatus.Active);
+
+        return await query
+            .Select(p => new ProjectSelectionProjection
+            {
+                Id = p.Id.Value,
+                Name = p.Name,
+                Status = p.Status.ToString(),
+                IsActive = p.Status == ProjectStatus.Active,
+                TeamId = p.TeamId.Value,
+                TeamName = Context.Set<Team>()
+                    .Where(t => t.Id == p.TeamId)
+                    .Select(t => t.Name)
+                    .FirstOrDefault() ?? "Unknown"
+            })
+            .OrderBy(p => p.Name)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Gets project overview data with team context.
+    /// Useful for project listing by team scenarios.
+    /// </summary>
+    /// <param name="teamId">Optional team filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of project overview projections.</returns>
+    public async Task<IEnumerable<ProjectOverviewProjection>> GetProjectOverviewsAsync(TeamId? teamId = null, CancellationToken cancellationToken = default)
+    {
+        var query = DbSet.AsNoTracking();
+
+        if (teamId != null)
+            query = query.Where(p => p.TeamId == teamId);
+
+        return await query
+            .Select(p => new ProjectOverviewProjection
+            {
+                Id = p.Id.Value,
+                Name = p.Name,
+                Description = p.Description,
+                Status = p.Status.ToString(),
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                TeamName = Context.Set<Team>()
+                    .Where(t => t.Id == p.TeamId)
+                    .Select(t => t.Name)
+                    .FirstOrDefault() ?? "Unknown",
+                TaskCount = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                    .Count(t => t.ProjectId == p.Id),
+                ProgressPercentage = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                    .Where(t => t.ProjectId == p.Id)
+                    .Count() == 0 ? 0 :
+                    (decimal)Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                        .Count(t => t.ProjectId == p.Id && t.Status == DotNetSkills.Domain.TaskExecution.Enums.TaskStatus.Done) * 100 /
+                    Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
+                        .Count(t => t.ProjectId == p.Id)
+            })
+            .OrderBy(p => p.Name)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 }

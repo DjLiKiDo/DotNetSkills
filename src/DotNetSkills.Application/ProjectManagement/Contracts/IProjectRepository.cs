@@ -1,3 +1,5 @@
+using DotNetSkills.Application.ProjectManagement.Projections;
+
 namespace DotNetSkills.Application.ProjectManagement.Contracts;
 
 /// <summary>
@@ -109,4 +111,43 @@ public interface IProjectRepository : IRepository<Project, ProjectId>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Projects with task count information.</returns>
     Task<IEnumerable<(Project Project, int TaskCount)>> GetWithTaskCountsAsync(TeamId? teamId = null, CancellationToken cancellationToken = default);
+
+    // Projection Methods
+
+    /// <summary>
+    /// Gets project summaries with optimized projection for read-only scenarios.
+    /// Minimizes data transfer by selecting only required fields.
+    /// </summary>
+    /// <param name="teamId">Optional team filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of project summary projections.</returns>
+    Task<IEnumerable<ProjectSummaryProjection>> GetProjectSummariesAsync(TeamId? teamId = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets project dashboard information with aggregated data.
+    /// Optimized for dashboard scenarios with minimal queries.
+    /// </summary>
+    /// <param name="teamId">Optional team filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of project dashboard projections.</returns>
+    Task<IEnumerable<ProjectDashboardProjection>> GetProjectDashboardDataAsync(TeamId? teamId = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets project selection data for dropdowns and selection lists.
+    /// Minimal projection for UI scenarios.
+    /// </summary>
+    /// <param name="teamId">Optional team filter.</param>
+    /// <param name="activeOnly">Whether to return only active projects.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of project selection projections.</returns>
+    Task<IEnumerable<ProjectSelectionProjection>> GetProjectSelectionsAsync(TeamId? teamId = null, bool activeOnly = true, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets project overview data with team context.
+    /// Useful for project listing by team scenarios.
+    /// </summary>
+    /// <param name="teamId">Optional team filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of project overview projections.</returns>
+    Task<IEnumerable<ProjectOverviewProjection>> GetProjectOverviewsAsync(TeamId? teamId = null, CancellationToken cancellationToken = default);
 }
