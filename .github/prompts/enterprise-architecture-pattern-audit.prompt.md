@@ -1,5 +1,5 @@
 ---
-mode: ask
+mode: agent
 description: Review the implementation of architecture patterns across the solution for consistency and adherence to best practices.
 ---
 
