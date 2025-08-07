@@ -168,7 +168,7 @@ public class TeamRepository : BaseRepository<Team, TeamId>, ITeamRepository
     /// <returns>A collection of teams with member count information.</returns>
     public async Task<IEnumerable<(Team Team, int MemberCount)>> GetWithMemberCountsAsync(CancellationToken cancellationToken = default)
     {
-        return await DbSet
+        var teamData = await DbSet
             .AsNoTracking()
             .Select(t => new 
             {
@@ -177,7 +177,9 @@ public class TeamRepository : BaseRepository<Team, TeamId>, ITeamRepository
             })
             .OrderBy(x => x.Team.Name)
             .ToListAsync(cancellationToken)
-            .ContinueWith(task => task.Result.Select(x => (x.Team, x.MemberCount)), cancellationToken);
+            .ConfigureAwait(false);
+
+        return teamData.Select(x => (x.Team, x.MemberCount));
     }
 
     /// <summary>

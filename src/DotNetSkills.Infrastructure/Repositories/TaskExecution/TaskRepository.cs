@@ -406,7 +406,7 @@ public class TaskRepository : BaseRepository<DotNetSkills.Domain.TaskExecution.E
             query = query.Where(t => t.CreatedAt <= dateTo.Value.Date.AddDays(1).AddTicks(-1));
         }
 
-        return await query
+        var taskData = await query
             .Select(t => new 
             {
                 Task = t,
@@ -415,7 +415,9 @@ public class TaskRepository : BaseRepository<DotNetSkills.Domain.TaskExecution.E
             })
             .OrderBy(x => x.Task.Title)
             .ToListAsync(cancellationToken)
-            .ContinueWith(task => task.Result.Select(x => (x.Task, x.EstimatedHours, x.ActualHours)), cancellationToken);
+            .ConfigureAwait(false);
+
+        return taskData.Select(x => (x.Task, x.EstimatedHours, x.ActualHours));
     }
 
     /// <summary>
