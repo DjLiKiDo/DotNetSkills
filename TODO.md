@@ -5,6 +5,7 @@
 [x] Implement extensions for enums
 [x] Review BusinesRules vs ValidationConstants vs ValidationMessages
 [x] Work on technical debt `DomainTechnicalDebt.md`
+[x] We have BoundedContextUsings in UserManagement and TeamCollaboration but no in ProjectManagement nor TaskExecution. Review the best approach and consolidate the most appropiate implementation
 [ ] Domain layer specific documentation
 
 # API Layer TODOs
