@@ -16,18 +16,32 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Database configuration with SQL Server provider
+        // Database configuration with SQL Server provider and enhanced connection settings
         services.AddDbContext<ApplicationDbContext>(options =>
         {
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null);
+                sqlOptions.CommandTimeout(30);
+            });
             
             // Development-specific configurations
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            if (environment == "Development")
             {
                 options.EnableSensitiveDataLogging();
                 options.EnableDetailedErrors();
                 options.LogTo(Console.WriteLine, LogLevel.Information);
             }
+
+            // Performance optimizations
+            options.EnableServiceProviderCaching();
+            options.EnableSensitiveDataLogging(false); // Disable in production
         });
 
         // Repository registrations (Application layer interfaces → Infrastructure implementations)
@@ -120,7 +134,7 @@ public static class DependencyInjection
     }
 
     /// <summary>
-    /// Configures database connection string and provider-specific options.
+    /// Configures database connection string and provider-specific options with enhanced settings.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="connectionString">The database connection string.</param>
@@ -133,15 +147,24 @@ public static class DependencyInjection
         {
             options.UseSqlServer(connectionString, sqlOptions =>
             {
-                sqlOptions.MigrationsAssembly(typeof(DependencyInjection).Assembly.FullName);
+                sqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
                 sqlOptions.EnableRetryOnFailure(
                     maxRetryCount: 3,
                     maxRetryDelay: TimeSpan.FromSeconds(5),
                     errorNumbersToAdd: null);
+                sqlOptions.CommandTimeout(30);
             });
 
-            // Connection pooling configuration
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            if (environment == "Development")
+            {
+                options.EnableSensitiveDataLogging();
+                options.EnableDetailedErrors();
+            }
+
+            // Performance optimizations
             options.EnableServiceProviderCaching();
+            options.EnableSensitiveDataLogging(false); // Disable in production
         });
 
         return services;
