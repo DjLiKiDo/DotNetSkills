@@ -1,5 +1,4 @@
 # Domain Layer TODOs
-
 [x] Review entities
 [x] Folder structure matching Domain looking for better organization and namespacing
 [x] Implement extensions for enums
@@ -9,19 +8,26 @@
 [ ] Domain layer specific documentation
 
 # API Layer TODOs
-
 [ ] BaseEndpoint.cs
 [ ] Review ExceptionHandlingMiddleware.cs
 [ ] API layer specific documentation
 
 # Application Layer TODOs
-
 [ ] Application layer specific documentation
 
 # Infrastructure Layer TODOs
-
 [ ] Migrations
 [ ] there are some warnings about shadow properties for TeamMember foreign keys. This is a known issue with EF Core when using strongly-typed IDs
 [ ] Database Creation: Run dotnet ef database update to create the database schema
 [ ] Production Deployment: Configure connection strings and deploy
 [ ] Infrastructure layer specific documentation
+
+# General
+[ ] Settings (IOptions pattern)
+[ ] JWT Authentication
+[ ] Review configuration through extension methods
+[ ] Review validation flows across all layers
+[ ] Review logging and monitoring implementations across all layers
+[ ] Security review
+[ ] Review performance and optimization strategies across all layers
+[ ] Review error handling strategies across all layers
