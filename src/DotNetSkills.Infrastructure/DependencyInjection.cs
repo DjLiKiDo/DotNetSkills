@@ -16,32 +16,41 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // Ensure options are bound and validated
+        services.AddDatabaseConfiguration(configuration);
+
         // Database configuration with SQL Server provider and enhanced connection settings
-        services.AddDbContext<ApplicationDbContext>(options =>
+        services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
         {
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var env = serviceProvider.GetRequiredService<IHostEnvironment>();
+            var dbOptions = serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value;
+            var connectionString = !string.IsNullOrWhiteSpace(dbOptions.ConnectionString)
+                ? dbOptions.ConnectionString
+                : configuration.GetConnectionString("DefaultConnection");
+
             options.UseSqlServer(connectionString, sqlOptions =>
             {
                 sqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
                 sqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 3,
-                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    maxRetryCount: dbOptions.MaxRetryCount,
+                    maxRetryDelay: TimeSpan.FromSeconds(dbOptions.MaxRetryDelaySeconds),
                     errorNumbersToAdd: null);
-                sqlOptions.CommandTimeout(30);
+                sqlOptions.CommandTimeout(dbOptions.CommandTimeout);
             });
-            
-            // Development-specific configurations
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            if (environment == "Development")
+
+            if (env.IsDevelopment())
             {
-                options.EnableSensitiveDataLogging();
-                options.EnableDetailedErrors();
-                options.LogTo(Console.WriteLine, LogLevel.Information);
+                if (dbOptions.EnableSensitiveDataLogging) options.EnableSensitiveDataLogging();
+                if (dbOptions.EnableDetailedErrors) options.EnableDetailedErrors();
+                if (dbOptions.EnableQueryLogging) options.LogTo(Console.WriteLine, LogLevel.Information);
             }
 
             // Performance optimizations
             options.EnableServiceProviderCaching();
-            options.EnableSensitiveDataLogging(false); // Disable in production
+            if (!env.IsDevelopment())
+            {
+                options.EnableSensitiveDataLogging(false);
+            }
         });
 
         // Repository registrations (Application layer interfaces → Infrastructure implementations)
@@ -129,6 +138,10 @@ public static class DependencyInjection
         
         // Add database configuration validation
         services.AddSingleton<IValidateOptions<DatabaseOptions>, DatabaseOptionsValidator>();
+        services.AddOptions<DatabaseOptions>()
+            .Bind(configuration.GetSection("Database"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
         
         return services;
     }

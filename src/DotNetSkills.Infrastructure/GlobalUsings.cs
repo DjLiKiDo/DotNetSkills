@@ -13,6 +13,7 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Caching.Memory;
+global using Microsoft.Extensions.Options;
 
 // Entity Framework Core
 global using Microsoft.EntityFrameworkCore;
@@ -72,4 +73,3 @@ global using DotNetSkills.Infrastructure.Common.Configuration;
 
 // Health checks and options
 global using Microsoft.Extensions.Diagnostics.HealthChecks;
-global using Microsoft.Extensions.Options;

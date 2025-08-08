@@ -18,22 +18,22 @@ public class DatabaseOptionsValidator : IValidateOptions<DatabaseOptions>
 
         if (string.IsNullOrWhiteSpace(options.ConnectionString))
         {
-            failures.Add("ConnectionString is required and cannot be empty");
+            failures.Add("DatabaseOptions.ConnectionString: ConnectionString is required");
         }
 
-        if (options.CommandTimeout <= 0)
+        if (options.CommandTimeout is < 1 or > 300)
         {
-            failures.Add("CommandTimeout must be greater than 0");
+            failures.Add("DatabaseOptions.CommandTimeout: CommandTimeout must be between 1 and 300 seconds");
         }
 
-        if (options.MaxRetryCount < 0)
+        if (options.MaxRetryCount is < 0 or > 10)
         {
-            failures.Add("MaxRetryCount must be 0 or greater");
+            failures.Add("DatabaseOptions.MaxRetryCount: MaxRetryCount must be between 0 and 10");
         }
 
-        if (options.MaxRetryDelaySeconds <= 0)
+        if (options.MaxRetryDelaySeconds is < 1 or > 60)
         {
-            failures.Add("MaxRetryDelaySeconds must be greater than 0");
+            failures.Add("DatabaseOptions.MaxRetryDelaySeconds: MaxRetryDelaySeconds must be between 1 and 60 seconds");
         }
 
         return failures.Count > 0 

@@ -1,0 +1,1 @@
+ok summarize the conversation and provide all relevant context to continue with the task in a new conversation in CurrentTask.md

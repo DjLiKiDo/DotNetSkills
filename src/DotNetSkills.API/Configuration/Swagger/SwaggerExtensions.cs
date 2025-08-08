@@ -23,7 +23,29 @@ public static class SwaggerExtensions
 
         services.AddSwaggerGen(options =>
         {
-            ConfigureApiInformation(options);
+            ConfigureApiInformation(options, new("DotNetSkills API", "v1"));
+            ConfigureDocumentationSettings(options);
+            ConfigureSchemaSettings(options);
+            ConfigureTagOrganization(options);
+            ConfigureSecurity(options);
+            ConfigureCustomFilters(options);
+        });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Overload to configure Swagger using bound SwaggerOptions.
+    /// </summary>
+    public static IServiceCollection AddSwaggerDocumentation(
+        this IServiceCollection services,
+        Configuration.Options.SwaggerOptions swaggerOptions)
+    {
+        services.AddEndpointsApiExplorer();
+
+        services.AddSwaggerGen(options =>
+        {
+            ConfigureApiInformation(options, new(swaggerOptions.Title, swaggerOptions.Version));
             ConfigureDocumentationSettings(options);
             ConfigureSchemaSettings(options);
             ConfigureTagOrganization(options);
@@ -37,12 +59,12 @@ public static class SwaggerExtensions
     /// <summary>
     /// Configures the basic API information including title, description, contact, and license.
     /// </summary>
-    private static void ConfigureApiInformation(SwaggerGenOptions options)
+    private static void ConfigureApiInformation(SwaggerGenOptions options, (string Title, string Version) info)
     {
-        options.SwaggerDoc("v1", new OpenApiInfo
+        options.SwaggerDoc(info.Version, new OpenApiInfo
         {
-            Title = "DotNetSkills API",
-            Version = "v1",
+            Title = info.Title,
+            Version = info.Version,
             Description = """
                 ## DotNetSkills Project Management API
 
@@ -88,7 +110,7 @@ public static class SwaggerExtensions
                 Name = "MIT License",
                 Url = new Uri("https://opensource.org/licenses/MIT")
             }
-        });
+    });
     }
 
     /// <summary>

@@ -1,5 +1,10 @@
 using DotNetSkills.Application;
 using DotNetSkills.Infrastructure;
+using DotNetSkills.API.Configuration.Options;
+using DotNetSkills.API.Configuration.Options.Validators;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace DotNetSkills.API;
 
@@ -20,13 +25,38 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // Bind API options
+        services.AddOptions<SwaggerOptions>()
+            .Bind(configuration.GetSection("Swagger"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<CorsOptions>()
+            .Bind(configuration.GetSection("Cors"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection("Jwt"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+    // Option validators
+    services.AddSingleton<IValidateOptions<JwtOptions>, JwtOptionsValidator>();
+    services.AddSingleton<IValidateOptions<CorsOptions>, CorsOptionsValidator>();
+    services.AddSingleton<IValidateOptions<SwaggerOptions>, SwaggerOptionsValidator>();
+
         // Register all layers in dependency order (Application → Infrastructure → API)
         // Note: Domain services are registered through Application layer
         services.AddApplicationServices();
         services.AddInfrastructureServices(configuration);
 
         // Configure comprehensive Swagger/OpenAPI documentation
-        services.AddSwaggerDocumentation(configuration);
+        var swagger = configuration.GetSection("Swagger").Get<SwaggerOptions>() ?? new SwaggerOptions();
+        if (swagger.Enabled)
+        {
+            services.AddSwaggerDocumentation(swagger);
+        }
 
         // Configure JSON serialization options for strongly-typed IDs and domain types
         services.ConfigureHttpJsonOptions(options =>
@@ -73,38 +103,67 @@ public static class DependencyInjection
         // services.AddFluentValidationAutoValidation();
         // services.AddFluentValidationClientsideAdapters();
 
-        // Authentication & Authorization (when implemented)
-        // services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        //     .AddJwtBearer(options =>
-        //     {
-        //         options.TokenValidationParameters = new TokenValidationParameters
-        //         {
-        //             ValidateIssuer = true,
-        //             ValidateAudience = true,
-        //             ValidateLifetime = true,
-        //             ValidateIssuerSigningKey = true,
-        //             ValidIssuer = configuration["Jwt:Issuer"],
-        //             ValidAudience = configuration["Jwt:Audience"],
-        //             IssuerSigningKey = new SymmetricSecurityKey(
-        //                 Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
-        //         };
-        //     });
+        // Authentication & Authorization (conditional on Jwt.Enabled)
+        var jwt = configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
+        if (jwt.Enabled)
+        {
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = jwt.Issuer,
+                        ValidAudience = jwt.Audience,
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(jwt.SigningKey))
+                    };
+                });
 
-        // services.AddAuthorization(options =>
-        // {
-        //     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-        //     options.AddPolicy("ProjectManager", policy =>
-        //         policy.RequireRole("Admin", "ProjectManager"));
-        // });
+            services.AddAuthorization();
+        }
 
-        // CORS configuration
+        // CORS configuration via options
+        var cors = configuration.GetSection("Cors").Get<CorsOptions>() ?? new CorsOptions();
         services.AddCors(options =>
         {
-            options.AddPolicy("AllowAll", builder =>
-                builder
-                    .AllowAnyOrigin()
-                    .AllowAnyMethod()
-                    .AllowAnyHeader());
+            options.AddPolicy(cors.PolicyName, builder =>
+            {
+                if (cors.AllowedOrigins.Length > 0)
+                {
+                    builder.WithOrigins(cors.AllowedOrigins);
+                }
+                else
+                {
+                    builder.AllowAnyOrigin();
+                }
+
+                if (cors.AllowedMethods.Length > 0)
+                {
+                    builder.WithMethods(cors.AllowedMethods);
+                }
+                else
+                {
+                    builder.AllowAnyMethod();
+                }
+
+                if (cors.AllowedHeaders.Length > 0)
+                {
+                    builder.WithHeaders(cors.AllowedHeaders);
+                }
+                else
+                {
+                    builder.AllowAnyHeader();
+                }
+
+                if (cors.AllowCredentials)
+                {
+                    builder.AllowCredentials();
+                }
+            });
         });
 
         // Health checks
@@ -162,6 +221,6 @@ public static class DependencyInjection
         //         new HeaderApiVersionReader("X-Version"));
         // });
 
-        return services;
+    return services;
     }
 }
