@@ -32,7 +32,7 @@ public static class ProjectTaskEndpoints
         group.MapGet("", GetProjectTasks)
             .WithName("GetProjectTasks")
             .WithSummary("Get tasks for a specific project")
-            .WithDescription("Retrieves a paginated list of tasks belonging to a specific project with optional filtering")
+            .WithDescription("Retrieves a paginated list of tasks for a specific project with filtering. Query parameters: page (int), pageSize (int), status (TaskStatus), assignedUserId (Guid), priority (TaskPriority), dueDateFrom (date), dueDateTo (date), isOverdue (bool), isSubtask (bool), search (string). Enums are provided as strings, e.g., status=InProgress, priority=High.")
             .Produces<PagedProjectTaskResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)

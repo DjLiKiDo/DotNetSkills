@@ -32,7 +32,7 @@ public static class TeamEndpoints
         group.MapGet("", GetTeams)
             .WithName("GetTeams")
             .WithSummary("Get teams with pagination")
-            .WithDescription("Retrieves a paginated list of teams with optional search functionality")
+            .WithDescription("Retrieves a paginated list of teams with optional search functionality. Query parameters: page (int), pageSize (int), search (string). Enum filters (e.g., TeamStatus, TeamRole) are provided as strings when available in future endpoints.")
             .Produces<PagedTeamResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);

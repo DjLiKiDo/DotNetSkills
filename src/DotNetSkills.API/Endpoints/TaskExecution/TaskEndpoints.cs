@@ -35,7 +35,7 @@ public static class TaskEndpoints
         group.MapGet("", GetTasks)
             .WithName("GetTasks")
             .WithSummary("Get tasks with filtering")
-            .WithDescription("Retrieves a paginated list of tasks with comprehensive filtering options including project, assignee, status, priority, due dates, and search terms")
+            .WithDescription("Retrieves a paginated list of tasks with comprehensive filtering. Query parameters: pageNumber (int), pageSize (int), projectId (Guid), assignedUserId (Guid), status (TaskStatus), priority (TaskPriority), dueDateFrom (date), dueDateTo (date), createdFrom (date), createdTo (date), searchTerm (string), includeSubtasks (bool), onlyOverdue (bool), onlyUnassigned (bool), sortBy (string), sortDirection (asc|desc). Enums are provided as strings, e.g., status=InProgress, priority=High.")
             .Produces<PagedTaskResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);

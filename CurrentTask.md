@@ -40,8 +40,13 @@ Updated: 2025-08-08
 	- TaskExecution: TaskSummary/Dashboard/Selection/Assignment projections now use TaskPriority and DomainTaskStatus alias for Status.
 	- ProjectManagement: Project* projections now use ProjectStatus.
 	- UserManagement: User* projections now use UserRole/UserStatus.
-- Next: Review OpenAPI summaries/examples and docs to reflect enum-typed parameters and responses.
-- Documentation/OpenAPI: review endpoint summaries and examples to reflect enum-typed params and responses.
+- Done: Updated OpenAPI to reflect enum-typed parameters and responses.
+- Documentation/OpenAPI: Added EnumSchemaFilter and EnumParameterExampleOperationFilter; updated User endpoints descriptions to mention enum filters explicitly.
+- Documentation/OpenAPI: Added RequestExamplesSchemaFilter to provide request-body examples showing enum string values for:
+	- TaskExecution: CreateTaskRequest, UpdateTaskRequest, UpdateTaskStatusRequest
+	- ProjectManagement: CreateProjectRequest, UpdateProjectRequest
+	- TeamCollaboration: CreateTeamRequest, UpdateTeamRequest
+	These appear in Swagger UI under each schema’s Example.
 - Tidy warnings: address async-without-await placeholder endpoints when implementations are ready; fix nullable assignment warnings in `ProjectRepository`.
 
 ### 5) Relevant code snippets (illustrative)
@@ -124,4 +129,4 @@ public record TeamMemberResponse(
 - Build: success. Known warnings (to address later):
 	- Async methods lacking `await` in placeholder endpoints: TeamEndpoints.cs, ProjectEndpoints.cs, ProjectTaskEndpoints.cs, TaskEndpoints.cs, TaskAssignmentEndpoints.cs.
 	- Nullable assignment warnings in `ProjectRepository.cs` lines ~266/303/389.
-- Tests: 91 passed, 0 failed.
+- Tests: 91 passed, 0 failed (still green after Swagger enum documentation changes).

@@ -34,7 +34,7 @@ public static class ProjectEndpoints
         group.MapGet("", GetProjects)
             .WithName("GetProjects")
             .WithSummary("Get projects with filtering")
-            .WithDescription("Retrieves a paginated list of projects with optional filtering by team, status, and date ranges")
+            .WithDescription("Retrieves a paginated list of projects with optional filtering by team, status, and date ranges. Query parameters: page (int), pageSize (int), teamId (Guid), status (ProjectStatus), startDateFrom (date), startDateTo (date), endDateFrom (date), endDateTo (date), search (string). Enums are provided as strings, e.g., status=Active.")
             .Produces<PagedProjectResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);

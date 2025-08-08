@@ -142,16 +142,21 @@ public static class SwaggerExtensions
     {
         // Configure response types and examples
         options.SupportNonNullableReferenceTypes();
-        options.UseInlineDefinitionsForEnums();
+    options.UseInlineDefinitionsForEnums();
         options.DescribeAllParametersInCamelCase();
 
-        // Custom schema mappings for strongly-typed IDs
+    // Custom schema mappings for strongly-typed IDs
         options.MapType<Guid>(() => new OpenApiSchema
         {
             Type = "string",
             Format = "uuid",
             Example = new Microsoft.OpenApi.Any.OpenApiString("123e4567-e89b-12d3-a456-426614174000")
         });
+
+    // Ensure enums are documented as strings with allowed values and examples
+    options.SchemaFilter<EnumSchemaFilter>();
+    // Add concrete examples for common request DTOs
+    options.SchemaFilter<RequestExamplesSchemaFilter>();
     }
 
     /// <summary>
@@ -206,10 +211,12 @@ public static class SwaggerExtensions
     private static void ConfigureCustomFilters(SwaggerGenOptions options)
     {
         // Schema filters for custom type documentation
-        options.SchemaFilter<ProblemDetailsSchemaFilter>();
+    options.SchemaFilter<ProblemDetailsSchemaFilter>();
+    options.SchemaFilter<EnumSchemaFilter>();
 
         // Operation filters for enhanced endpoint documentation
-        options.OperationFilter<CommonResponsesOperationFilter>();
+    options.OperationFilter<CommonResponsesOperationFilter>();
+    options.OperationFilter<EnumParameterExampleOperationFilter>();
         options.OperationFilter<AuthorizeOperationFilter>();
 
         // Document filters for overall API enhancement
