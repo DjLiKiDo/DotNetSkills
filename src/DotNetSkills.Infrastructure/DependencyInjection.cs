@@ -31,10 +31,43 @@ public static class DependencyInjection
         });
 
         // Repository registrations (Application layer interfaces → Infrastructure implementations)
-        services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<ITeamRepository, TeamRepository>();
-        services.AddScoped<IProjectRepository, ProjectRepository>();
-        services.AddScoped<ITaskRepository, TaskRepository>();
+        // Register concrete repositories first, then wrap with cached decorators
+        
+        // User Repository with caching
+        services.AddScoped<UserRepository>();
+        services.AddScoped<IUserRepository>(provider =>
+        {
+            var innerRepository = provider.GetRequiredService<UserRepository>();
+            var memoryCache = provider.GetRequiredService<IMemoryCache>();
+            return new CachedUserRepository(innerRepository, memoryCache);
+        });
+        
+        // Team Repository with caching
+        services.AddScoped<TeamRepository>();
+        services.AddScoped<ITeamRepository>(provider =>
+        {
+            var innerRepository = provider.GetRequiredService<TeamRepository>();
+            var memoryCache = provider.GetRequiredService<IMemoryCache>();
+            return new CachedTeamRepository(innerRepository, memoryCache);
+        });
+        
+        // Project Repository with caching
+        services.AddScoped<ProjectRepository>();
+        services.AddScoped<IProjectRepository>(provider =>
+        {
+            var innerRepository = provider.GetRequiredService<ProjectRepository>();
+            var memoryCache = provider.GetRequiredService<IMemoryCache>();
+            return new CachedProjectRepository(innerRepository, memoryCache);
+        });
+        
+        // Task Repository with caching
+        services.AddScoped<TaskRepository>();
+        services.AddScoped<ITaskRepository>(provider =>
+        {
+            var innerRepository = provider.GetRequiredService<TaskRepository>();
+            var memoryCache = provider.GetRequiredService<IMemoryCache>();
+            return new CachedTaskRepository(innerRepository, memoryCache);
+        });
 
         // Unit of Work pattern
         services.AddScoped<IUnitOfWork, UnitOfWork>();
