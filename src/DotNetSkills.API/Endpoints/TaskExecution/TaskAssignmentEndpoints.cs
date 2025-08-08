@@ -1,3 +1,5 @@
+using DotNetSkills.API.Authorization;
+
 namespace DotNetSkills.API.Endpoints.TaskExecution;
 
 /// <summary>
@@ -34,7 +36,7 @@ public static class TaskAssignmentEndpoints
             .WithName("AssignTask")
             .WithSummary("Assign task to user")
             .WithDescription("Assigns a task to a specific user. Tasks support single assignment only as per domain business rules")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Accepts<AssignTaskRequest>("application/json")
             .Produces<TaskAssignmentResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -53,7 +55,7 @@ public static class TaskAssignmentEndpoints
             .WithName("UnassignTask")
             .WithSummary("Unassign task from user")
             .WithDescription("Removes the current assignment from a task, making it available for reassignment")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Produces<TaskAssignmentResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -71,7 +73,7 @@ public static class TaskAssignmentEndpoints
             .WithName("CreateSubtask")
             .WithSummary("Create subtask")
             .WithDescription("Creates a subtask under the specified parent task. Only one-level subtask nesting is allowed as per domain business rules")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Accepts<CreateSubtaskRequest>("application/json")
             .Produces<TaskResponse>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -105,7 +107,7 @@ public static class TaskAssignmentEndpoints
             .WithName("UpdateSubtask")
             .WithSummary("Update subtask")
             .WithDescription("Updates a subtask's information while respecting domain constraints and parent-child relationships")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Accepts<UpdateSubtaskRequest>("application/json")
             .Produces<TaskResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)

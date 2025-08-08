@@ -1,3 +1,5 @@
+using DotNetSkills.API.Authorization;
+
 namespace DotNetSkills.API.Endpoints.TeamCollaboration;
 
 /// <summary>
@@ -63,7 +65,7 @@ public static class TeamEndpoints
             .WithName("CreateTeam")
             .WithSummary("Create a new team")
             .WithDescription("Creates a new team - ProjectManager or Admin only operation")
-            .RequireAuthorization("ProjectManagerOrAdmin") // TODO: Implement ProjectManagerOrAdmin policy
+            .RequireAuthorization(Policies.ProjectManagerOrAdmin)
             .Accepts<CreateTeamRequest>("application/json")
             .Produces<TeamResponse>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -82,7 +84,7 @@ public static class TeamEndpoints
             .WithName("UpdateTeam")
             .WithSummary("Update team")
             .WithDescription("Updates an existing team's information")
-            .RequireAuthorization("ProjectManagerOrAdmin") // TODO: Implement ProjectManagerOrAdmin policy
+            .RequireAuthorization(Policies.ProjectManagerOrAdmin)
             .Accepts<UpdateTeamRequest>("application/json")
             .Produces<TeamResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -102,7 +104,7 @@ public static class TeamEndpoints
             .WithName("DeleteTeam")
             .WithSummary("Delete team")
             .WithDescription("Deletes an existing team - ProjectManager or Admin only operation")
-            .RequireAuthorization("ProjectManagerOrAdmin") // TODO: Implement ProjectManagerOrAdmin policy
+            .RequireAuthorization(Policies.ProjectManagerOrAdmin)
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)

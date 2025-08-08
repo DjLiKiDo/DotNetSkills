@@ -1,3 +1,5 @@
+using DotNetSkills.API.Authorization;
+
 namespace DotNetSkills.API.Endpoints.TaskExecution;
 
 /// <summary>
@@ -65,7 +67,7 @@ public static class TaskEndpoints
             .WithName("CreateTask")
             .WithSummary("Create a new task")
             .WithDescription("Creates a new task with optional assignment and parent task relationship. Supports business rules for single assignment and one-level subtask nesting")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Produces<TaskResponse>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -82,7 +84,7 @@ public static class TaskEndpoints
             .WithName("UpdateTask")
             .WithSummary("Update task information")
             .WithDescription("Updates task information while respecting domain constraints and status restrictions. Completed tasks cannot be modified")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Produces<TaskResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -100,7 +102,7 @@ public static class TaskEndpoints
             .WithName("DeleteTask")
             .WithSummary("Delete task (soft delete)")
             .WithDescription("Deletes a task by cancelling it (soft delete). This operation also cancels all subtasks automatically")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -118,7 +120,7 @@ public static class TaskEndpoints
             .WithName("UpdateTaskStatus")
             .WithSummary("Update task status")
             .WithDescription("Updates task status with proper state transition validation. Supports all valid status transitions according to domain business rules")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Produces<TaskResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)

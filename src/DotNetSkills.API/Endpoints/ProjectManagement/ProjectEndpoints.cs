@@ -1,3 +1,5 @@
+using DotNetSkills.API.Authorization;
+
 namespace DotNetSkills.API.Endpoints.ProjectManagement;
 
 /// <summary>
@@ -65,7 +67,7 @@ public static class ProjectEndpoints
             .WithName("CreateProject")
             .WithSummary("Create a new project")
             .WithDescription("Creates a new project associated with a team - ProjectManager or Admin only operation")
-            .RequireAuthorization("ProjectManagerOrAdmin") // TODO: Implement ProjectManagerOrAdmin policy
+            .RequireAuthorization(Policies.ProjectManagerOrAdmin)
             .Accepts<CreateProjectRequest>("application/json")
             .Produces<ProjectResponse>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -85,7 +87,7 @@ public static class ProjectEndpoints
             .WithName("UpdateProject")
             .WithSummary("Update project")
             .WithDescription("Updates an existing project's information")
-            .RequireAuthorization("ProjectManagerOrAdmin") // TODO: Implement ProjectManagerOrAdmin policy
+            .RequireAuthorization(Policies.ProjectManagerOrAdmin)
             .Accepts<UpdateProjectRequest>("application/json")
             .Produces<ProjectResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -106,7 +108,7 @@ public static class ProjectEndpoints
             .WithName("ArchiveProject")
             .WithSummary("Archive project")
             .WithDescription("Archives an existing project (soft delete) - ProjectManager or Admin only operation")
-            .RequireAuthorization("ProjectManagerOrAdmin") // TODO: Implement ProjectManagerOrAdmin policy
+            .RequireAuthorization(Policies.ProjectManagerOrAdmin)
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)

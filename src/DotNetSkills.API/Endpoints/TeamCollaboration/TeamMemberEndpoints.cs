@@ -1,3 +1,5 @@
+using DotNetSkills.API.Authorization;
+
 namespace DotNetSkills.API.Endpoints.TeamCollaboration;
 
 /// <summary>
@@ -48,7 +50,7 @@ public static class TeamMemberEndpoints
             .WithName("AddTeamMember")
             .WithSummary("Add team member")
             .WithDescription("Adds a user to the team with the specified role. Enforces max members limit and prevents duplicates.")
-            .RequireAuthorization("TeamManager") // TODO: Implement TeamManager policy
+            .RequireAuthorization(Policies.TeamManager)
             .Accepts<AddTeamMemberRequest>("application/json")
             .Produces<TeamMemberResponse>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -68,7 +70,7 @@ public static class TeamMemberEndpoints
             .WithName("RemoveTeamMember")
             .WithSummary("Remove team member")
             .WithDescription("Removes a user from the team")
-            .RequireAuthorization("TeamManager") // TODO: Implement TeamManager policy
+            .RequireAuthorization(Policies.TeamManager)
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -86,7 +88,7 @@ public static class TeamMemberEndpoints
             .WithName("UpdateMemberRole")
             .WithSummary("Update member role")
             .WithDescription("Updates the role of a team member")
-            .RequireAuthorization("TeamManager") // TODO: Implement TeamManager policy
+            .RequireAuthorization(Policies.TeamManager)
             .Accepts<UpdateMemberRoleRequest>("application/json")
             .Produces<TeamMemberResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)

@@ -1,3 +1,5 @@
+using DotNetSkills.API.Authorization;
+
 namespace DotNetSkills.API.Endpoints.UserManagement;
 
 /// <summary>
@@ -69,7 +71,7 @@ public static class UserEndpoints
             .WithName("CreateUser")
             .WithSummary("Create a new user")
             .WithDescription("Creates a new user account - Admin only operation. Request body uses enum fields as strings for role/status when applicable.")
-            .RequireAuthorization("AdminOnly") // TODO: Implement AdminOnly policy
+            .RequireAuthorization(Policies.AdminOnly)
             .Accepts<CreateUserRequest>("application/json")
             .Produces<UserResponse>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -109,7 +111,7 @@ public static class UserEndpoints
             .WithName("DeleteUser")
             .WithSummary("Delete (deactivate) a user")
             .WithDescription("Soft deletes a user by deactivating their account - Admin only operation")
-            .RequireAuthorization("AdminOnly") // TODO: Implement AdminOnly policy
+            .RequireAuthorization(Policies.AdminOnly)
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)

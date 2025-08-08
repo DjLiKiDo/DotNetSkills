@@ -1,3 +1,5 @@
+using DotNetSkills.API.Authorization;
+
 namespace DotNetSkills.API.Endpoints.ProjectManagement;
 
 /// <summary>
@@ -49,7 +51,7 @@ public static class ProjectTaskEndpoints
             .WithName("CreateTaskInProject")
             .WithSummary("Create a new task in project")
             .WithDescription("Creates a new task that belongs to the specified project - requires project team membership")
-            .RequireAuthorization("ProjectMemberOrAdmin") // TODO: Implement ProjectMemberOrAdmin policy
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Accepts<CreateTaskInProjectRequest>("application/json")
             .Produces<ProjectTaskResponse>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -70,7 +72,7 @@ public static class ProjectTaskEndpoints
             .WithName("UpdateTaskInProject")
             .WithSummary("Update task in project context")
             .WithDescription("Updates a task within the context of its project with validation of project membership")
-            .RequireAuthorization("ProjectMemberOrAdmin") // TODO: Implement ProjectMemberOrAdmin policy
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Accepts<UpdateTaskInProjectRequest>("application/json")
             .Produces<ProjectTaskResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)

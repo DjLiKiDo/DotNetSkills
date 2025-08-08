@@ -2,6 +2,7 @@ using DotNetSkills.Application;
 using DotNetSkills.Infrastructure;
 using DotNetSkills.API.Configuration.Options;
 using DotNetSkills.API.Configuration.Options.Validators;
+using DotNetSkills.API.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -126,7 +127,7 @@ public static class DependencyInjection
                     };
                 });
 
-            services.AddAuthorization();
+            services.AddApiAuthorization();
         }
 
         // CORS configuration via options
