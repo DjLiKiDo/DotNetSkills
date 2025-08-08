@@ -5,6 +5,7 @@ using DotNetSkills.API.Configuration.Options.Validators;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace DotNetSkills.API;
 
@@ -64,6 +65,7 @@ public static class DependencyInjection
             options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             options.SerializerOptions.WriteIndented = true;
             options.SerializerOptions.PropertyNameCaseInsensitive = true;
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 
             // Add custom converters for strongly-typed IDs when needed
             // options.SerializerOptions.Converters.Add(new UserIdJsonConverter());
@@ -78,6 +80,7 @@ public static class DependencyInjection
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             options.JsonSerializerOptions.WriteIndented = true;
             options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
 
         // Problem Details configuration for consistent error responses

@@ -6,8 +6,6 @@ namespace DotNetSkills.Application.ProjectManagement.Features.CreateTaskInProjec
 /// </summary>
 public class CreateTaskInProjectCommandValidator : AbstractValidator<CreateTaskInProjectCommand>
 {
-    private static readonly string[] ValidPriorities = { "Low", "Medium", "High", "Critical" };
-
     public CreateTaskInProjectCommandValidator()
     {
         RuleFor(x => x.ProjectId)
@@ -26,8 +24,8 @@ public class CreateTaskInProjectCommandValidator : AbstractValidator<CreateTaskI
             .When(x => !string.IsNullOrEmpty(x.Description));
 
         RuleFor(x => x.Priority)
-            .Must(priority => ValidPriorities.Contains(priority))
-            .WithMessage("Priority must be one of: Low, Medium, High, Critical.");
+            .IsInEnum()
+            .WithMessage("Priority must be a valid TaskPriority value.");
 
         RuleFor(x => x.EstimatedHours)
             .GreaterThan(0)

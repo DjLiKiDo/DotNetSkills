@@ -7,5 +7,5 @@ namespace DotNetSkills.Application.UserManagement.Features.CreateUser;
 public record CreateUserCommand(
     string Name,
     string Email,
-    string Role,
+    UserRole Role,
     UserId? CreatedById = null) : IRequest<Result<UserResponse>>;

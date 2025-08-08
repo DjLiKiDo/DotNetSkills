@@ -6,7 +6,7 @@ namespace DotNetSkills.Application.TaskExecution.Features.UpdateTaskStatus;
 /// </summary>
 public record UpdateTaskStatusCommand(
     TaskId TaskId,
-    string Status,
+    DomainTaskStatus Status,
     int? ActualHours,
     UserId UpdatedBy
 ) : IRequest<TaskResponse>;

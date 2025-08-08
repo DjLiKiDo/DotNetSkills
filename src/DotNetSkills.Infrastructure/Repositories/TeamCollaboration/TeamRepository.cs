@@ -336,7 +336,7 @@ public class TeamRepository : BaseRepository<Team, TeamId>, ITeamRepository
                 Id = t.Id.Value,
                 Name = t.Name,
                 Description = t.Description ?? string.Empty,
-                Status = t.Status.ToString(),
+                Status = t.Status,
                 CreatedAt = t.CreatedAt,
                 MemberCount = t.Members.Count,
                 ProjectCount = Context.Set<Project>().Count(p => p.TeamId == t.Id)
@@ -362,7 +362,7 @@ public class TeamRepository : BaseRepository<Team, TeamId>, ITeamRepository
                 Id = t.Id.Value,
                 Name = t.Name,
                 Description = t.Description ?? string.Empty,
-                Status = t.Status.ToString(),
+                Status = t.Status,
                 MemberCount = t.Members.Count,
                 ActiveProjectCount = Context.Set<Project>().Count(p => p.TeamId == t.Id && p.Status == ProjectStatus.Active),
                 CompletedProjectCount = Context.Set<Project>().Count(p => p.TeamId == t.Id && p.Status == ProjectStatus.Completed),
@@ -399,7 +399,7 @@ public class TeamRepository : BaseRepository<Team, TeamId>, ITeamRepository
             {
                 Id = t.Id.Value,
                 Name = t.Name,
-                Status = t.Status.ToString(),
+                Status = t.Status,
                 IsActive = t.Status == TeamStatus.Active,
                 MemberCount = t.Members.Count
             })
@@ -424,8 +424,8 @@ public class TeamRepository : BaseRepository<Team, TeamId>, ITeamRepository
             {
                 TeamId = t.Id.Value,
                 TeamName = t.Name,
-                TeamStatus = t.Status.ToString(),
-                MemberRole = t.Members.First(m => m.UserId == userId).Role.ToString(),
+                TeamStatus = t.Status,
+                MemberRole = t.Members.First(m => m.UserId == userId).Role,
                 JoinedAt = t.Members.First(m => m.UserId == userId).CreatedAt,
                 TotalMembers = t.Members.Count
             })

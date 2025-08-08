@@ -8,8 +8,8 @@ public record UserResponse(
     Guid Id,
     string Name,
     string Email,
-    string Role,
-    string Status,
+    UserRole Role,
+    UserStatus Status,
     DateTime CreatedAt,
     DateTime UpdatedAt,
     int TeamMembershipsCount)
@@ -24,8 +24,8 @@ public record UserResponse(
             user.Id.Value,
             user.Name,
             user.Email.Value,
-            user.Role.ToString(),
-            user.Status.ToString(),
+            user.Role,
+            user.Status,
             user.CreatedAt,
             user.UpdatedAt,
             user.TeamMemberships.Count);

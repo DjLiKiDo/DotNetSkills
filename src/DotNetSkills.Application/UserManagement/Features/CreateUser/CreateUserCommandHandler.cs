@@ -43,13 +43,6 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
             _logger.LogInformation("Creating user with email {Email} and role {Role}", 
                 request.Email, request.Role);
 
-            // Parse UserRole enum from string with validation
-            if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var userRole))
-            {
-                _logger.LogWarning("Invalid user role provided: {Role}", request.Role);
-                return Result<UserResponse>.Failure($"Invalid user role: {request.Role}");
-            }
-
             // Create EmailAddress value object from string input
             EmailAddress emailAddress;
             try
@@ -81,7 +74,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
             User user;
             try
             {
-                user = User.Create(request.Name, emailAddress, userRole, createdByUser);
+                user = User.Create(request.Name, emailAddress, request.Role, createdByUser);
             }
             catch (DomainException ex)
             {

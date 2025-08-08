@@ -50,8 +50,8 @@ public record SubtaskResponse(
     Guid Id,
     string Title,
     string? Description,
-    string Status,
-    string Priority,
+    DomainTaskStatus Status,
+    TaskPriority Priority,
     Guid? AssignedUserId,
     string? AssignedUserName,
     int? EstimatedHours,
@@ -71,7 +71,7 @@ public record SubtaskResponse(
 public record CreateSubtaskRequest(
     string Title,
     string? Description,
-    string Priority = "Medium",
+    TaskPriority Priority = TaskPriority.Medium,
     int? EstimatedHours = null,
     DateTime? DueDate = null,
     Guid? AssignedUserId = null
@@ -98,9 +98,8 @@ public record CreateSubtaskRequest(
         if (DueDate.HasValue && DueDate.Value <= DateTime.UtcNow)
             throw new ArgumentException("Due date must be in the future", nameof(DueDate));
 
-        var validPriorities = new[] { "Low", "Medium", "High", "Critical" };
-        if (!validPriorities.Contains(Priority))
-            throw new ArgumentException($"Priority must be one of: {string.Join(", ", validPriorities)}", nameof(Priority));
+        if (!Enum.IsDefined(typeof(TaskPriority), Priority))
+            throw new ArgumentException("Invalid task priority.", nameof(Priority));
 
         if (AssignedUserId.HasValue && AssignedUserId.Value == Guid.Empty)
             throw new ArgumentException("Assigned user ID cannot be empty GUID", nameof(AssignedUserId));
@@ -113,7 +112,7 @@ public record CreateSubtaskRequest(
 public record UpdateSubtaskRequest(
     string Title,
     string? Description,
-    string Priority,
+    TaskPriority Priority,
     int? EstimatedHours = null,
     DateTime? DueDate = null
 )
@@ -139,8 +138,7 @@ public record UpdateSubtaskRequest(
         if (DueDate.HasValue && DueDate.Value <= DateTime.UtcNow)
             throw new ArgumentException("Due date must be in the future", nameof(DueDate));
 
-        var validPriorities = new[] { "Low", "Medium", "High", "Critical" };
-        if (!validPriorities.Contains(Priority))
-            throw new ArgumentException($"Priority must be one of: {string.Join(", ", validPriorities)}", nameof(Priority));
+        if (!Enum.IsDefined(typeof(TaskPriority), Priority))
+            throw new ArgumentException("Invalid task priority.", nameof(Priority));
     }
 };

@@ -192,7 +192,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Invalid Query Parameters");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while retrieving tasks",
@@ -228,7 +228,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Invalid Task ID");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while retrieving the task",
@@ -284,7 +284,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while creating the task",
@@ -339,7 +339,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while updating the task",
@@ -387,7 +387,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while deleting the task",
@@ -439,7 +439,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while updating task status",
@@ -458,8 +458,8 @@ public record GetTasksQueryParameters(
     int PageSize = 20,
     Guid? ProjectId = null,
     Guid? AssignedUserId = null,
-    string? Status = null,
-    string? Priority = null,
+    DomainTaskStatus? Status = null,
+    TaskPriority? Priority = null,
     DateTime? DueDateFrom = null,
     DateTime? DueDateTo = null,
     DateTime? CreatedFrom = null,

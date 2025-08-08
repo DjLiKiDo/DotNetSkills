@@ -9,8 +9,8 @@ public record UserProfileResponse(
     Guid Id,
     string Name,
     string Email,
-    string Role,
-    string Status,
+    UserRole Role,
+    UserStatus Status,
     DateTime CreatedAt,
     DateTime UpdatedAt,
     int TeamMembershipsCount,
@@ -22,6 +22,6 @@ public record UserProfileResponse(
     public record TeamMembershipSummary(
         Guid TeamId,
         string TeamName,
-        string Role,
+    TeamRole Role,
         DateTime JoinedAt);
 };

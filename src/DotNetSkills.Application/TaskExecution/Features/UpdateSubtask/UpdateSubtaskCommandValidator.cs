@@ -5,8 +5,6 @@ namespace DotNetSkills.Application.TaskExecution.Features.UpdateSubtask;
 /// </summary>
 public class UpdateSubtaskCommandValidator : AbstractValidator<UpdateSubtaskCommand>
 {
-    private static readonly string[] ValidPriorities = { "Low", "Medium", "High", "Critical" };
-
     public UpdateSubtaskCommandValidator()
     {
         RuleFor(x => x.TaskId)
@@ -47,7 +45,7 @@ public class UpdateSubtaskCommandValidator : AbstractValidator<UpdateSubtaskComm
             .WithMessage("Due date must be in the future.");
 
         RuleFor(x => x.Priority)
-            .Must(priority => ValidPriorities.Contains(priority))
-            .WithMessage($"Priority must be one of: {string.Join(", ", ValidPriorities)}.");
+            .IsInEnum()
+            .WithMessage("Priority must be a valid TaskPriority value.");
     }
 }

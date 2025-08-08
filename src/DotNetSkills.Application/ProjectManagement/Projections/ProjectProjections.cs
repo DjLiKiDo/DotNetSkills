@@ -9,7 +9,7 @@ public record ProjectSummaryProjection
     public required Guid Id { get; init; }
     public required string Name { get; init; }
     public required string Description { get; init; }
-    public required string Status { get; init; }
+    public required ProjectStatus Status { get; init; }
     public required DateTime CreatedAt { get; init; }
     public required DateTime? StartDate { get; init; }
     public required DateTime? EndDate { get; init; }
@@ -27,7 +27,7 @@ public record ProjectDashboardProjection
     public required Guid Id { get; init; }
     public required string Name { get; init; }
     public required string Description { get; init; }
-    public required string Status { get; init; }
+    public required ProjectStatus Status { get; init; }
     public required DateTime CreatedAt { get; init; }
     public required DateTime? StartDate { get; init; }
     public required DateTime? EndDate { get; init; }
@@ -48,7 +48,7 @@ public record ProjectSelectionProjection
 {
     public required Guid Id { get; init; }
     public required string Name { get; init; }
-    public required string Status { get; init; }
+    public required ProjectStatus Status { get; init; }
     public required bool IsActive { get; init; }
     public required Guid TeamId { get; init; }
     public required string TeamName { get; init; }
@@ -63,7 +63,7 @@ public record ProjectOverviewProjection
     public required Guid Id { get; init; }
     public required string Name { get; init; }
     public required string Description { get; init; }
-    public required string Status { get; init; }
+    public required ProjectStatus Status { get; init; }
     public required DateTime CreatedAt { get; init; }
     public required DateTime UpdatedAt { get; init; }
     public required string TeamName { get; init; }

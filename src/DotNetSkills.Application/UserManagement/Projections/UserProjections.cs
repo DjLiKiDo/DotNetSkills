@@ -9,8 +9,8 @@ public record UserSummaryProjection
     public required Guid Id { get; init; }
     public required string Name { get; init; }
     public required string Email { get; init; }
-    public required string Role { get; init; }
-    public required string Status { get; init; }
+    public required UserRole Role { get; init; }
+    public required UserStatus Status { get; init; }
     public required DateTime CreatedAt { get; init; }
     public required int TeamMembershipCount { get; init; }
 }
@@ -24,8 +24,8 @@ public record UserDashboardProjection
     public required Guid Id { get; init; }
     public required string Name { get; init; }
     public required string Email { get; init; }
-    public required string Role { get; init; }
-    public required string Status { get; init; }
+    public required UserRole Role { get; init; }
+    public required UserStatus Status { get; init; }
     public required int ActiveTeamCount { get; init; }
     public required int AssignedTaskCount { get; init; }
     public required int CompletedTaskCount { get; init; }
@@ -41,6 +41,6 @@ public record UserSelectionProjection
     public required Guid Id { get; init; }
     public required string Name { get; init; }
     public required string Email { get; init; }
-    public required string Role { get; init; }
+    public required UserRole Role { get; init; }
     public required bool IsActive { get; init; }
 }

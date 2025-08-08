@@ -24,8 +24,8 @@ public record TaskFilterMetadata(
     string? ProjectName,
     Guid? AssignedUserId,
     string? AssignedUserName,
-    string? Status,
-    string? Priority,
+    DomainTaskStatus? Status,
+    TaskPriority? Priority,
     DateTime? DueDateFrom,
     DateTime? DueDateTo,
     DateTime? CreatedFrom,
@@ -46,7 +46,7 @@ public record CreateTaskRequest(
     string Title,
     string? Description,
     Guid ProjectId,
-    string Priority,
+    TaskPriority Priority,
     Guid? ParentTaskId,
     int? EstimatedHours,
     DateTime? DueDate,
@@ -71,8 +71,8 @@ public record CreateTaskRequest(
         if (ProjectId == Guid.Empty)
             throw new ArgumentException("Project ID cannot be empty.", nameof(ProjectId));
 
-        if (!IsValidPriority(Priority))
-            throw new ArgumentException("Priority must be one of: Low, Medium, High, Critical.", nameof(Priority));
+        if (!Enum.IsDefined(typeof(TaskPriority), Priority))
+            throw new ArgumentException("Invalid task priority.", nameof(Priority));
 
         if (EstimatedHours.HasValue && EstimatedHours <= 0)
             throw new ArgumentException("Estimated hours must be positive.", nameof(EstimatedHours));
@@ -93,10 +93,7 @@ public record CreateTaskRequest(
     /// <summary>
     /// Validates task priority values.
     /// </summary>
-    private static bool IsValidPriority(string priority)
-    {
-        return priority is "Low" or "Medium" or "High" or "Critical";
-    }
+    private static bool IsValidPriority(TaskPriority priority) => Enum.IsDefined(typeof(TaskPriority), priority);
 }
 
 /// <summary>
@@ -106,7 +103,7 @@ public record CreateTaskRequest(
 public record UpdateTaskRequest(
     string Title,
     string? Description,
-    string Priority,
+    TaskPriority Priority,
     int? EstimatedHours,
     DateTime? DueDate
 )
@@ -126,8 +123,8 @@ public record UpdateTaskRequest(
         if (Description?.Length > 2000)
             throw new ArgumentException("Task description cannot exceed 2000 characters.", nameof(Description));
 
-        if (!IsValidPriority(Priority))
-            throw new ArgumentException("Priority must be one of: Low, Medium, High, Critical.", nameof(Priority));
+        if (!Enum.IsDefined(typeof(TaskPriority), Priority))
+            throw new ArgumentException("Invalid task priority.", nameof(Priority));
 
         if (EstimatedHours.HasValue && EstimatedHours <= 0)
             throw new ArgumentException("Estimated hours must be positive.", nameof(EstimatedHours));
@@ -142,10 +139,7 @@ public record UpdateTaskRequest(
     /// <summary>
     /// Validates task priority values.
     /// </summary>
-    private static bool IsValidPriority(string priority)
-    {
-        return priority is "Low" or "Medium" or "High" or "Critical";
-    }
+    private static bool IsValidPriority(TaskPriority priority) => Enum.IsDefined(typeof(TaskPriority), priority);
 }
 
 /// <summary>
@@ -153,7 +147,7 @@ public record UpdateTaskRequest(
 /// Supports task status transitions according to domain business rules.
 /// </summary>
 public record UpdateTaskStatusRequest(
-    string Status,
+    DomainTaskStatus Status,
     int? ActualHours
 )
 {
@@ -163,11 +157,8 @@ public record UpdateTaskStatusRequest(
     /// <exception cref="ArgumentException">Thrown when request parameters are invalid.</exception>
     public void Validate()
     {
-        if (string.IsNullOrWhiteSpace(Status))
-            throw new ArgumentException("Status is required and cannot be empty.", nameof(Status));
-
-        if (!IsValidStatus(Status))
-            throw new ArgumentException("Status must be one of: ToDo, InProgress, InReview, Done, Cancelled.", nameof(Status));
+        if (!Enum.IsDefined(typeof(DomainTaskStatus), Status))
+            throw new ArgumentException("Invalid task status.", nameof(Status));
 
         if (ActualHours.HasValue && ActualHours <= 0)
             throw new ArgumentException("Actual hours must be positive.", nameof(ActualHours));
@@ -179,8 +170,5 @@ public record UpdateTaskStatusRequest(
     /// <summary>
     /// Validates task status values.
     /// </summary>
-    private static bool IsValidStatus(string status)
-    {
-        return status is "ToDo" or "InProgress" or "InReview" or "Done" or "Cancelled";
-    }
+    private static bool IsValidStatus(DomainTaskStatus status) => Enum.IsDefined(typeof(DomainTaskStatus), status);
 }

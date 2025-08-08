@@ -7,7 +7,7 @@ public record UpdateSubtaskCommand(
     TaskId TaskId,
     string Title,
     string? Description,
-    string Priority,
+    TaskPriority Priority,
     int? EstimatedHours,
     DateTime? DueDate,
     UserId UpdatedByUserId

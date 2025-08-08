@@ -5,8 +5,6 @@ namespace DotNetSkills.Application.TaskExecution.Features.GetTasks;
 /// </summary>
 public class GetTasksQueryValidator : AbstractValidator<GetTasksQuery>
 {
-    private static readonly string[] ValidStatuses = { "ToDo", "InProgress", "InReview", "Done", "Cancelled" };
-    private static readonly string[] ValidPriorities = { "Low", "Medium", "High", "Critical" };
     private static readonly string[] ValidSortFields = { "Title", "Status", "Priority", "DueDate", "CreatedAt", "UpdatedAt" };
     private static readonly string[] ValidSortDirections = { "asc", "desc" };
 
@@ -31,14 +29,14 @@ public class GetTasksQueryValidator : AbstractValidator<GetTasksQuery>
             .WithMessage("Assigned user ID cannot be empty GUID.");
 
         RuleFor(x => x.Status)
-            .Must(status => ValidStatuses.Contains(status!))
-            .When(x => !string.IsNullOrEmpty(x.Status))
-            .WithMessage("Status must be one of: ToDo, InProgress, InReview, Done, Cancelled.");
+            .IsInEnum()
+            .When(x => x.Status.HasValue)
+            .WithMessage("Status must be a valid TaskStatus value.");
 
         RuleFor(x => x.Priority)
-            .Must(priority => ValidPriorities.Contains(priority!))
-            .When(x => !string.IsNullOrEmpty(x.Priority))
-            .WithMessage("Priority must be one of: Low, Medium, High, Critical.");
+            .IsInEnum()
+            .When(x => x.Priority.HasValue)
+            .WithMessage("Priority must be a valid TaskPriority value.");
 
         RuleFor(x => x.DueDateFrom)
             .LessThanOrEqualTo(x => x.DueDateTo)

@@ -5,8 +5,6 @@ namespace DotNetSkills.Application.TaskExecution.Features.CreateSubtask;
 /// </summary>
 public class CreateSubtaskCommandValidator : AbstractValidator<CreateSubtaskCommand>
 {
-    private static readonly string[] ValidPriorities = { "Low", "Medium", "High", "Critical" };
-
     public CreateSubtaskCommandValidator()
     {
         RuleFor(x => x.ParentTaskId)
@@ -47,8 +45,8 @@ public class CreateSubtaskCommandValidator : AbstractValidator<CreateSubtaskComm
             .WithMessage("Due date must be in the future.");
 
         RuleFor(x => x.Priority)
-            .Must(priority => ValidPriorities.Contains(priority))
-            .WithMessage($"Priority must be one of: {string.Join(", ", ValidPriorities)}.");
+            .IsInEnum()
+            .WithMessage("Priority must be a valid TaskPriority value.");
 
         RuleFor(x => x.AssignedUserId)
             .Must(userId => userId != null && userId.Value != Guid.Empty)

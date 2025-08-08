@@ -8,8 +8,8 @@ public record ProjectTaskResponse(
     Guid TaskId,
     string Title,
     string? Description,
-    string Status,
-    string Priority,
+    DomainTaskStatus Status,
+    TaskPriority Priority,
     Guid ProjectId,
     Guid? AssignedUserId,
     string? AssignedUserName,
@@ -33,19 +33,19 @@ public record ProjectTaskResponse(
     /// <summary>
     /// Indicates whether the task is currently active (not completed or cancelled).
     /// </summary>
-    public bool IsActive => Status != "Done" && Status != "Cancelled";
+    public bool IsActive => Status is not DomainTaskStatus.Done and not DomainTaskStatus.Cancelled;
 
     /// <summary>
     /// Gets the task status in a human-readable format.
     /// </summary>
     public string StatusDisplay => Status switch
     {
-        "ToDo" => "To Do",
-        "InProgress" => "In Progress",
-        "InReview" => "In Review",
-        "Done" => "Done",
-        "Cancelled" => "Cancelled",
-        _ => Status
+        DomainTaskStatus.ToDo => "To Do",
+        DomainTaskStatus.InProgress => "In Progress",
+        DomainTaskStatus.InReview => "In Review",
+        DomainTaskStatus.Done => "Done",
+        DomainTaskStatus.Cancelled => "Cancelled",
+        _ => Status.ToString()
     };
 
     /// <summary>
@@ -53,10 +53,10 @@ public record ProjectTaskResponse(
     /// </summary>
     public string PriorityColor => Priority switch
     {
-        "Critical" => "red",
-        "High" => "orange",
-        "Medium" => "yellow",
-        "Low" => "green",
+        TaskPriority.Critical => "red",
+        TaskPriority.High => "orange",
+        TaskPriority.Medium => "yellow",
+        TaskPriority.Low => "green",
         _ => "gray"
     };
 }

@@ -89,9 +89,9 @@ public static class ProjectTaskEndpoints
         string projectId,
         int page = 1,
         int pageSize = 20,
-        string? status = null,
+    DomainTaskStatus? status = null,
         Guid? assignedUserId = null,
-        string? priority = null,
+    TaskPriority? priority = null,
         DateTime? dueDateFrom = null,
         DateTime? dueDateTo = null,
         bool? isOverdue = null,
@@ -154,11 +154,11 @@ public static class ProjectTaskEndpoints
                 Status = StatusCodes.Status400BadRequest
             });
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 title: "An error occurred while retrieving project tasks",
-                detail: ex.Message,
+        detail: "An unexpected error occurred.",
                 statusCode: StatusCodes.Status500InternalServerError);
         }
     }

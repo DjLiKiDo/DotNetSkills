@@ -9,8 +9,8 @@ public record TaskSummaryProjection
     public required Guid Id { get; init; }
     public required string Title { get; init; }
     public required string Description { get; init; }
-    public required string Status { get; init; }
-    public required string Priority { get; init; }
+    public required DomainTaskStatus Status { get; init; }
+    public required TaskPriority Priority { get; init; }
     public required DateTime CreatedAt { get; init; }
     public required DateTime? DueDate { get; init; }
     public required Guid ProjectId { get; init; }
@@ -29,8 +29,8 @@ public record TaskDashboardProjection
     public required Guid Id { get; init; }
     public required string Title { get; init; }
     public required string Description { get; init; }
-    public required string Status { get; init; }
-    public required string Priority { get; init; }
+    public required DomainTaskStatus Status { get; init; }
+    public required TaskPriority Priority { get; init; }
     public required DateTime CreatedAt { get; init; }
     public required DateTime UpdatedAt { get; init; }
     public required DateTime? DueDate { get; init; }
@@ -54,8 +54,8 @@ public record TaskSelectionProjection
 {
     public required Guid Id { get; init; }
     public required string Title { get; init; }
-    public required string Status { get; init; }
-    public required string Priority { get; init; }
+    public required DomainTaskStatus Status { get; init; }
+    public required TaskPriority Priority { get; init; }
     public required Guid ProjectId { get; init; }
     public required string ProjectName { get; init; }
     public required bool CanHaveSubtasks { get; init; }
@@ -69,8 +69,8 @@ public record TaskAssignmentProjection
 {
     public required Guid Id { get; init; }
     public required string Title { get; init; }
-    public required string Status { get; init; }
-    public required string Priority { get; init; }
+    public required DomainTaskStatus Status { get; init; }
+    public required TaskPriority Priority { get; init; }
     public required DateTime? DueDate { get; init; }
     public required Guid ProjectId { get; init; }
     public required string ProjectName { get; init; }

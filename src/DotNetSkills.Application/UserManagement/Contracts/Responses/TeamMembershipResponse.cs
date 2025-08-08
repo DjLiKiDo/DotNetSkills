@@ -12,7 +12,7 @@ public record TeamMembershipResponse(
     Guid TeamId,
     string TeamName,
     string TeamDescription,
-    string Role,
+    TeamRole Role,
     DateTime JoinedAt,
     DateTime? LeftAt,
     bool IsActive)

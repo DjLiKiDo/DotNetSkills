@@ -132,12 +132,14 @@ public static class UserEndpoints
         IMediator mediator,
         int page = 1,
         int pageSize = 20,
-        string? search = null)
+        string? search = null,
+        UserRole? role = null,
+        UserStatus? status = null)
     {
         try
         {
             // Create query
-            var query = new GetUsersQuery(page, pageSize, search);
+            var query = new GetUsersQuery(page, pageSize, search, role, status);
 
             // Send query through MediatR
             var result = await mediator.Send(query);
@@ -160,7 +162,7 @@ public static class UserEndpoints
                 Status = StatusCodes.Status400BadRequest
             });
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             // TODO: Log exception
             return Results.Problem(
@@ -208,7 +210,7 @@ public static class UserEndpoints
                 Status = StatusCodes.Status400BadRequest
             });
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             // TODO: Log exception
             return Results.Problem(
@@ -265,7 +267,7 @@ public static class UserEndpoints
                 Status = StatusCodes.Status400BadRequest
             });
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             // TODO: Log exception
             return Results.Problem(
@@ -323,7 +325,7 @@ public static class UserEndpoints
                 Status = StatusCodes.Status400BadRequest
             });
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             // TODO: Log exception
             return Results.Problem(
@@ -372,7 +374,7 @@ public static class UserEndpoints
                 Status = StatusCodes.Status400BadRequest
             });
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             // TODO: Log exception
             return Results.Problem(

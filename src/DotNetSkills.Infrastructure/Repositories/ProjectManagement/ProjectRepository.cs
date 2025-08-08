@@ -264,7 +264,7 @@ public class ProjectRepository : BaseRepository<Project, ProjectId>, IProjectRep
                 Id = p.Id.Value,
                 Name = p.Name,
                 Description = p.Description,
-                Status = p.Status.ToString(),
+                Status = p.Status,
                 CreatedAt = p.CreatedAt,
                 StartDate = p.StartDate,
                 EndDate = p.EndDate,
@@ -301,7 +301,7 @@ public class ProjectRepository : BaseRepository<Project, ProjectId>, IProjectRep
                 Id = p.Id.Value,
                 Name = p.Name,
                 Description = p.Description,
-                Status = p.Status.ToString(),
+                Status = p.Status,
                 CreatedAt = p.CreatedAt,
                 StartDate = p.StartDate,
                 EndDate = p.EndDate,
@@ -354,7 +354,7 @@ public class ProjectRepository : BaseRepository<Project, ProjectId>, IProjectRep
             {
                 Id = p.Id.Value,
                 Name = p.Name,
-                Status = p.Status.ToString(),
+                Status = p.Status,
                 IsActive = p.Status == ProjectStatus.Active,
                 TeamId = p.TeamId.Value,
                 TeamName = Context.Set<Team>()
@@ -387,7 +387,7 @@ public class ProjectRepository : BaseRepository<Project, ProjectId>, IProjectRep
                 Id = p.Id.Value,
                 Name = p.Name,
                 Description = p.Description,
-                Status = p.Status.ToString(),
+                Status = p.Status,
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt,
                 TeamName = Context.Set<Team>()

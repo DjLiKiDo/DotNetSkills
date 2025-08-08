@@ -6,8 +6,6 @@ namespace DotNetSkills.Application.TaskExecution.Features.UpdateTaskStatus;
 /// </summary>
 public class UpdateTaskStatusCommandValidator : AbstractValidator<UpdateTaskStatusCommand>
 {
-    private static readonly string[] ValidStatuses = { "ToDo", "InProgress", "InReview", "Done", "Cancelled" };
-
     public UpdateTaskStatusCommandValidator()
     {
         RuleFor(x => x.TaskId)
@@ -15,10 +13,8 @@ public class UpdateTaskStatusCommandValidator : AbstractValidator<UpdateTaskStat
             .WithMessage("Task ID is required.");
 
         RuleFor(x => x.Status)
-            .NotEmpty()
-            .WithMessage("Status is required.")
-            .Must(status => ValidStatuses.Contains(status))
-            .WithMessage("Status must be one of: ToDo, InProgress, InReview, Done, Cancelled.");
+            .IsInEnum()
+            .WithMessage("Status must be a valid TaskStatus value.");
 
         RuleFor(x => x.ActualHours)
             .GreaterThan(0)

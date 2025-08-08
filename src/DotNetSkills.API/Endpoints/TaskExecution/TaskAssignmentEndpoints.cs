@@ -157,7 +157,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while assigning the task",
@@ -205,7 +205,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while unassigning the task",
@@ -261,7 +261,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while creating the subtask",
@@ -305,7 +305,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Invalid Task ID");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while retrieving subtasks",
@@ -361,7 +361,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while updating the subtask",

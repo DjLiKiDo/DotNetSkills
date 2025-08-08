@@ -6,8 +6,7 @@ namespace DotNetSkills.Application.ProjectManagement.Features.GetProjectTasks;
 /// </summary>
 public class GetProjectTasksQueryValidator : AbstractValidator<GetProjectTasksQuery>
 {
-    private static readonly string[] ValidStatuses = { "ToDo", "InProgress", "InReview", "Done", "Cancelled" };
-    private static readonly string[] ValidPriorities = { "Low", "Medium", "High", "Critical" };
+    // Enums are validated via IsInEnum rules
 
     public GetProjectTasksQueryValidator()
     {
@@ -24,12 +23,14 @@ public class GetProjectTasksQueryValidator : AbstractValidator<GetProjectTasksQu
             .WithMessage("Page size must be between 1 and 100.");
 
         RuleFor(x => x.Status)
-            .Must(status => string.IsNullOrEmpty(status) || ValidStatuses.Contains(status))
-            .WithMessage("Status must be one of: ToDo, InProgress, InReview, Done, Cancelled.");
+            .IsInEnum()
+            .When(x => x.Status.HasValue)
+            .WithMessage("Status must be a valid TaskStatus value.");
 
         RuleFor(x => x.Priority)
-            .Must(priority => string.IsNullOrEmpty(priority) || ValidPriorities.Contains(priority))
-            .WithMessage("Priority must be one of: Low, Medium, High, Critical.");
+            .IsInEnum()
+            .When(x => x.Priority.HasValue)
+            .WithMessage("Priority must be a valid TaskPriority value.");
 
         RuleFor(x => x.AssignedUserId)
             .NotEqual(new UserId(Guid.Empty))

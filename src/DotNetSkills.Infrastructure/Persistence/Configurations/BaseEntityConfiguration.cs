@@ -89,9 +89,12 @@ public abstract class BaseEntityConfiguration<TEntity, TId> : IEntityTypeConfigu
     /// <param name="builder">The entity type builder.</param>
     protected virtual void ConfigureOptimisticConcurrency(EntityTypeBuilder<TEntity> builder)
     {
-        // Use UpdatedAt as row version for optimistic concurrency
-        builder.Property(e => e.UpdatedAt)
-            .IsRowVersion();
+        // Map a dedicated rowversion column for optimistic concurrency
+        // We use a shadow property to avoid polluting the domain model with persistence concerns
+        builder.Property<byte[]>("RowVersion")
+            .IsRowVersion()
+            .HasColumnName("RowVersion")
+            .HasComment("SQL Server rowversion for optimistic concurrency");
     }
     
     /// <summary>

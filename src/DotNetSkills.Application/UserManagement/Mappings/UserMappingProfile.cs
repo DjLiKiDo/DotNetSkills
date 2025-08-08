@@ -38,8 +38,8 @@ public class UserMappingProfile : MappingProfile
                 user.Id.Value,
                 user.Name,
                 user.Email.Value,
-                user.Role.ToString(),
-                user.Status.ToString(),
+                user.Role,
+                user.Status,
                 user.CreatedAt,
                 user.UpdatedAt,
                 user.TeamMemberships.Count))
@@ -50,16 +50,16 @@ public class UserMappingProfile : MappingProfile
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.Value))
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.Value))
-            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
 
         // User to UserProfileResponse (for profile management)
         CreateMap<User, UserProfileResponse>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.Value))
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.Value))
-            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
             .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
             .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.UpdatedAt))
             .ForMember(dest => dest.CanBeAssignedTasks, opt => opt.MapFrom(src => src.CanBeAssignedTasks()))
@@ -78,7 +78,7 @@ public class UserMappingProfile : MappingProfile
             .ForMember(dest => dest.TeamMemberId, opt => opt.MapFrom(src => src.Id.Value))
             .ForMember(dest => dest.TeamId, opt => opt.MapFrom(src => src.TeamId.Value))
             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId.Value))
-            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()))
+            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role))
             .ForMember(dest => dest.JoinedAt, opt => opt.MapFrom(src => src.JoinedAt))
             .ForMember(dest => dest.HasLeadershipPrivileges, opt => opt.MapFrom(src => src.HasLeadershipPrivileges()))
             .ForMember(dest => dest.CanBeAssignedTasks, opt => opt.MapFrom(src => src.CanBeAssignedTasks()))
@@ -129,9 +129,8 @@ public class UserMappingProfile : MappingProfile
     /// </summary>
     private void CreateEnumMappings()
     {
-        CreateEnumToStringMapping<UserRole>();
-        CreateEnumToStringMapping<UserStatus>();
-        CreateEnumToStringMapping<TeamRole>();
+        // API uses JsonStringEnumConverter, so enums will serialize as strings automatically.
+        // No custom enum-to-string mapping is needed for response DTOs now that they use enum types.
     }
 
     /// <summary>
@@ -167,8 +166,8 @@ public record UserSummaryResponse(
     Guid Id,
     string Name,
     string Email,
-    string Role,
-    string Status);
+    UserRole Role,
+    UserStatus Status);
 
 /// <summary>
 /// Detailed DTO for user profile management operations.
@@ -177,8 +176,8 @@ public record UserProfileResponse(
     Guid Id,
     string Name,
     string Email,
-    string Role,
-    string Status,
+    UserRole Role,
+    UserStatus Status,
     DateTime CreatedAt,
     DateTime UpdatedAt,
     bool CanBeAssignedTasks,
@@ -194,7 +193,7 @@ public record TeamMembershipResponse(
     string TeamName,
     Guid UserId,
     string UserName,
-    string Role,
+    TeamRole Role,
     DateTime JoinedAt,
     bool HasLeadershipPrivileges,
     bool CanBeAssignedTasks,

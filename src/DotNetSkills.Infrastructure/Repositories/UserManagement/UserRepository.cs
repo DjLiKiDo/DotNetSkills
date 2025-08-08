@@ -281,8 +281,8 @@ public class UserRepository : BaseRepository<User, UserId>, IUserRepository
                 Id = u.Id.Value,
                 Name = u.Name,
                 Email = u.Email.Value,
-                Role = u.Role.ToString(),
-                Status = u.Status.ToString(),
+                Role = u.Role,
+                Status = u.Status,
                 CreatedAt = u.CreatedAt,
                 TeamMembershipCount = u.TeamMemberships.Count
             })
@@ -307,8 +307,8 @@ public class UserRepository : BaseRepository<User, UserId>, IUserRepository
                 Id = u.Id.Value,
                 Name = u.Name,
                 Email = u.Email.Value,
-                Role = u.Role.ToString(),
-                Status = u.Status.ToString(),
+                Role = u.Role,
+                Status = u.Status,
                 ActiveTeamCount = u.TeamMemberships.Count(tm => 
                     Context.Set<Team>().Any(t => t.Id == tm.TeamId && t.Status == TeamStatus.Active)),
                 AssignedTaskCount = Context.Set<DotNetSkills.Domain.TaskExecution.Entities.Task>()
@@ -342,7 +342,7 @@ public class UserRepository : BaseRepository<User, UserId>, IUserRepository
                 Id = u.Id.Value,
                 Name = u.Name,
                 Email = u.Email.Value,
-                Role = u.Role.ToString(),
+                Role = u.Role,
                 IsActive = u.Status == UserStatus.Active
             })
             .OrderBy(u => u.Name)

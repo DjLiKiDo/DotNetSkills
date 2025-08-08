@@ -35,7 +35,7 @@ public record TeamResponse(
 /// </summary>
 public record TeamMemberResponse(
     Guid UserId,
-    string Role,
+    TeamRole Role,
     DateTime JoinedAt)
 {
     /// <summary>
@@ -47,7 +47,7 @@ public record TeamMemberResponse(
     {
         return new TeamMemberResponse(
             member.UserId.Value,
-            member.Role.ToString(),
+            member.Role,
             member.JoinedAt);
     }
 }

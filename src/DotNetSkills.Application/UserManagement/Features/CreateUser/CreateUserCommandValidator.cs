@@ -39,12 +39,10 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
             .MustAsync(BeUniqueEmailAsync)
             .WithMessage("Email address is already taken");
 
-        // Role validation - using EmailAddress value object validation approach
+        // Role validation - enum ensures type safety; optional explicit check for defined values
         RuleFor(x => x.Role)
-            .NotEmpty()
-            .WithMessage("User role is required")
-            .Must(BeValidUserRole)
-            .WithMessage("Role must be Admin, ProjectManager, Developer, or Viewer");
+            .IsInEnum()
+            .WithMessage("Invalid user role value");
 
         // Optional CreatedById validation
         When(x => x.CreatedById != null, () =>
@@ -55,25 +53,7 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
         });
     }
 
-    /// <summary>
-    /// Validates that the role string can be parsed to a valid UserRole enum value.
-    /// Uses the same validation approach as the EmailAddress value object.
-    /// </summary>
-    private static bool BeValidUserRole(string role)
-    {
-        if (string.IsNullOrWhiteSpace(role))
-            return false;
-
-        try
-        {
-            // Attempt to parse the role to UserRole enum
-            return Enum.TryParse<UserRole>(role, ignoreCase: true, out _);
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    // String-based role validation removed; using strongly-typed enum
 
     /// <summary>
     /// Async validation to check if email address is unique in the system.

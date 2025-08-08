@@ -106,8 +106,11 @@ global using DotNetSkills.API.Middleware;
 // Domain references (for basic types and exceptions)
 global using DotNetSkills.Domain.Common.Exceptions;
 global using DotNetSkills.Domain.UserManagement.ValueObjects;
+global using DotNetSkills.Domain.UserManagement.Enums;
 global using DotNetSkills.Domain.TeamCollaboration.ValueObjects;
 global using DotNetSkills.Domain.ProjectManagement.ValueObjects;
 global using DotNetSkills.Domain.ProjectManagement.Enums;
 global using DotNetSkills.Domain.TaskExecution.ValueObjects;
 global using DotNetSkills.Domain.TaskExecution.Enums;
+// Alias to disambiguate from System.Threading.Tasks.TaskStatus
+global using DomainTaskStatus = DotNetSkills.Domain.TaskExecution.Enums.TaskStatus;

@@ -8,8 +8,8 @@ public record TaskResponse(
     Guid Id,
     string Title,
     string? Description,
-    string Status,
-    string Priority,
+    DomainTaskStatus Status,
+    TaskPriority Priority,
     Guid ProjectId,
     Guid? AssignedUserId,
     string? AssignedUserName,
@@ -34,12 +34,12 @@ public record TaskResponse(
     /// <summary>
     /// Indicates whether the task is currently active (not completed or cancelled).
     /// </summary>
-    public bool IsActive => Status is not "Done" and not "Cancelled";
+    public bool IsActive => Status is not DomainTaskStatus.Done and not DomainTaskStatus.Cancelled;
 
     /// <summary>
     /// Indicates whether the task can be modified.
     /// </summary>
-    public bool CanBeModified => Status is not "Done";
+    public bool CanBeModified => Status is not DomainTaskStatus.Done;
 
     /// <summary>
     /// Gets the task urgency level based on due date and priority.
@@ -49,9 +49,9 @@ public record TaskResponse(
         get
         {
             if (IsOverdue) return "Overdue";
-            if (Priority == "Critical") return "Critical";
+            if (Priority == TaskPriority.Critical) return "Critical";
             if (DueDate.HasValue && DueDate.Value <= DateTime.UtcNow.AddDays(1)) return "Urgent";
-            if (Priority == "High") return "High";
+            if (Priority == TaskPriority.High) return "High";
             return "Normal";
         }
     }

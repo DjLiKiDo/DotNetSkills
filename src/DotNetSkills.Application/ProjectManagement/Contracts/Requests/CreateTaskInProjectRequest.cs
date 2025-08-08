@@ -20,7 +20,7 @@ public record CreateTaskInProjectRequest
     /// The priority level of the task.
     /// Valid values: Low, Medium, High, Critical
     /// </summary>
-    public required string Priority { get; init; }
+    public required TaskPriority Priority { get; init; }
 
     /// <summary>
     /// Optional ID of the parent task if this is a subtask.
@@ -63,8 +63,8 @@ public record CreateTaskInProjectRequest
         if (Description?.Length > 2000)
             errors.Add("Task description cannot exceed 2000 characters.");
 
-        if (!IsValidPriority(Priority))
-            errors.Add("Priority must be one of: Low, Medium, High, Critical.");
+        if (!Enum.IsDefined(typeof(TaskPriority), Priority))
+            errors.Add("Invalid task priority.");
 
         if (EstimatedHours.HasValue && EstimatedHours <= 0)
             errors.Add("Estimated hours must be positive.");
@@ -88,8 +88,5 @@ public record CreateTaskInProjectRequest
     /// <summary>
     /// Checks if the provided priority string is valid.
     /// </summary>
-    private static bool IsValidPriority(string priority)
-    {
-        return priority is "Low" or "Medium" or "High" or "Critical";
-    }
+    private static bool IsValidPriority(TaskPriority priority) => Enum.IsDefined(typeof(TaskPriority), priority);
 }

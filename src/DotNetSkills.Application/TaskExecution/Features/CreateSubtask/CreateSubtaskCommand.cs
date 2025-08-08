@@ -7,7 +7,7 @@ public record CreateSubtaskCommand(
     TaskId ParentTaskId,
     string Title,
     string? Description,
-    string Priority,
+    TaskPriority Priority,
     int? EstimatedHours,
     DateTime? DueDate,
     UserId? AssignedUserId,

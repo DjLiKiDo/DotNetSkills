@@ -99,6 +99,8 @@ global using DomainTask = DotNetSkills.Domain.TaskExecution.Entities.Task;
 global using DotNetSkills.Domain.TaskExecution.ValueObjects;
 global using DotNetSkills.Domain.TaskExecution.Enums;
 global using DotNetSkills.Domain.TaskExecution.Events;
+// Aliases for conflicting enum names
+global using DomainTaskStatus = DotNetSkills.Domain.TaskExecution.Enums.TaskStatus;
 
 // Task Execution Application references - Feature Slices
 global using DotNetSkills.Application.TaskExecution.Features.CreateTask;

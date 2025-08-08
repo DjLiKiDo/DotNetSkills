@@ -6,8 +6,6 @@ namespace DotNetSkills.Application.TaskExecution.Features.UpdateTask;
 /// </summary>
 public class UpdateTaskCommandValidator : AbstractValidator<UpdateTaskCommand>
 {
-    private static readonly string[] ValidPriorities = { "Low", "Medium", "High", "Critical" };
-
     public UpdateTaskCommandValidator()
     {
         RuleFor(x => x.TaskId)
@@ -26,8 +24,8 @@ public class UpdateTaskCommandValidator : AbstractValidator<UpdateTaskCommand>
             .When(x => !string.IsNullOrEmpty(x.Description));
 
         RuleFor(x => x.Priority)
-            .Must(priority => ValidPriorities.Contains(priority))
-            .WithMessage("Priority must be one of: Low, Medium, High, Critical.");
+            .IsInEnum()
+            .WithMessage("Priority must be a valid TaskPriority value.");
 
         RuleFor(x => x.EstimatedHours)
             .GreaterThan(0)

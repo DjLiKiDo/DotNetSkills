@@ -9,7 +9,7 @@ public record TeamSummaryProjection
     public required Guid Id { get; init; }
     public required string Name { get; init; }
     public required string Description { get; init; }
-    public required string Status { get; init; }
+    public required TeamStatus Status { get; init; }
     public required DateTime CreatedAt { get; init; }
     public required int MemberCount { get; init; }
     public required int ProjectCount { get; init; }
@@ -24,7 +24,7 @@ public record TeamDashboardProjection
     public required Guid Id { get; init; }
     public required string Name { get; init; }
     public required string Description { get; init; }
-    public required string Status { get; init; }
+    public required TeamStatus Status { get; init; }
     public required int MemberCount { get; init; }
     public required int ActiveProjectCount { get; init; }
     public required int CompletedProjectCount { get; init; }
@@ -42,7 +42,7 @@ public record TeamSelectionProjection
 {
     public required Guid Id { get; init; }
     public required string Name { get; init; }
-    public required string Status { get; init; }
+    public required TeamStatus Status { get; init; }
     public required bool IsActive { get; init; }
     public required int MemberCount { get; init; }
 }
@@ -55,8 +55,8 @@ public record TeamMembershipProjection
 {
     public required Guid TeamId { get; init; }
     public required string TeamName { get; init; }
-    public required string TeamStatus { get; init; }
-    public required string MemberRole { get; init; }
+    public required TeamStatus TeamStatus { get; init; }
+    public required TeamRole MemberRole { get; init; }
     public required DateTime JoinedAt { get; init; }
     public required int TotalMembers { get; init; }
 }

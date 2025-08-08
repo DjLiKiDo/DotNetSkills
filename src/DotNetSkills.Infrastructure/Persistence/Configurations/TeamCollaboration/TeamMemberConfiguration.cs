@@ -72,8 +72,7 @@ public class TeamMemberConfiguration : IEntityTypeConfiguration<TeamMember>
         builder.Property(tm => tm.UpdatedAt)
             .IsRequired()
             .HasColumnType("datetime2(7)")
-            .HasDefaultValueSql("GETUTCDATE()")
-            .IsRowVersion(); // Optimistic concurrency
+            .HasDefaultValueSql("GETUTCDATE()");
             
         builder.Property(tm => tm.CreatedBy)
             .IsRequired(false)
@@ -90,6 +89,12 @@ public class TeamMemberConfiguration : IEntityTypeConfiguration<TeamMember>
     /// <param name="builder">The entity type builder for TeamMember.</param>
     private static void ConfigureRelationships(EntityTypeBuilder<TeamMember> builder)
     {
+        // Configure rowversion for optimistic concurrency as a shadow property
+        builder.Property<byte[]>("RowVersion")
+            .IsRowVersion()
+            .HasColumnName("RowVersion")
+            .HasComment("SQL Server rowversion for optimistic concurrency");
+
         // Configure relationship with User entity
         builder.HasOne<User>()
             .WithMany()

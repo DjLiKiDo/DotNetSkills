@@ -8,7 +8,7 @@ public record CreateTaskCommand(
     string Title,
     string? Description,
     ProjectId ProjectId,
-    string Priority,
+    TaskPriority Priority,
     TaskId? ParentTaskId,
     int? EstimatedHours,
     DateTime? DueDate,

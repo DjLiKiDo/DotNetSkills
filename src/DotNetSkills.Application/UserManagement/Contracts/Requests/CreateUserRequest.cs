@@ -17,8 +17,7 @@ public record CreateUserRequest(
     string Email,
 
     [Required(ErrorMessage = "User role is required")]
-    [RegularExpression("^(Admin|ProjectManager|Developer|Viewer)$", ErrorMessage = "Role must be Admin, ProjectManager, Developer, or Viewer")]
-    string Role)
+    UserRole Role)
 {
     /// <summary>
     /// Converts this request to a CreateUserCommand.
