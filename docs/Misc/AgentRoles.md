@@ -1,15 +1,3 @@
-
-Quiero trabajar en la creacion de roles para ser usados en agentes de IA. Entiendo que para esto, los chatmodes son lo que busco.
-
-Obten documentacion sobre como customizar github copilot para obtener los mejores resultados.
-
-https://code.visualstudio.com/docs/copilot/overview
-https://docs.github.com/es/copilot
-
-Quiero diferentes roles a los que asisgnarles diferentes tareas para que trabajen de una manera adecuada a su rol, con sus metodologias tareas y objetivos definidos.
-
-Habia pensado en esto como lista de roles
-
 # 📄 Definición de Roles para Agentes de IA en el Desarrollo de un Producto
 
 Este documento recoge la definición, objetivos y funciones de los roles clave que puedes asignar a agentes de IA para crear un producto completo, desde la concepción hasta el lanzamiento y mantenimiento.
@@ -247,6 +235,3 @@ Este documento recoge la definición, objetivos y funciones de los roles clave q
 - La comunicación entre agentes debe estar bien definida, idealmente con protocolos y formatos estándar (JSON, OpenAPI, RPC, mensajería asíncrona).
 
 ---
-
-
-Crea un fichero para cada rol con lo que consideres oportuno para que el agente tenga claro cual es su rol, la forma en la que debe trabajar en sus tareas, los objetivos que tiene y los entregables que tiene que hacer y como validarlos
