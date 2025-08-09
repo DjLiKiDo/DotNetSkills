@@ -1,4 +1,6 @@
 using DotNetSkills.API.Authorization;
+using DotNetSkills.API.Services;
+using MediatR;
 
 namespace DotNetSkills.API.Endpoints.TeamCollaboration;
 
@@ -117,6 +119,7 @@ public static class TeamEndpoints
     /// Handles GET /api/v1/teams - retrieves teams with pagination and optional search.
     /// </summary>
     private static async Task<IResult> GetTeams(
+        IMediator mediator,
         int page = 1,
         int pageSize = 20,
         string? search = null,
@@ -127,17 +130,9 @@ public static class TeamEndpoints
             // Create query - validation will be handled by FluentValidation in the pipeline
             var query = new GetTeamsQuery(page, pageSize, search);
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(query, cancellationToken);
+            var result = await mediator.Send(query, cancellationToken);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            var placeholderResponse = new PagedTeamResponse(
-                Teams: new List<TeamResponse>(),
-                TotalCount: 0,
-                Page: page,
-                PageSize: pageSize);
-
-            return Results.Ok(placeholderResponse);
+            return Results.Ok(result);
         }
         catch (ArgumentException ex)
         {
@@ -162,6 +157,7 @@ public static class TeamEndpoints
     /// </summary>
     private static async Task<IResult> GetTeamById(
         string id,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -179,12 +175,19 @@ public static class TeamEndpoints
             // Create and validate query
             var query = new GetTeamByIdQuery(new TeamId(teamId));
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(query, cancellationToken);
+            var result = await mediator.Send(query, cancellationToken);
+            
+            if (result == null)
+            {
+                return Results.NotFound(new ProblemDetails
+                {
+                    Title = "Team Not Found",
+                    Detail = $"Team with ID {teamId} was not found.",
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("GetTeamById requires Application layer implementation");
+            return Results.Ok(result);
         }
         catch (DomainException ex)
         {
@@ -218,19 +221,24 @@ public static class TeamEndpoints
     /// </summary>
     private static async Task<IResult> CreateTeam(
         CreateTeamRequest request,
+        IMediator mediator,
+        ICurrentUserService currentUserService,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Results.Unauthorized();
+            }
+
             // Create and validate command
-            var command = new CreateTeamCommand(request.Name, request.Description);
+            var command = new CreateTeamCommand(request.Name, request.Description, currentUserId);
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command, cancellationToken);
+            var result = await mediator.Send(command, cancellationToken);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("CreateTeam requires Application layer implementation");
+            return Results.Created($"/api/v1/teams/{result.Id}", result);
         }
         catch (DomainException ex)
         {
@@ -265,6 +273,7 @@ public static class TeamEndpoints
     private static async Task<IResult> UpdateTeam(
         string id,
         UpdateTeamRequest request,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -282,12 +291,9 @@ public static class TeamEndpoints
             // Create and validate command
             var command = new UpdateTeamCommand(new TeamId(teamId), request.Name, request.Description);
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command, cancellationToken);
+            var result = await mediator.Send(command, cancellationToken);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("UpdateTeam requires Application layer implementation");
+            return Results.Ok(result);
         }
         catch (DomainException ex)
         {
@@ -321,6 +327,7 @@ public static class TeamEndpoints
     /// </summary>
     private static async Task<IResult> DeleteTeam(
         string id,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -338,12 +345,9 @@ public static class TeamEndpoints
             // Create and validate command
             var command = new DeleteTeamCommand(new TeamId(teamId));
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command, cancellationToken);
+            await mediator.Send(command, cancellationToken);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("DeleteTeam requires Application layer implementation");
+            return Results.NoContent();
         }
         catch (DomainException ex)
         {

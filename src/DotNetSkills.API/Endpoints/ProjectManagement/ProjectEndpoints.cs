@@ -1,4 +1,6 @@
 using DotNetSkills.API.Authorization;
+using DotNetSkills.API.Services;
+using MediatR;
 
 namespace DotNetSkills.API.Endpoints.ProjectManagement;
 
@@ -122,6 +124,7 @@ public static class ProjectEndpoints
     /// Supports filtering by team, status, and date ranges.
     /// </summary>
     private static async Task<IResult> GetProjects(
+        IMediator mediator,
         int page = 1,
         int pageSize = 20,
         Guid? teamId = null,
@@ -147,18 +150,9 @@ public static class ProjectEndpoints
                 endDateTo,
                 search);
 
+            var result = await mediator.Send(query, cancellationToken);
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(query, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            var placeholderResponse = new PagedProjectResponse(
-                Projects: new List<ProjectResponse>(),
-                TotalCount: 0,
-                Page: page,
-                PageSize: pageSize);
-
-            return Results.Ok(placeholderResponse);
+            return Results.Ok(result);
         }
         catch (ArgumentException ex)
         {
@@ -183,6 +177,7 @@ public static class ProjectEndpoints
     /// </summary>
     private static async Task<IResult> GetProjectById(
         string id,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -200,12 +195,19 @@ public static class ProjectEndpoints
             // Create and validate query
             var query = new GetProjectByIdQuery(new ProjectId(projectId));
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(query, cancellationToken);
+            var result = await mediator.Send(query, cancellationToken);
+            
+            if (result == null)
+            {
+                return Results.NotFound(new ProblemDetails
+                {
+                    Title = "Project Not Found",
+                    Detail = $"Project with ID {projectId} was not found.",
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("GetProjectById requires Application layer implementation");
+            return Results.Ok(result);
         }
         catch (DomainException ex)
         {
@@ -240,12 +242,17 @@ public static class ProjectEndpoints
     /// </summary>
     private static async Task<IResult> CreateProject(
         CreateProjectRequest request,
+        IMediator mediator,
+        ICurrentUserService currentUserService,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Results.Unauthorized();
+            }
 
             // Create and validate command
             var command = new CreateProjectCommand(
@@ -255,12 +262,9 @@ public static class ProjectEndpoints
                 request.PlannedEndDate,
                 currentUserId);
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command, cancellationToken);
+            var result = await mediator.Send(command, cancellationToken);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("CreateProject requires Application layer implementation");
+            return Results.Created($"/api/v1/projects/{result.Id}", result);
         }
         catch (DomainException ex)
         {
@@ -295,6 +299,8 @@ public static class ProjectEndpoints
     private static async Task<IResult> UpdateProject(
         string id,
         UpdateProjectRequest request,
+        IMediator mediator,
+        ICurrentUserService currentUserService,
         CancellationToken cancellationToken = default)
     {
         try
@@ -309,8 +315,11 @@ public static class ProjectEndpoints
                 });
             }
 
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Results.Unauthorized();
+            }
 
             // Create and validate command
             var command = new UpdateProjectCommand(
@@ -320,12 +329,9 @@ public static class ProjectEndpoints
                 request.PlannedEndDate,
                 currentUserId);
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command, cancellationToken);
+            var result = await mediator.Send(command, cancellationToken);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("UpdateProject requires Application layer implementation");
+            return Results.Ok(result);
         }
         catch (DomainException ex)
         {
@@ -360,6 +366,8 @@ public static class ProjectEndpoints
     /// </summary>
     private static async Task<IResult> ArchiveProject(
         string id,
+        IMediator mediator,
+        ICurrentUserService currentUserService,
         CancellationToken cancellationToken = default)
     {
         try
@@ -374,18 +382,18 @@ public static class ProjectEndpoints
                 });
             }
 
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+            {
+                return Results.Unauthorized();
+            }
 
             // Create and validate command
             var command = new ArchiveProjectCommand(new ProjectId(projectId), currentUserId);
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command, cancellationToken);
+            await mediator.Send(command, cancellationToken);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("ArchiveProject requires Application layer implementation");
+            return Results.NoContent();
         }
         catch (DomainException ex)
         {

@@ -3,6 +3,7 @@ using DotNetSkills.Infrastructure;
 using DotNetSkills.API.Configuration.Options;
 using DotNetSkills.API.Configuration.Options.Validators;
 using DotNetSkills.API.Authorization;
+using DotNetSkills.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -169,6 +170,10 @@ public static class DependencyInjection
                 }
             });
         });
+
+        // API Services
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         // Health checks
         services.AddHealthChecks();

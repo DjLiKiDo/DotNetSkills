@@ -1,41 +1,5 @@
 ## Task list (grouped) ✅
 
-1) Implement authorization policies
-- Description: Define and wire authorization policies referenced in endpoints: AdminOnly, TeamManager, ProjectManagerOrAdmin, ProjectMemberOrAdmin. Add policy constants, claims/roles mapping, and enforce via AddAuthorization in API. Include minimal tests.
-- Benefits: Secures endpoints, unblocks API usage in protected routes, aligns with security guidelines.
-- Effort: Medium (1–2 days).
-- Prompt:
-  Implement missing authorization policies in the DotNetSkills API.
-  Context:
-  - Solution root: /Users/marquez/Downloads/Pablo/Repos/DotNetSkills
-  - Policies referenced in endpoints:
-    - "AdminOnly" in UserEndpoints.cs
-    - "TeamManager" in TeamMemberEndpoints.cs
-    - "ProjectManagerOrAdmin" in:
-      - ProjectEndpoints.cs
-      - TeamEndpoints.cs
-    - "ProjectMemberOrAdmin" in ProjectTaskEndpoints.cs
-  - Follow dotnet.instructions.md and Clean Architecture. Do not couple to Infrastructure from API.
-  Requirements:
-  - Create a central static class for policy names (e.g., Api.Authorization.Policies).
-  - Configure AddAuthorization in API Startup/Program to map these policies to roles/claims:
-    - AdminOnly: user role == Admin
-    - TeamManager: role in [Admin, TeamManager]
-    - ProjectManagerOrAdmin: role in [Admin, ProjectManager]
-    - ProjectMemberOrAdmin: role in [Admin, ProjectManager, Developer] OR explicit project membership claim
-  - If role enums/constants exist in Domain (e.g., UserRole), reuse; else define minimal values to unblock.
-  - Add extension method AddApiAuthorization(this IServiceCollection, IConfiguration).
-  - Update endpoints to use constants instead of string literals.
-  - Add minimal unit tests for policy registration (API.UnitTests).
-  Deliverables:
-  - Policy constants file
-  - DI registration in Program.cs/DependencyInjection.cs
-  - Endpoint updates
-  - Tests in DotNetSkills.API.UnitTests
-  Acceptance:
-  - dotnet build succeeds
-  - Endpoints compile without TODOs for auth
-  - Unit tests validate policies exist
 
 2) Replace endpoint placeholders with MediatR integration
 - Description: Many endpoints return placeholders and TODO “Replace with MediatR.Send”. Wire endpoints to Application commands/queries, validate using FluentValidation if present, and return correct HTTP responses.
