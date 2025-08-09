@@ -1,25 +1,6 @@
 ## Task list (grouped) ✅
 
 
-5) Current user ID retrieval from auth context
-- Description: Replace TODOs “Get current user ID from authentication context” with a reusable helper service to extract UserId from claims; wire into endpoints.
-- Benefits: Consistent, secure identity handling; reduces duplication.
-- Effort: Small (0.5 day).
-- Prompt:
-  Implement CurrentUser accessor for Minimal APIs and replace TODOs.
-  Context TODOs appear in:
-  - ProjectManagement endpoints: several points
-  - TaskExecution endpoints and TaskAssignment endpoints
-  Requirements:
-  - Create ICurrentUserService with UserId? GetUserId(HttpContext).
-  - Implementation reads claim types: sub, nameidentifier, or custom "uid"; converts to UserId VO.
-  - Register in API DI.
-  - Inject into endpoints (method parameter) and use to supply CreatedBy/AssignedBy etc.
-  - Add unit tests for claim parsing variants.
-  Acceptance:
-  - Build passes
-  - Endpoints compile and no “Get current user ID” TODOs remain
-
 6) Logging improvements in User endpoints
 - Description: Replace “TODO: Log exception” occurrences with structured logging at the right levels; ensure consistent ProblemDetails.
 - Benefits: Better observability, production-grade error handling.

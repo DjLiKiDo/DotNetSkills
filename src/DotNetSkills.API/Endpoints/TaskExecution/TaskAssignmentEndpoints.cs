@@ -1,4 +1,5 @@
 using DotNetSkills.API.Authorization;
+using DotNetSkills.Application.Common.Abstractions;
 
 namespace DotNetSkills.API.Endpoints.TaskExecution;
 
@@ -123,13 +124,15 @@ public static class TaskAssignmentEndpoints
     private static async Task<IResult> AssignTask(
         Guid id,
         AssignTaskRequest request,
+        ICurrentUserService currentUserService,
         CancellationToken cancellationToken = default)
     {
         try
         {
 
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+                return Results.Unauthorized();
 
             var command = new AssignTaskCommand(
                 new TaskId(id),
@@ -173,12 +176,14 @@ public static class TaskAssignmentEndpoints
     /// </summary>
     private static async Task<IResult> UnassignTask(
         Guid id,
+        ICurrentUserService currentUserService,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+                return Results.Unauthorized();
 
             var command = new UnassignTaskCommand(
                 new TaskId(id),
@@ -222,13 +227,15 @@ public static class TaskAssignmentEndpoints
     private static async Task<IResult> CreateSubtask(
         Guid id,
         CreateSubtaskRequest request,
+        ICurrentUserService currentUserService,
         CancellationToken cancellationToken = default)
     {
         try
         {
 
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+                return Results.Unauthorized();
 
             var command = new CreateSubtaskCommand(
                 new TaskId(id),
@@ -323,13 +330,15 @@ public static class TaskAssignmentEndpoints
         Guid taskId,
         Guid subtaskId,
         UpdateSubtaskRequest request,
+        ICurrentUserService currentUserService,
         CancellationToken cancellationToken = default)
     {
         try
         {
 
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+                return Results.Unauthorized();
 
             var command = new UpdateSubtaskCommand(
                 new TaskId(subtaskId),
