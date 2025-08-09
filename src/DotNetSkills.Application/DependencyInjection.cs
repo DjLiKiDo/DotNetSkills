@@ -33,13 +33,13 @@ public static class DependencyInjection
             cfg.RegisterServicesFromAssembly(assembly);
             
             // MediatR behaviors registration - order matters!
-            // 1. Logging - first to capture all operations
+            // 1. Logging - capture all operations early
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-            // 2. Performance - to measure total operation time including validation
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(PerformanceBehavior<,>));
-            // 3. Validation - validate before business logic execution
+            // 2. Validation - short‑circuit before expensive work
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-            // 4. Domain events - dispatch events after successful command execution
+            // 3. Performance - measure only after validation passes
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(PerformanceBehavior<,>));
+            // 4. Domain events - dispatch after successful handler execution
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(DomainEventDispatchBehavior<,>));
         });
 
