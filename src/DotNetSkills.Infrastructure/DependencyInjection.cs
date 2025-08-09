@@ -38,14 +38,10 @@ public static class DependencyInjection
                 sqlOptions.CommandTimeout(dbOptions.CommandTimeout);
             });
 
-            // Diagnostics & logging driven by DatabaseOptions (environment still respected)
+            // Diagnostics & logging (only enable; rely on EF default 'off' otherwise)
             if (dbOptions.EnableSensitiveDataLogging && env.IsDevelopment())
             {
-                options.EnableSensitiveDataLogging();
-            }
-            else
-            {
-                options.EnableSensitiveDataLogging(false); // ensure off outside permitted scenario
+                options.EnableSensitiveDataLogging(); // do NOT force disable in other environments to avoid overriding future provider defaults
             }
 
             if (dbOptions.EnableDetailedErrors)
@@ -182,12 +178,8 @@ public static class DependencyInjection
             var isDev = string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase);
             if (isDev)
             {
-                options.EnableSensitiveDataLogging();
+                options.EnableSensitiveDataLogging(); // only enable in Development
                 options.EnableDetailedErrors();
-            }
-            else
-            {
-                options.EnableSensitiveDataLogging(false);
             }
 
             // Performance optimizations

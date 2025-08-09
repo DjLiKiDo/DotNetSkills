@@ -13,9 +13,7 @@ public class Team : AggregateRoot<TeamId>
 
     private readonly List<TeamMember> _members = [];
 
-    // Cached expensive computations
-    private bool? _hasLeadershipCache;
-    private readonly object _leadershipCacheLock = new();
+    // Leadership determination computed on demand (cheap LINQ over in-memory list)
 
     /// <summary>
     /// Gets the team name.
@@ -133,8 +131,7 @@ public class Team : AggregateRoot<TeamId>
         var teamMember = new TeamMember(user.Id, Id, role);
         _members.Add(teamMember);
 
-        // Invalidate leadership cache when adding members
-        _hasLeadershipCache = null;
+    // Leadership cache removed – direct evaluation is inexpensive
 
         // Add the membership to the user as well
         user.AddTeamMembership(teamMember);
@@ -166,8 +163,7 @@ public class Team : AggregateRoot<TeamId>
 
         _members.Remove(member!);
 
-        // Invalidate leadership cache when removing members
-        _hasLeadershipCache = null;
+    // Leadership cache removed – direct evaluation is inexpensive
 
         // Remove the membership from the user as well
         user.RemoveTeamMembership(Id);
@@ -306,21 +302,7 @@ public class Team : AggregateRoot<TeamId>
     /// Uses cached result for performance optimization.
     /// </summary>
     /// <returns>True if the team has at least one project manager or team lead, false otherwise.</returns>
-    public bool HasLeadership()
-    {
-        if (_hasLeadershipCache.HasValue)
-            return _hasLeadershipCache.Value;
-
-        lock (_leadershipCacheLock)
-        {
-            // Double-check pattern
-            if (_hasLeadershipCache.HasValue)
-                return _hasLeadershipCache.Value;
-
-            _hasLeadershipCache = _members.Any(m => m.HasLeadershipPrivileges());
-            return _hasLeadershipCache.Value;
-        }
-    }
+    public bool HasLeadership() => _members.Any(m => m.HasLeadershipPrivileges());
 
     /// <summary>
     /// Gets the member record for the specified user.

@@ -89,11 +89,7 @@ public class TeamMemberConfiguration : IEntityTypeConfiguration<TeamMember>
     /// <param name="builder">The entity type builder for TeamMember.</param>
     private static void ConfigureRelationships(EntityTypeBuilder<TeamMember> builder)
     {
-        // Configure rowversion for optimistic concurrency as a shadow property
-        builder.Property<byte[]>("RowVersion")
-            .IsRowVersion()
-            .HasColumnName("RowVersion")
-            .HasComment("SQL Server rowversion for optimistic concurrency");
+    // Optimistic concurrency: TeamMember does not require dedicated rowversion beyond aggregate root; removed per review feedback
 
         // Configure relationship with User entity
         builder.HasOne<User>()
