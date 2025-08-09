@@ -1,27 +1,5 @@
 ## Task list (grouped) ✅
 
-3) Implement Application handlers for Teams, Projects, Tasks
-- Description: Many Application handlers are TODO stubs. Implement command/query handlers using rich domain models and repositories, returning DTOs via mappers.
-- Benefits: Enables functional endpoints via CQRS; unlocks end-to-end flows.
-- Effort: Large (5–8 days) across contexts; break into sub-epics.
-- Prompt:
-  Implement missing Application CQRS handlers and mapping for TeamCollaboration, ProjectManagement, TaskExecution.
-  Files with TODO handlers:
-  - TeamCollaboration: CreateTeam, UpdateTeam, DeleteTeam, GetTeams (pagination/search), GetTeamById, GetTeamMembers, AddTeamMember, RemoveTeamMember, UpdateMemberRole
-  - ProjectManagement: CreateProject, UpdateProject, ArchiveProject, GetProjects (filtering), GetProjectById, GetProjectTasks, CreateTaskInProject, UpdateTaskInProject
-  - TaskExecution: CreateTask, UpdateTask, DeleteTask, GetTaskById, GetTasks, CreateSubtask, UpdateSubtask, GetTaskSubtasks, AssignTask, UnassignTask, UpdateTaskStatus
-  Requirements:
-  - Use repositories via Application interfaces; don’t access DbContext in Application.
-  - Enforce domain invariants in entities; raise domain events where relevant.
-  - Implement mappers for responses; avoid anemic models.
-  - Use FluentValidation for commands/queries; integrate with ValidationBehavior.
-  - Ensure pagination types (PagedRequest/PagedResponse) used where noted by TODO.
-  - Add unit tests for each handler’s happy path + 1 failure case using fakes/mocks.
-  - Use ConfigureAwait(false) in library code.
-  Acceptance:
-  - Build and tests pass
-  - All TODO comments in listed handlers removed
-  - Endpoints can call handlers without placeholders
 
 4) Introduce AutoMapper profiles for DTO mapping
 - Description: Replace “Replace with AutoMapper when configured” TODOs in response DTOs; add profiles and mappings for User, Team, Project, Task aggregates.
