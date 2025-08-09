@@ -1,1 +1,4 @@
-ok summarize the conversation and provide all relevant context to continue with the task in a new conversation in CurrentTask.md
+Retrieve helpful documentation about Github Copilot.
+
+https://code.visualstudio.com/docs/copilot/overview
+https://docs.github.com/es/copilot

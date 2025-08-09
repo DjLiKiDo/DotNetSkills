@@ -192,8 +192,19 @@ public class Team : AggregateRoot<TeamId>
         var member = _members.FirstOrDefault(m => m.UserId == user.Id);
         if (member == null)
             throw new DomainException("User is not a member of this team");
-
+        var previousRole = member.Role;
         member.ChangeRole(newRole, changedBy);
+
+        if (previousRole != newRole)
+        {
+            // Raise domain event for role change
+            RaiseDomainEvent(new MemberRoleChangedDomainEvent(
+                user.Id,
+                Id,
+                previousRole,
+                newRole,
+                changedBy.Id));
+        }
     }
 
     /// <summary>
