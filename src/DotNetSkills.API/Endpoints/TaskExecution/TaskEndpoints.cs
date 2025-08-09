@@ -262,13 +262,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-    catch (Exception)
-        {
-            return Results.Problem(
-                detail: "An error occurred while creating the task",
-                statusCode: StatusCodes.Status500InternalServerError,
-                title: "Internal Server Error");
-        }
+        // Allow other exceptions (including validation) to bubble to middleware
     }
 
     /// <summary>

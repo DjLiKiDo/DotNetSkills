@@ -57,3 +57,6 @@ app.MapProjectManagementEndpoints();
 app.MapTaskExecutionEndpoints();
 
 await app.RunAsync();
+
+// Expose Program class for WebApplicationFactory in tests
+public partial class Program { }

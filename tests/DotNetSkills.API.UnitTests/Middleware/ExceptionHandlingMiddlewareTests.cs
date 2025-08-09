@@ -3,7 +3,9 @@ using System.Text.Json;
 using DotNetSkills.API.Middleware;
 using DotNetSkills.Application.Common.Exceptions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 using Moq;
 using Xunit;
 

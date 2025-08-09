@@ -41,6 +41,13 @@ public class ExceptionHandlingMiddleware
 
     var problemDetails = MapToProblemDetails(context, exception);
 
+        // Ensure validation errors are always surfaced in serialized JSON (System.Text.Json may omit
+        // derived properties when serializing through base ProblemDetails reference).
+        if (problemDetails is ValidationProblemDetails vpd && !problemDetails.Extensions.ContainsKey("errors"))
+        {
+            problemDetails.Extensions["errors"] = vpd.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+
         // Add additional context information
         problemDetails.Extensions["requestId"] = context.TraceIdentifier;
         problemDetails.Extensions["timestamp"] = DateTime.UtcNow;

@@ -1,5 +1,6 @@
 using DotNetSkills.API.Authorization;
 using DotNetSkills.Application.Common.Abstractions;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DotNetSkills.API.Endpoints.UserManagement;
 
@@ -135,7 +136,7 @@ public static class UserEndpoints
     /// <returns>Paginated user response with metadata</returns>
     private static async Task<IResult> GetUsers(
         IMediator mediator,
-        ILogger logger,
+        [FromServices] ILogger<UserManagementLogCategory> logger,
         ICurrentUserService currentUserService,
         int page = 1,
         int pageSize = 20,
@@ -192,7 +193,7 @@ public static class UserEndpoints
     /// <param name="currentUserService">Service for getting current user context</param>
     /// <param name="id">User unique identifier</param>
     /// <returns>User details or 404 if not found</returns>
-    private static async Task<IResult> GetUserById(IMediator mediator, ILogger logger, ICurrentUserService currentUserService, Guid id)
+    private static async Task<IResult> GetUserById(IMediator mediator, [FromServices] ILogger<UserManagementLogCategory> logger, ICurrentUserService currentUserService, Guid id)
     {
         try
         {
@@ -246,7 +247,7 @@ public static class UserEndpoints
     /// <param name="currentUserService">Service for getting current user context</param>
     /// <param name="request">User creation request data</param>
     /// <returns>Created user response with 201 status</returns>
-    private static async Task<IResult> CreateUser(IMediator mediator, ILogger logger, ICurrentUserService currentUserService, CreateUserRequest request)
+    private static async Task<IResult> CreateUser(IMediator mediator, [FromServices] ILogger<UserManagementLogCategory> logger, ICurrentUserService currentUserService, CreateUserRequest request)
     {
         try
         {
@@ -310,7 +311,7 @@ public static class UserEndpoints
     /// <param name="id">User unique identifier</param>
     /// <param name="request">User update request data</param>
     /// <returns>Updated user response</returns>
-    private static async Task<IResult> UpdateUser(IMediator mediator, ILogger logger, ICurrentUserService currentUserService, Guid id, UpdateUserRequest request)
+    private static async Task<IResult> UpdateUser(IMediator mediator, [FromServices] ILogger<UserManagementLogCategory> logger, ICurrentUserService currentUserService, Guid id, UpdateUserRequest request)
     {
         try
         {
@@ -373,7 +374,7 @@ public static class UserEndpoints
     /// <param name="currentUserService">Service for getting current user context</param>
     /// <param name="id">User unique identifier</param>
     /// <returns>204 No Content on successful deletion</returns>
-    private static async Task<IResult> DeleteUser(IMediator mediator, ILogger logger, ICurrentUserService currentUserService, Guid id)
+    private static async Task<IResult> DeleteUser(IMediator mediator, [FromServices] ILogger<UserManagementLogCategory> logger, ICurrentUserService currentUserService, Guid id)
     {
         try
         {
@@ -421,3 +422,8 @@ public static class UserEndpoints
 
     #endregion
 }
+
+/// <summary>
+/// Marker type for user management endpoint logging category.
+/// </summary>
+internal sealed class UserManagementLogCategory { }
