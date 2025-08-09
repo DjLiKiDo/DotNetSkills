@@ -1,51 +1,135 @@
-## Task list (grouped) ✅
+## 1. Key Discussion Points & Decisions
 
+- Exception taxonomy: Introduced ApplicationExceptionBase with NotFoundException (404), BusinessRuleViolationException (409), ValidationException (400).
+- Centralized handling: ExceptionHandlingMiddleware maps Application + Domain + FluentValidation + generic errors to ProblemDetails.
+- Validation strategy: Pipeline ValidationBehavior executes early (after Logging, before Performance). Uses FluentValidation; on failure currently returns Result failure or throws FluentValidation.ValidationException for non-Result responses.
+- Repository pattern: Kept synchronous Add/Update; persistence via UnitOfWork.SaveChangesAsync only.
+- Strongly-typed IDs: Use nullable checks (id is not null) instead of .HasValue; consistent messaging (NotFoundException(entity, key)).
+- Mapping fixes: SubtaskResponse now includes UpdatedAt, IsAssigned etc.; handlers aligned.
+- Domain vs application: DomainException remains for invariant violations; Application exceptions for workflow/resource concerns.
+- Chosen status codes: Validation mapped to 400 (not 422) for consistency with other client errors.
 
-11) Wire Minimal API validation using FluentValidation
-- Description: For endpoints receiving commands, ensure validators execute and return Results.ValidationProblem. Some handlers reference validation TODOs implicitly.
-- Benefits: Input safety, consistent API behavior.
-- Effort: Small (0.5 day).
-- Prompt:
-  Ensure FluentValidation is registered and integrated in the API request pipeline for Minimal APIs.
-  Requirements:
-  - Register validators and ValidationBehavior in Application DI.
-  - Add Minimal API middleware to surface validation errors as 400 ProblemDetails.
-  - Update endpoints to call validators if you’re not using behavior-based validation.
-  - Add one unit test per context to ensure validation errors are returned as 400.
-  Acceptance:
-  - Build passes
-  - Validation behavior proven via tests
+## 2. Current Status
 
-12) Replace hard-coded sample data in GetProjectTasks
-- Description: Replace hard-coded ProjectName and items with repository-backed data.
-- Benefits: Accurate data; removes stubs.
-- Effort: Tiny (0.25 day).
-- Prompt:
-  Remove sample data from GetProjectTasks and use repository projection for ProjectName and task list.
-  Context:
-  - GetProjectTasksQueryHandler.cs lines with TODOs for repository and ProjectName.
-  Requirements:
-  - Implement repository call to fetch tasks with project context.
-  - Map to response DTO.
-  Acceptance:
-  - Build passes
-  - No sample literals remain
+Completed:
+- ValidationBehavior implemented and ordered: Logging → Validation → Performance → DomainEventDispatch.
+- Behavior ordering corrected in Application DependencyInjection.
+- ExceptionHandlingMiddleware operational with new mappings.
+- Unit tests added:
+  - Middleware mapping tests (NotFound 404, BusinessRule 409, Validation 400, Domain 400).
+  - AssignTaskCommandHandler happy path test (verifies Update + SaveChanges).
+- AssignTask handler refactored to new patterns.
 
-13) Add Global exception handling middleware (if missing)
-- Description: Ensure a central middleware exists and endpoints delegate to it; remove inline try/catch with TODO “Log exception” when global handler is present.
-- Benefits: Consistent error responses, less duplication.
-- Effort: Small (0.5 day).
-- Prompt:
-  Add/verify global exception middleware and standard ProblemDetails mapping; integrate logging.
-  Requirements:
-  - Middleware per dotnet.instructions.md pattern.
-  - Register in Program.cs.
-  - Remove redundant try/catch in endpoints; rely on middleware.
-  Acceptance:
-  - Build passes
-  - Consistent error responses
-  - TODOs resolved
+In place:
+- Result / Result<T> pattern (used by behaviors).
+- Mapping profiles auto-registered.
 
-## Notes
-- I kept prompts self-contained so an agent can run autonomously using repo paths and standards in dotnet.instructions.md.
-- If you’d like, I can split large items (#2, #3, #10) into smaller PR-sized chunks by bounded context.
+Pending (not yet implemented):
+- Integration test for invalid task creation (POST /api/v1/tasks) expecting 400 ValidationProblemDetails.
+- Analyzer & nullable warning cleanup (ProjectRepository and async warnings).
+- Documentation updates (exception table, validation pipeline rationale, repository sync decision).
+- Additional regression / coverage (subtask flags, domain event dispatch verification).
+- Correlation ID enrichment (optional future).
+
+## 3. Important Context for Continuation
+
+- ValidationBehavior short-circuits before PerformanceBehavior; failing requests will not appear in performance metrics.
+- ValidationBehavior currently mixes two approaches: returns failed Result for handlers returning Result/Result<T>; throws FluentValidation.ValidationException for other responses.
+- ExceptionHandlingMiddleware formats ApplicationExceptionBase using ErrorCode → Title (snake_case to Title Case).
+- Domain events dispatch behavior is currently a placeholder (no actual event collection logic yet).
+- All repository Update/Add calls are synchronous; do not introduce async variants unless globally adopted.
+- Tests rely on Moq, AutoMapper real profiles, and direct handler invocation (no full pipeline simulation yet).
+
+## 4. Pending Items / Next Steps
+
+Immediate (next work cycle):
+- Integration Test: Invalid CreateTask (e.g., missing Title) → 400 ValidationProblemDetails (assert errors dictionary).
+- Warning Resolution:
+  - Fix nullable warnings in repositories (add null checks or null-forgiving operator where safe).
+  - Convert any blocking .Result / .Wait() test usages to await.
+  - Remove async keyword from methods with no awaits or add awaited operations.
+- Documentation:
+  - Add exception taxonomy table (Exception → HTTP Status → ErrorCode).
+  - Describe pipeline ordering rationale.
+  - Note 400 for validation (decision + client impact).
+  - State repository sync design reasons (simplicity, UoW flush boundary).
+- Additional Unit Tests:
+  - Negative path for AssignTask (task not found → NotFoundException).
+  - Validation failure surface test via mediator (optional).
+- Optional Quick Wins:
+  - Add correlation ID middleware (include X-Correlation-Id header in responses & ProblemDetails).
+  - Add error code to ProblemDetails.Extensions["errorCode"] for consistency.
+
+Medium-term:
+- Implement real domain event collection & dispatch in DomainEventDispatchBehavior.
+- Broaden handler tests (UnassignTask, UpdateTaskStatus).
+- Add projections / caching coverage tests.
+- Introduce Result<T> consistency (decide whether to migrate all handlers or stick to exceptions).
+
+Future enhancements:
+- Correlation + tracing (Activity / W3C TraceContext).
+- Structured ProblemDetails error codes reference doc.
+- PerformanceBehavior metrics export (e.g., OpenTelemetry).
+
+## 5. Relevant Code Snippets
+
+ValidationBehavior ordering (DependencyInjection):
+```csharp
+cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(PerformanceBehavior<,>));
+cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(DomainEventDispatchBehavior<,>));
+```
+
+ValidationBehavior core decision:
+```csharp
+if (failures.Count != 0)
+    return CreateValidationResult<TResponse>(failures);
+```
+
+ExceptionHandlingMiddleware mapping excerpt:
+```csharp
+exception switch
+{
+  ApplicationExceptionBase appEx => new ProblemDetails { Status = appEx.StatusCode, Title = FormatTitle(appEx.ErrorCode), Detail = appEx.Message },
+  DomainException domainEx => new ProblemDetails { Status = 400, Title = "Domain Rule Violation", Detail = domainEx.Message },
+  FluentValidation.ValidationException valEx => CreateValidationProblemDetails(valEx, context.Request.Path),
+  _ => new ProblemDetails { Status = 500, Title = "Internal Server Error" }
+};
+```
+
+AssignTask handler (core flow):
+```csharp
+var task = await _taskRepository.GetByIdAsync(request.TaskId, ct) ?? throw new NotFoundException("Task", request.TaskId);
+var assignee = await _userRepository.GetByIdAsync(request.AssignedUserId, ct) ?? throw new NotFoundException("User", request.AssignedUserId);
+var assigner = await _userRepository.GetByIdAsync(request.AssignedByUserId, ct) ?? throw new NotFoundException("User", request.AssignedByUserId);
+task.AssignTo(assignee, assigner);
+_taskRepository.Update(task);
+await _unitOfWork.SaveChangesAsync(ct);
+```
+
+Middleware tests added (file):
+ExceptionHandlingMiddlewareTests.cs
+
+Handler test added (file):
+AssignTaskCommandHandlerTests.cs
+
+## 6. Documentation / Resource Links
+
+Internal:
+- ValidationBehavior.cs
+- ExceptionHandlingMiddleware.cs
+- `src/DotNetSkills.Application/Common/Exceptions/*`
+- `docs/DotNet Coding Principles.md`
+- README.md (needs update for new exception & validation pipeline)
+- DependencyInjection.cs
+
+External References:
+- FluentValidation: https://docs.fluentvalidation.net
+- RFC 7807 (ProblemDetails): https://datatracker.ietf.org/doc/html/rfc7807
+- Clean Architecture: https://blog.cleancoder.com/
+- DDD Reference: https://domainlanguage.com/ddd/
+
+---
+
+This plan contains the required context and actionable next steps for seamless continuation.
