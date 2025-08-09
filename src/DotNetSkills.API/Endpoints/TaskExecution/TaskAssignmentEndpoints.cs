@@ -1,3 +1,6 @@
+using DotNetSkills.API.Authorization;
+using DotNetSkills.Application.Common.Abstractions;
+
 namespace DotNetSkills.API.Endpoints.TaskExecution;
 
 /// <summary>
@@ -34,7 +37,7 @@ public static class TaskAssignmentEndpoints
             .WithName("AssignTask")
             .WithSummary("Assign task to user")
             .WithDescription("Assigns a task to a specific user. Tasks support single assignment only as per domain business rules")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Accepts<AssignTaskRequest>("application/json")
             .Produces<TaskAssignmentResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -53,7 +56,7 @@ public static class TaskAssignmentEndpoints
             .WithName("UnassignTask")
             .WithSummary("Unassign task from user")
             .WithDescription("Removes the current assignment from a task, making it available for reassignment")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Produces<TaskAssignmentResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -71,7 +74,7 @@ public static class TaskAssignmentEndpoints
             .WithName("CreateSubtask")
             .WithSummary("Create subtask")
             .WithDescription("Creates a subtask under the specified parent task. Only one-level subtask nesting is allowed as per domain business rules")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Accepts<CreateSubtaskRequest>("application/json")
             .Produces<TaskResponse>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -105,7 +108,7 @@ public static class TaskAssignmentEndpoints
             .WithName("UpdateSubtask")
             .WithSummary("Update subtask")
             .WithDescription("Updates a subtask's information while respecting domain constraints and parent-child relationships")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Accepts<UpdateSubtaskRequest>("application/json")
             .Produces<TaskResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -121,14 +124,16 @@ public static class TaskAssignmentEndpoints
     private static async Task<IResult> AssignTask(
         Guid id,
         AssignTaskRequest request,
+        ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            request.Validate();
 
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+                return Results.Unauthorized();
 
             var command = new AssignTaskCommand(
                 new TaskId(id),
@@ -136,14 +141,9 @@ public static class TaskAssignmentEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("AssignTask requires Infrastructure layer implementation");
+            var response = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {
@@ -159,7 +159,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while assigning the task",
@@ -173,26 +173,24 @@ public static class TaskAssignmentEndpoints
     /// </summary>
     private static async Task<IResult> UnassignTask(
         Guid id,
+        ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+                return Results.Unauthorized();
 
             var command = new UnassignTaskCommand(
                 new TaskId(id),
                 currentUserId
             );
 
-            command.Validate();
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("UnassignTask requires Infrastructure layer implementation");
+            var response = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {
@@ -208,7 +206,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while unassigning the task",
@@ -223,14 +221,15 @@ public static class TaskAssignmentEndpoints
     private static async Task<IResult> CreateSubtask(
         Guid id,
         CreateSubtaskRequest request,
+        ICurrentUserService currentUserService,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            request.Validate();
 
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+                return Results.Unauthorized();
 
             var command = new CreateSubtaskCommand(
                 new TaskId(id),
@@ -243,7 +242,6 @@ public static class TaskAssignmentEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(command, cancellationToken);
@@ -266,7 +264,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while creating the subtask",
@@ -287,7 +285,6 @@ public static class TaskAssignmentEndpoints
             var taskId = new TaskId(id);
             var query = new GetTaskSubtasksQuery(taskId);
 
-            query.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(query, cancellationToken);
@@ -311,7 +308,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Invalid Task ID");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while retrieving subtasks",
@@ -327,14 +324,15 @@ public static class TaskAssignmentEndpoints
         Guid taskId,
         Guid subtaskId,
         UpdateSubtaskRequest request,
+        ICurrentUserService currentUserService,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            request.Validate();
 
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+                return Results.Unauthorized();
 
             var command = new UpdateSubtaskCommand(
                 new TaskId(subtaskId),
@@ -346,7 +344,6 @@ public static class TaskAssignmentEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(command, cancellationToken);
@@ -369,7 +366,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while updating the subtask",

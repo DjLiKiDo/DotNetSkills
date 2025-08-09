@@ -67,7 +67,7 @@ public static class TeamRoleExtensions
             "Access reports and metrics",
             "Observe team activities"
         },
-        _ => Array.Empty<string>()
+        _ => []
     };
 
     /// <summary>

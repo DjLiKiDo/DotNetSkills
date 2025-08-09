@@ -6,7 +6,8 @@ global using System.Linq;
 global using System.Threading;
 global using System.Threading.Tasks;
 
-// Domain layer specific globals - Common
+// Domain layer specific globals - Common only
+// These are shared across all bounded contexts
 global using DotNetSkills.Domain.Common;
 global using DotNetSkills.Domain.Common.Entities;
 global using DotNetSkills.Domain.Common.Events;
@@ -15,19 +16,9 @@ global using DotNetSkills.Domain.Common.Extensions;
 global using DotNetSkills.Domain.Common.Rules;
 global using DotNetSkills.Domain.Common.Validation;
 
-// Domain layer specific globals - User Management
-global using DotNetSkills.Domain.UserManagement.Entities;
-global using DotNetSkills.Domain.UserManagement.ValueObjects;
-global using DotNetSkills.Domain.UserManagement.Enums;
-global using DotNetSkills.Domain.UserManagement.Events;
-global using DotNetSkills.Domain.UserManagement.Services;
-
-// Domain layer specific globals - Team Collaboration
-global using DotNetSkills.Domain.TeamCollaboration.Entities;
-global using DotNetSkills.Domain.TeamCollaboration.ValueObjects;
-global using DotNetSkills.Domain.TeamCollaboration.Enums;
-global using DotNetSkills.Domain.TeamCollaboration.Events;
-global using DotNetSkills.Domain.TeamCollaboration.Services;
+// REMOVED: Cross-bounded-context globals to maintain loose coupling
+// Each bounded context should explicitly import what it needs
+// This prevents tight coupling and maintains clear boundaries
 
 // Domain layer specific globals - Project Management
 global using DotNetSkills.Domain.ProjectManagement.Entities;

@@ -2,137 +2,155 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Essential Commands
+## Development Commands
 
-### Build and Test
+Build the entire solution:
 ```bash
-# Build entire solution
 dotnet build
+```
 
-# Run all tests
+Run tests:
+```bash
 dotnet test
+```
 
-# Run specific test project
+Run specific test project:
+```bash
 dotnet test tests/DotNetSkills.Domain.UnitTests
+dotnet test tests/DotNetSkills.Application.UnitTests
+dotnet test tests/DotNetSkills.Infrastructure.UnitTests
+dotnet test tests/DotNetSkills.API.UnitTests
+```
 
-# Run tests with coverage
-dotnet test --collect:"XPlat Code Coverage"
-
-# Run API (currently placeholder weather endpoint at https://localhost:7240)
+Run the API:
+```bash
 dotnet run --project src/DotNetSkills.API
 ```
 
-### Database Operations (When Infrastructure is implemented)
+Database migrations (when needed):
 ```bash
-# Add migration
-dotnet ef migrations add <Name> --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
-
-# Update database
 dotnet ef database update --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
 ```
 
 ## Architecture Overview
 
-This is a .NET 9 project management API built with **Clean Architecture** and **Domain-Driven Design** principles.
+This is a .NET 9 Clean Architecture solution following Domain-Driven Design principles with CQRS pattern implementation using MediatR.
 
-### Clean Architecture Layers
-- **API Layer**: `DotNetSkills.API` - Minimal APIs (currently placeholder weather endpoint)
-- **Application Layer**: `DotNetSkills.Application` - Currently placeholder `Class1.cs`, will contain CQRS with MediatR
-- **Domain Layer**: `DotNetSkills.Domain` - **Complete** - Rich domain models with 4 bounded contexts
-- **Infrastructure Layer**: `DotNetSkills.Infrastructure` - Currently placeholder `Class1.cs`, will contain EF Core repositories
-
-### Domain Layer Structure (Complete - Follow These Patterns)
-
-The domain is organized into 4 bounded contexts:
-- `UserManagement/` - User entity with roles, status, team memberships
-- `TeamCollaboration/` - Team and TeamMember entities with membership management
-- `ProjectManagement/` - Project entities with team associations
-- `TaskExecution/` - Task entities with assignment and status management
-
-Each bounded context contains:
-- `Entities/` - Rich domain models with business logic
-- `ValueObjects/` - Strongly-typed IDs and value types
-- `Events/` - Domain events using `BaseDomainEvent` pattern
-- `Enums/` - Status and role enumerations with extension methods
-
-### Key Domain Patterns (Follow Exactly)
-
-**Strongly-Typed IDs**: All entities use this pattern:
-```csharp
-public record UserId(Guid Value) : IStronglyTypedId<Guid>
-{
-    public static UserId New() => new(Guid.NewGuid());
-    public static implicit operator Guid(UserId id) => id.Value;
-    public static explicit operator UserId(Guid value) => new(value);
-}
+### Layer Structure and Dependencies
+```
+API Layer (Minimal APIs)
+    ↓ depends on
+Application Layer (Use Cases, CQRS)
+    ↓ depends on  
+Domain Layer (Entities, Business Logic)
+    ↑ implemented by
+Infrastructure Layer (Database, External Services)
 ```
 
-**Aggregate Root Pattern**: Business logic in entity methods with domain events:
-```csharp
-public class User : AggregateRoot<UserId>
-{
-    public void JoinTeam(Team team, TeamRole role)
-    {
-        // Business rule validation first
-        if (_teamMemberships.Any(m => m.TeamId == team.Id))
-            throw new DomainException("User is already a member of this team");
+### Project Structure
+- **DotNetSkills.Domain**: Core business entities, value objects, domain events, and business rules
+- **DotNetSkills.Application**: Use cases implemented as Commands/Queries, DTOs, validators, and application interfaces
+- **DotNetSkills.Infrastructure**: EF Core repositories, database configuration, and external service implementations
+- **DotNetSkills.API**: Minimal API endpoints, authentication, and middleware
 
-        // State change
-        var membership = new TeamMember(Id, team.Id, role);
-        _teamMemberships.Add(membership);
+### Bounded Contexts
+The solution is organized into four main bounded contexts:
 
-        // Domain event for cross-aggregate communication
-        RaiseDomainEvent(new UserJoinedTeamDomainEvent(Id, team.Id, role));
-    }
-}
-```
+1. **UserManagement**: User lifecycle, roles, and authentication
+   - Entry point: `Domain.UserManagement.Entities.User`
+   - Key operations: Create, activate/deactivate users, role management
 
-**Global Usings**: Each layer has `GlobalUsings.cs` with layer-specific imports. The domain layer includes comprehensive global usings for all bounded contexts.
+2. **TeamCollaboration**: Team management and membership
+   - Entry point: `Domain.TeamCollaboration.Entities.Team`  
+   - Key operations: Create teams, manage membership, assign roles
 
-### Critical Business Rules (Implemented in Domain)
+3. **ProjectManagement**: Project lifecycle and organization
+   - Entry point: `Domain.ProjectManagement.Entities.Project`
+   - Key operations: Create/update projects, project status management
 
-- **Team membership limits**: `Team.MaxMembers = 50` enforced in `AddMember()`
-- **Single task assignment**: Tasks support one assignee only
-- **One-level subtask nesting**: Tasks can have subtasks, but subtasks cannot have children
-- **Project ownership**: Each project belongs to exactly one team
-- **Admin-only user creation**: User.Create() factory method enforces this rule
+4. **TaskExecution**: Task management and assignment
+   - Entry point: `Domain.TaskExecution.Entities.Task`
+   - Key operations: Create/assign tasks, status transitions, subtask support
 
-### Technology Stack
+## Key Patterns and Conventions
 
-- **.NET 9** with C# 13, nullable reference types enabled, primary constructors
-- **Minimal APIs** (currently placeholder - needs real implementation)
-- **Entity Framework Core** (planned for Infrastructure layer)
-- **MediatR** for CQRS (planned for Application layer)
-- **AutoMapper** for entity ↔ DTO mapping (planned)
-- **FluentValidation** for input validation (planned)
-- **xUnit + FluentAssertions + Moq** for testing
+### Domain Layer
+- Rich domain models with business logic encapsulated in entities
+- Strongly-typed IDs using records: `record UserId(Guid Value) : IStronglyTypedId<Guid>`
+- Domain events for decoupled communication between aggregates
+- Value objects for concepts defined by attributes (e.g., `EmailAddress`)
+- Business rule validation using `Ensure.BusinessRule()` pattern
 
-### Current Implementation Status
+### Application Layer
+- CQRS pattern with separate Commands and Queries
+- MediatR for command/query handling
+- FluentValidation for input validation with `ValidationBehavior`
+- Repository abstractions (never expose IQueryable)
+- DTOs for API contracts using record types
+- AutoMapper for entity ↔ DTO transformations
 
-**Domain Layer**: ✅ Complete with rich domain models, value objects, events, and business rules
-**Application Layer**: 📋 Placeholder - needs CQRS commands/queries with MediatR
-**Infrastructure Layer**: 📋 Placeholder - needs EF Core DbContext and repository implementations
-**API Layer**: 📋 Placeholder weather endpoint - needs real project management endpoints
+### API Layer
+- Minimal APIs organized in endpoint groups by bounded context
+- JWT authentication with role-based authorization policies
+- Global exception handling middleware
+- Swagger/OpenAPI documentation with enum examples
+- Request/response validation using FluentValidation integration
 
-### Validation Patterns
+### Infrastructure Layer
+- Entity Framework Core with SQL Server
+- Repository pattern implementation
+- Unit of Work pattern for transaction coordination
+- Entity configurations using `IEntityTypeConfiguration<T>`
+- Value converters for strongly-typed IDs
 
-- **Input validation**: Use `ArgumentException` for parameter validation
-- **Business rules**: Use `DomainException` for domain constraint violations
-- **Validation messages**: Centralized in `ValidationMessages.cs` with formatting support
+## Code Quality Standards
 
-### Authentication & Authorization (Planned)
+### Naming Conventions
+- Classes/Methods: PascalCase (`CreateUserCommandHandler`)
+- Properties: PascalCase (`public string Name { get; private set; }`)
+- Fields: camelCase with underscore (`private readonly IUserRepository _userRepository`)
+- Parameters: camelCase (`public User(string name, EmailAddress email)`)
+- Constants: PascalCase (`public const int MaxTeamMembers = 50`)
 
-- **JWT-based** authentication with role hierarchy: Admin > ProjectManager > Developer > Viewer
-- **Admin-only user creation** - no self-registration in MVP
-- **Role-based access control** for all operations
+### Testing Structure
+- Unit tests for domain logic and business rules
+- Integration tests using TestContainers for database scenarios
+- Builder pattern for test data creation
+- 80%+ coverage target, focusing on Domain and Application layers
+- Test categories: `[Trait("Category", "Unit")]` and `[Trait("Category", "Integration")]`
 
-## Development Guidelines
+### Security Guidelines
+- JWT authentication with role-based policies
+- Input validation at multiple layers (Domain, Application, API)
+- Never expose secrets in code - use configuration/environment variables
+- BCrypt password hashing
+- Validate all user inputs using FluentValidation
 
-When implementing new features:
-1. Start with domain entities (rich models with business logic)
-2. Follow established patterns in existing domain contexts
-3. Use strongly-typed IDs for all entity identifiers
-4. Implement proper aggregate boundaries and domain events
-5. Follow the dependency rule: API → Application → Domain ← Infrastructure
+## Current Implementation Status
 
-The project follows strict SOLID principles, Clean Architecture patterns, and comprehensive Domain-Driven Design implementation as documented in the GitHub Copilot instructions.
+This is an MVP in development. Key areas requiring attention:
+
+### High Priority Tasks
+1. **Authorization policies**: Need to implement policies referenced in endpoints (`AdminOnly`, `TeamManager`, `ProjectManagerOrAdmin`, `ProjectMemberOrAdmin`)
+2. **MediatR integration**: Many endpoints have TODO placeholders that need to be wired to actual command/query handlers
+3. **Application handlers**: Missing implementations for CQRS handlers across all bounded contexts
+4. **Current user context**: Need service to extract current user ID from JWT claims
+
+### Common TODO Patterns
+- "Replace with MediatR.Send" in endpoint files
+- "TODO: Implement [operation]" in Application handlers
+- "Get current user ID from authentication context" 
+- "TODO: Log exception" for error handling
+- "Replace with AutoMapper when configured" for DTO mapping
+
+When working on these areas, follow the established patterns and maintain consistency with the existing codebase architecture.
+
+## Important Implementation Notes
+
+- Always use `ConfigureAwait(false)` in Application/Infrastructure layers
+- Domain entities should validate business rules and raise domain events
+- Repository methods should return strongly-typed results, never IQueryable
+- Use projection queries for read-only scenarios to improve performance
+- Implement proper async/await patterns throughout
+- Follow the existing GlobalUsings.cs patterns for each project layer
+- Maintain Clean Architecture dependency rules - outer layers depend on inner layers only

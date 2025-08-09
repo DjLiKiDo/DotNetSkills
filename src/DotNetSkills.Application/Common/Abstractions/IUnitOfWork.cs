@@ -1,0 +1,65 @@
+using DotNetSkills.Application.UserManagement.Contracts;
+using DotNetSkills.Application.TeamCollaboration.Contracts;
+using DotNetSkills.Application.ProjectManagement.Contracts;
+using DotNetSkills.Application.TaskExecution.Contracts;
+
+namespace DotNetSkills.Application.Common.Abstractions;
+
+/// <summary>
+/// Unit of Work interface for managing transactions and coordinating changes across multiple repositories.
+/// Implements the Unit of Work pattern to ensure data consistency and transaction boundaries.
+/// </summary>
+public interface IUnitOfWork : IDisposable, IAsyncDisposable
+{
+    /// <summary>
+    /// Gets the User repository.
+    /// </summary>
+    IUserRepository Users { get; }
+
+    /// <summary>
+    /// Gets the Team repository.
+    /// </summary>
+    ITeamRepository Teams { get; }
+
+    /// <summary>
+    /// Gets the Project repository.
+    /// </summary>
+    IProjectRepository Projects { get; }
+
+    /// <summary>
+    /// Gets the Task repository.
+    /// </summary>
+    ITaskRepository Tasks { get; }
+
+    /// <summary>
+    /// Saves all changes made in this unit of work to the underlying data store asynchronously.
+    /// This method commits the current transaction and persists all pending changes.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The number of entities that were affected by the save operation.</returns>
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Begins a new database transaction asynchronously.
+    /// Use this when you need explicit transaction control beyond the default SaveChanges behavior.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task BeginTransactionAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Commits the current database transaction asynchronously.
+    /// Should be called after BeginTransactionAsync and successful operations.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task CommitTransactionAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Rolls back the current database transaction asynchronously.
+    /// Should be called when an error occurs during transaction processing.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
+}

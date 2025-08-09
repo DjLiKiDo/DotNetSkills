@@ -120,7 +120,9 @@ public static class UserAccountEndpoints
                 }));
             }
 
-            var command = new DeactivateUserCommand(new UserId(userId));
+            var command = new DeactivateUserCommand(
+                new UserId(userId), 
+                new UserId(Guid.NewGuid())); // TODO: Replace with actual current user ID from authentication
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);
@@ -171,7 +173,10 @@ public static class UserAccountEndpoints
                 }));
             }
 
-            var command = new UpdateUserRoleCommand(new UserId(userId), request.Role);
+            var command = new UpdateUserRoleCommand(
+                new UserId(userId), 
+                request.Role,
+                new UserId(Guid.NewGuid())); // TODO: Replace with actual current user ID from authentication
 
             // TODO: Replace with MediatR.Send when implemented
             // var result = await mediator.Send(command, cancellationToken);

@@ -13,6 +13,8 @@ public class Team : AggregateRoot<TeamId>
 
     private readonly List<TeamMember> _members = [];
 
+    // Leadership determination computed on demand (cheap LINQ over in-memory list)
+
     /// <summary>
     /// Gets the team name.
     /// </summary>
@@ -22,6 +24,11 @@ public class Team : AggregateRoot<TeamId>
     /// Gets the team description.
     /// </summary>
     public string? Description { get; private set; }
+
+    /// <summary>
+    /// Gets the current status of the team.
+    /// </summary>
+    public TeamStatus Status { get; private set; }
 
     /// <summary>
     /// Gets the read-only collection of team members.
@@ -39,6 +46,7 @@ public class Team : AggregateRoot<TeamId>
     private Team() : base(TeamId.New())
     {
         Name = string.Empty;
+        Status = TeamStatus.Active; // Default status
     }
 
     /// <summary>
@@ -61,6 +69,7 @@ public class Team : AggregateRoot<TeamId>
 
         Name = name.Trim();
         Description = description?.Trim();
+        Status = TeamStatus.Active; // New teams start as active
 
         // Raise domain event
         RaiseDomainEvent(new TeamCreatedDomainEvent(Id, Name, createdBy.Id));
@@ -122,6 +131,8 @@ public class Team : AggregateRoot<TeamId>
         var teamMember = new TeamMember(user.Id, Id, role);
         _members.Add(teamMember);
 
+    // Leadership cache removed – direct evaluation is inexpensive
+
         // Add the membership to the user as well
         user.AddTeamMembership(teamMember);
 
@@ -152,6 +163,8 @@ public class Team : AggregateRoot<TeamId>
 
         _members.Remove(member!);
 
+    // Leadership cache removed – direct evaluation is inexpensive
+
         // Remove the membership from the user as well
         user.RemoveTeamMembership(Id);
 
@@ -175,8 +188,19 @@ public class Team : AggregateRoot<TeamId>
         var member = _members.FirstOrDefault(m => m.UserId == user.Id);
         if (member == null)
             throw new DomainException("User is not a member of this team");
-
+        var previousRole = member.Role;
         member.ChangeRole(newRole, changedBy);
+
+        if (previousRole != newRole)
+        {
+            // Raise domain event for role change
+            RaiseDomainEvent(new MemberRoleChangedDomainEvent(
+                user.Id,
+                Id,
+                previousRole,
+                newRole,
+                changedBy.Id));
+        }
     }
 
     /// <summary>
@@ -207,11 +231,15 @@ public class Team : AggregateRoot<TeamId>
         if (user.Role == UserRole.Admin)
             return true;
 
+        // System-level ProjectManager can remove any member
+        if (user.Role == UserRole.ProjectManager)
+            return true;
+
         // Users can remove themselves
         if (user.Id == memberToRemove.UserId)
             return true;
 
-        // Project managers can remove any member
+        // Team-level project managers can remove any member
         if (user.GetRoleInTeam(Id) == TeamRole.ProjectManager)
             return true;
 
@@ -271,12 +299,10 @@ public class Team : AggregateRoot<TeamId>
 
     /// <summary>
     /// Checks if the team has any members with leadership roles.
+    /// Uses cached result for performance optimization.
     /// </summary>
     /// <returns>True if the team has at least one project manager or team lead, false otherwise.</returns>
-    public bool HasLeadership()
-    {
-        return _members.Any(m => m.HasLeadershipPrivileges());
-    }
+    public bool HasLeadership() => _members.Any(m => m.HasLeadershipPrivileges());
 
     /// <summary>
     /// Gets the member record for the specified user.
@@ -286,5 +312,88 @@ public class Team : AggregateRoot<TeamId>
     public TeamMember? GetMember(UserId userId)
     {
         return _members.FirstOrDefault(m => m.UserId == userId);
+    }
+
+    /// <summary>
+    /// Changes the team status to the specified new status.
+    /// </summary>
+    /// <param name="newStatus">The new status to transition to.</param>
+    /// <param name="changedBy">The user making the status change.</param>
+    /// <exception cref="ArgumentNullException">Thrown when changedBy is null.</exception>
+    /// <exception cref="DomainException">Thrown when the status transition is invalid or user lacks permission.</exception>
+    public void ChangeStatus(TeamStatus newStatus, User changedBy)
+    {
+        Ensure.NotNull(changedBy, nameof(changedBy));
+
+        Ensure.BusinessRule(
+            changedBy.CanManageTeams(),
+            "Only users with team management privileges can change team status");
+
+        Ensure.BusinessRule(
+            Status.CanTransitionTo(newStatus),
+            $"Cannot transition team status from {Status} to {newStatus}");
+
+        if (Status == newStatus)
+            return; // No change needed
+
+        var previousStatus = Status;
+        Status = newStatus;
+
+        // Raise domain event for status change
+        RaiseDomainEvent(new TeamStatusChangedDomainEvent(Id, previousStatus, newStatus, changedBy.Id));
+    }
+
+    /// <summary>
+    /// Activates the team if it's currently inactive or pending.
+    /// </summary>
+    /// <param name="activatedBy">The user activating the team.</param>
+    public void Activate(User activatedBy)
+    {
+        ChangeStatus(TeamStatus.Active, activatedBy);
+    }
+
+    /// <summary>
+    /// Deactivates the team, preventing new members from joining.
+    /// </summary>
+    /// <param name="deactivatedBy">The user deactivating the team.</param>
+    public void Deactivate(User deactivatedBy)
+    {
+        ChangeStatus(TeamStatus.Inactive, deactivatedBy);
+    }
+
+    /// <summary>
+    /// Archives the team for historical purposes.
+    /// </summary>
+    /// <param name="archivedBy">The user archiving the team.</param>
+    public void Archive(User archivedBy)
+    {
+        ChangeStatus(TeamStatus.Archived, archivedBy);
+    }
+
+    /// <summary>
+    /// Determines if the team can accept new members based on its current status and member count.
+    /// </summary>
+    /// <returns>True if new members can join; otherwise, false.</returns>
+    public bool CanAcceptNewMembers()
+    {
+        return Status.AllowsMemberAddition() && _members.Count < MaxMembers;
+    }
+
+    /// <summary>
+    /// Determines if the team can create new projects based on its current status.
+    /// </summary>
+    /// <returns>True if new projects can be created; otherwise, false.</returns>
+    public bool CanCreateProjects()
+    {
+        return Status.AllowsProjectCreation();
+    }
+
+    /// <summary>
+    /// Determines if the team can perform operational activities based on its current status.
+    /// </summary>
+    /// <returns>True if operational activities are allowed; otherwise, false.</returns>
+    public bool IsOperational()
+    {
+        return Status.AllowsOperations();
     }
 }

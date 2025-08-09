@@ -76,8 +76,12 @@ public class TeamMember : BaseEntity<TeamMemberId>
         if (user.Role == UserRole.Admin)
             return true;
 
-        // Project managers can change roles within their teams
-        if (user.Role == UserRole.ProjectManager && user.IsMemberOfTeam(TeamId))
+        // System-level Project managers can change roles
+        if (user.Role == UserRole.ProjectManager)
+            return true;
+
+        // Team-level project managers can change roles within their teams
+        if (user.GetRoleInTeam(TeamId) == TeamRole.ProjectManager)
             return true;
 
         // Team leads can change roles within their teams (except other team leads and project managers)

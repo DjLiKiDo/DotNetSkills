@@ -74,7 +74,7 @@ public record CreateUserRequest(
 /// </summary>
 public class DomainValidationResult
 {
-    private readonly List<string> _errors = new();
+    private readonly List<string> _errors = [];
 
     /// <summary>
     /// Gets whether the validation was successful (no errors).

@@ -6,4 +6,6 @@ description: 'Create a SWE.md file with a domain layer analysis'
 
 take a look at the domain layer and check if it follows best practices.
 
-Don`t modify nothing, just create a report on SWE.md with findings and insights
+Look for patterns and inconsistenciesReview the best approach and consolidate the most appropriate implementation
+
+Don`t modify nothing, just create a report on CurrentPlan.md with findings and insights

@@ -2,24 +2,43 @@
 global using System;
 global using System.Collections.Generic;
 global using System.Linq;
+global using System.Linq.Expressions;
+global using System.Runtime.CompilerServices;
 global using System.Threading;
 global using System.Threading.Tasks;
 
 // Microsoft Extensions
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Hosting;
+global using Microsoft.Extensions.Caching.Memory;
+global using Microsoft.Extensions.Options;
 
-// Entity Framework Core (when added)
-// global using Microsoft.EntityFrameworkCore;
+// Entity Framework Core
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Metadata.Builders;
+global using Microsoft.EntityFrameworkCore.Storage;
+global using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-// Application layer interfaces (Infrastructure implements these)
-// global using DotNetSkills.Application.Common.Interfaces;
-// global using DotNetSkills.Application.Common.Models;
+// MediatR
+global using MediatR;
 
-// Domain layer references (for repository implementations)
+// Application layer interfaces
+global using DotNetSkills.Application.Common.Abstractions;
+global using DotNetSkills.Application.Common.Models;
+global using DotNetSkills.Application.UserManagement.Contracts;
+global using DotNetSkills.Application.TeamCollaboration.Contracts;
+global using DotNetSkills.Application.ProjectManagement.Contracts;
+global using DotNetSkills.Application.TaskExecution.Contracts;
+
+// Domain layer references
+global using DotNetSkills.Domain.Common;
 global using DotNetSkills.Domain.Common.Entities;
 global using DotNetSkills.Domain.Common.Events;
 global using DotNetSkills.Domain.Common.Exceptions;
+global using DotNetSkills.Domain.Common.Rules;
+global using DotNetSkills.Domain.Common.Validation;
 
 // User Management Domain references
 global using DotNetSkills.Domain.UserManagement.Entities;
@@ -40,3 +59,17 @@ global using DotNetSkills.Domain.ProjectManagement.Enums;
 global using DotNetSkills.Domain.TaskExecution.Entities;
 global using DotNetSkills.Domain.TaskExecution.ValueObjects;
 global using DotNetSkills.Domain.TaskExecution.Enums;
+
+// Infrastructure layer
+global using DotNetSkills.Infrastructure.Persistence.Context;
+global using DotNetSkills.Infrastructure.Persistence.Extensions;
+global using DotNetSkills.Infrastructure.Repositories.Common;
+global using DotNetSkills.Infrastructure.Repositories.UserManagement;
+global using DotNetSkills.Infrastructure.Repositories.TeamCollaboration;
+global using DotNetSkills.Infrastructure.Repositories.ProjectManagement;
+global using DotNetSkills.Infrastructure.Repositories.TaskExecution;
+global using DotNetSkills.Infrastructure.Services.Events;
+global using DotNetSkills.Infrastructure.Common.Configuration;
+
+// Health checks and options
+global using Microsoft.Extensions.Diagnostics.HealthChecks;

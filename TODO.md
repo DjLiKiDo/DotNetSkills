@@ -1,22 +1,33 @@
 # Domain Layer TODOs
-
 [x] Review entities
 [x] Folder structure matching Domain looking for better organization and namespacing
 [x] Implement extensions for enums
 [x] Review BusinesRules vs ValidationConstants vs ValidationMessages
-[-] Work on technical debt `DomainTechnicalDebt.md`
+[x] Work on technical debt `DomainTechnicalDebt.md`
+[x] We have BoundedContextUsings in UserManagement and TeamCollaboration but no in ProjectManagement nor TaskExecution. Review the best approach and consolidate the most appropiate implementation
 [ ] Domain layer specific documentation
 
 # API Layer TODOs
-
 [ ] BaseEndpoint.cs
+[ ] Review ExceptionHandlingMiddleware.cs
 [ ] API layer specific documentation
 
 # Application Layer TODOs
-
 [ ] Application layer specific documentation
 
 # Infrastructure Layer TODOs
-
-[ ] BaseEndpoint.cs
+[ ] Migrations
+[ ] there are some warnings about shadow properties for TeamMember foreign keys. This is a known issue with EF Core when using strongly-typed IDs
+[ ] Database Creation: Run dotnet ef database update to create the database schema
+[ ] Production Deployment: Configure connection strings and deploy
 [ ] Infrastructure layer specific documentation
+
+# General
+[ ] Settings (IOptions pattern)
+[ ] JWT Authentication
+[ ] Review configuration through extension methods
+[ ] Review validation flows across all layers
+[ ] Review logging and monitoring implementations across all layers
+[ ] Security review
+[ ] Review performance and optimization strategies across all layers
+[ ] Review error handling strategies across all layers

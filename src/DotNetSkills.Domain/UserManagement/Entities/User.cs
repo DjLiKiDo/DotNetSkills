@@ -228,11 +228,11 @@ public class User : AggregateRoot<UserId>
     }
 
     /// <summary>
-    /// Checks if the user can manage teams (must be active admin).
+    /// Checks if the user can manage teams (must be active admin or project manager).
     /// </summary>
     /// <returns>True if the user can manage teams, false otherwise.</returns>
     public bool CanManageTeams()
     {
-        return IsActive() && Role == UserRole.Admin;
+        return IsActive() && (Role == UserRole.Admin || Role == UserRole.ProjectManager);
     }
 }

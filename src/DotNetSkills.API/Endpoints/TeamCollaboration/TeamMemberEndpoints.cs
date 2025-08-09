@@ -1,3 +1,7 @@
+using DotNetSkills.API.Authorization;
+using DotNetSkills.API.Services;
+using MediatR;
+
 namespace DotNetSkills.API.Endpoints.TeamCollaboration;
 
 /// <summary>
@@ -48,7 +52,7 @@ public static class TeamMemberEndpoints
             .WithName("AddTeamMember")
             .WithSummary("Add team member")
             .WithDescription("Adds a user to the team with the specified role. Enforces max members limit and prevents duplicates.")
-            .RequireAuthorization("TeamManager") // TODO: Implement TeamManager policy
+            .RequireAuthorization(Policies.TeamManager)
             .Accepts<AddTeamMemberRequest>("application/json")
             .Produces<TeamMemberResponse>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -68,7 +72,7 @@ public static class TeamMemberEndpoints
             .WithName("RemoveTeamMember")
             .WithSummary("Remove team member")
             .WithDescription("Removes a user from the team")
-            .RequireAuthorization("TeamManager") // TODO: Implement TeamManager policy
+            .RequireAuthorization(Policies.TeamManager)
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -86,7 +90,7 @@ public static class TeamMemberEndpoints
             .WithName("UpdateMemberRole")
             .WithSummary("Update member role")
             .WithDescription("Updates the role of a team member")
-            .RequireAuthorization("TeamManager") // TODO: Implement TeamManager policy
+            .RequireAuthorization(Policies.TeamManager)
             .Accepts<UpdateMemberRoleRequest>("application/json")
             .Produces<TeamMemberResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -102,6 +106,7 @@ public static class TeamMemberEndpoints
     /// </summary>
     private static async Task<IResult> GetTeamMembers(
         string id,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -119,12 +124,9 @@ public static class TeamMemberEndpoints
             // Create and validate query
             var query = new GetTeamMembersQuery(new TeamId(teamId));
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(query, cancellationToken);
+            var result = await mediator.Send(query, cancellationToken);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("GetTeamMembers requires Application layer implementation");
+            return Results.Ok(result);
         }
         catch (DomainException ex)
         {
@@ -160,6 +162,7 @@ public static class TeamMemberEndpoints
     private static async Task<IResult> AddTeamMember(
         string id,
         AddTeamMemberRequest request,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -180,12 +183,9 @@ public static class TeamMemberEndpoints
                 new UserId(request.UserId),
                 request.Role);
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command, cancellationToken);
+            var result = await mediator.Send(command, cancellationToken);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("AddTeamMember requires Application layer implementation");
+            return Results.Created($"/api/v1/teams/{teamId}/members/{request.UserId}", result);
         }
         catch (DomainException ex)
         {
@@ -220,6 +220,7 @@ public static class TeamMemberEndpoints
     private static async Task<IResult> RemoveTeamMember(
         string teamId,
         string userId,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -249,12 +250,9 @@ public static class TeamMemberEndpoints
                 new TeamId(teamGuid),
                 new UserId(userGuid));
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command, cancellationToken);
+            await mediator.Send(command, cancellationToken);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("RemoveTeamMember requires Application layer implementation");
+            return Results.NoContent();
         }
         catch (DomainException ex)
         {
@@ -290,6 +288,7 @@ public static class TeamMemberEndpoints
         string teamId,
         string userId,
         UpdateMemberRoleRequest request,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -320,12 +319,9 @@ public static class TeamMemberEndpoints
                 new UserId(userGuid),
                 request.Role);
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command, cancellationToken);
+            var result = await mediator.Send(command, cancellationToken);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("UpdateMemberRole requires Application layer implementation");
+            return Results.Ok(result);
         }
         catch (DomainException ex)
         {
