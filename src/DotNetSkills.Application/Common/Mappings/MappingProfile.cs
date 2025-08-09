@@ -15,66 +15,21 @@ public abstract class MappingProfile : Profile
     /// </summary>
     protected MappingProfile()
     {
-        CreateCommonValueObjectMappings();
-        CreateStronglyTypedIdMappings();
+        // Common value object & strongly-typed ID mappings moved to SharedValueObjectMappingProfile
+        // to prevent duplicate type map registration across multiple profiles.
         ConfigureNullHandling();
     }
 
     /// <summary>
     /// Creates common value object mappings that are shared across all domain contexts.
     /// </summary>
-    private void CreateCommonValueObjectMappings()
-    {
-        // EmailAddress value object mappings
-        CreateMap<EmailAddress, string>()
-            .ConvertUsing(email => email.Value);
-
-        CreateMap<string, EmailAddress>()
-            .ConvertUsing(email => new EmailAddress(email));
-
-        // DateTime mappings with UTC handling
-        CreateMap<DateTime, DateTime>()
-            .ConvertUsing(dt => DateTime.SpecifyKind(dt, DateTimeKind.Utc));
-
-        CreateMap<DateTime?, DateTime?>()
-            .ConvertUsing(dt => dt.HasValue ? DateTime.SpecifyKind(dt.Value, DateTimeKind.Utc) : null);
-    }
+    // Removed: common value object mappings now centralized in SharedValueObjectMappingProfile
 
     /// <summary>
     /// Creates strongly-typed ID to Guid mappings for all domain entities.
     /// This ensures consistent conversion patterns across all bounded contexts.
     /// </summary>
-    private void CreateStronglyTypedIdMappings()
-    {
-        // User Management strongly-typed IDs
-        CreateMap<UserId, Guid>()
-            .ConvertUsing(id => id.Value);
-        CreateMap<Guid, UserId>()
-            .ConvertUsing(guid => new UserId(guid));
-
-        // Team Collaboration strongly-typed IDs
-        CreateMap<TeamId, Guid>()
-            .ConvertUsing(id => id.Value);
-        CreateMap<Guid, TeamId>()
-            .ConvertUsing(guid => new TeamId(guid));
-
-        CreateMap<TeamMemberId, Guid>()
-            .ConvertUsing(id => id.Value);
-        CreateMap<Guid, TeamMemberId>()
-            .ConvertUsing(guid => new TeamMemberId(guid));
-
-        // Project Management strongly-typed IDs
-        CreateMap<ProjectId, Guid>()
-            .ConvertUsing(id => id.Value);
-        CreateMap<Guid, ProjectId>()
-            .ConvertUsing(guid => new ProjectId(guid));
-
-        // Task Execution strongly-typed IDs
-        CreateMap<TaskId, Guid>()
-            .ConvertUsing(id => id.Value);
-        CreateMap<Guid, TaskId>()
-            .ConvertUsing(guid => new TaskId(guid));
-    }
+    // Removed: strongly-typed ID mappings now centralized in SharedValueObjectMappingProfile
 
     /// <summary>
     /// Configures null handling and conditional mapping patterns.
@@ -85,10 +40,6 @@ public abstract class MappingProfile : Profile
         // Configure default null value handling
         AllowNullDestinationValues = true;
         AllowNullCollections = true;
-
-        // Configure collection handling - empty collections instead of null
-        CreateMap<IEnumerable<object>, List<object>>()
-            .ConvertUsing((src, dest, context) => src?.ToList() ?? new List<object>());
     }
 
     /// <summary>

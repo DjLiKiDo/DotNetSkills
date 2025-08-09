@@ -94,14 +94,16 @@ public class TaskMappingProfile : MappingProfile
     {
         // Task to TaskAssignmentResponse mapping (for assignment operations)
         CreateMap<DomainTask, TaskAssignmentResponse>()
-            .ForMember(dest => dest.TaskId, opt => opt.MapFrom(src => src.Id.Value))
-            .ForMember(dest => dest.TaskTitle, opt => opt.MapFrom(src => src.Title))
-            .ForMember(dest => dest.AssignedUserId, opt => opt.MapFrom(src => src.AssignedUserId != null ? src.AssignedUserId.Value : (Guid?)null))
-            .ForMember(dest => dest.AssignedAt, opt => opt.MapFrom(src => src.UpdatedAt))
-            // These will be populated by custom resolvers or separate queries
-            .ForMember(dest => dest.AssignedUserName, opt => opt.Ignore())
-            .ForMember(dest => dest.AssignedByUserId, opt => opt.Ignore())
-            .ForMember(dest => dest.AssignedByUserName, opt => opt.Ignore());
+            .ConstructUsing((task, context) => new TaskAssignmentResponse(
+                TaskId: task.Id.Value,
+                TaskTitle: task.Title,
+                AssignedUserId: task.AssignedUserId?.Value,
+                AssignedUserName: context.Items.TryGetValue("AssignedUserName", out var assignedUserNameObj) ? assignedUserNameObj as string : null,
+                AssignedAt: task.UpdatedAt,
+                AssignedByUserId: context.Items.TryGetValue("AssignedByUserId", out var assignedByIdObj) && assignedByIdObj is Guid g ? g : Guid.Empty,
+                AssignedByUserName: context.Items.TryGetValue("AssignedByUserName", out var assignedByNameObj) ? assignedByNameObj as string ?? string.Empty : string.Empty
+            ))
+            .ForAllMembers(opt => opt.Ignore()); // Use constructor values only
     }
 
     /// <summary>

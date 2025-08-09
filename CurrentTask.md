@@ -19,6 +19,11 @@ Completed:
   - Middleware mapping tests (NotFound 404, BusinessRule 409, Validation 400, Domain 400).
   - AssignTaskCommandHandler happy path test (verifies Update + SaveChanges).
 - AssignTask handler refactored to new patterns.
+- AutoMapper configuration stabilized (all profile configuration tests passing):
+  - Removed duplicate IEnumerable<object> -> List<object> map from base profile; centralized in SharedValueObjectMappingProfile.
+  - Added SharedValueObjectMappingProfile for strongly-typed IDs & value objects to eliminate DuplicateTypeMapConfigurationException.
+  - Added ConstructUsing mappings for record DTOs (TaskAssignmentResponse, TeamMembershipResponse) to satisfy positional constructors.
+  - Adjusted Task & User mappings to rely on constructor projections and ignore member mapping after construction.
 
 In place:
 - Result / Result<T> pattern (used by behaviors).
@@ -29,12 +34,14 @@ Recent Additions:
 - Adjusted TaskEndpoints: removed broad catch for CreateTask to let ValidationException bubble.
 - ExceptionHandlingMiddleware now surfaces validation errors under extensions.errors to ensure consistent JSON shape.
  - Added standardized extensions.errorCode for all mapped exceptions; middleware & unit tests updated and passing.
+ - AutoMapper refactor (see above) with green test verification.
 
 Pending (not yet implemented):
 - Analyzer & nullable warning cleanup (ProjectRepository and async warnings).
 - Documentation updates (exception table, validation pipeline rationale, repository sync decision).
 - Additional regression / coverage (subtask flags, domain event dispatch verification).
 - Correlation ID enrichment (optional future).
+ - (AutoMapper follow-ups) Add contextual mapping tests for TaskAssignmentResponse with context.Items (AssignedUserName / AssignedByUserId) to lock behavior.
 
 ## 3. Important Context for Continuation
 
@@ -49,6 +56,7 @@ Pending (not yet implemented):
 
 Immediate (next work cycle):
  - (Done) Add errorCode to ProblemDetails.Extensions["errorCode"] for all mapped exceptions.
+ - (Done) Resolve AutoMapper duplicate type map & record constructor failures (now green).
 - Warning Resolution:
   - Fix nullable warnings in repositories (add null checks or null-forgiving operator where safe).
   - Convert any blocking .Result / .Wait() test usages to await.
@@ -61,6 +69,7 @@ Immediate (next work cycle):
 - Additional Unit Tests:
   - Negative path for AssignTask (task not found → NotFoundException).
   - Validation failure surface test via mediator (optional).
+  - Mapping context test for TaskAssignmentResponse (ensures context items populate names & assigner IDs when provided).
 - Optional Quick Wins:
   - Add correlation ID middleware (include X-Correlation-Id header in responses & ProblemDetails).
   - Add error code to ProblemDetails.Extensions["errorCode"] for consistency.

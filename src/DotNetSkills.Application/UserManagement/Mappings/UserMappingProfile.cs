@@ -75,17 +75,18 @@ public class UserMappingProfile : MappingProfile
     {
         // TeamMember to TeamMembershipResponse
         CreateMap<TeamMember, TeamMembershipResponse>()
-            .ForMember(dest => dest.TeamMemberId, opt => opt.MapFrom(src => src.Id.Value))
-            .ForMember(dest => dest.TeamId, opt => opt.MapFrom(src => src.TeamId.Value))
-            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId.Value))
-            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role))
-            .ForMember(dest => dest.JoinedAt, opt => opt.MapFrom(src => src.JoinedAt))
-            .ForMember(dest => dest.HasLeadershipPrivileges, opt => opt.MapFrom(src => src.HasLeadershipPrivileges()))
-            .ForMember(dest => dest.CanBeAssignedTasks, opt => opt.MapFrom(src => src.CanBeAssignedTasks()))
-            .ForMember(dest => dest.CanAssignTasks, opt => opt.MapFrom(src => src.CanAssignTasks()))
-            // These will be populated by custom resolvers or separate queries
-            .ForMember(dest => dest.TeamName, opt => opt.Ignore())
-            .ForMember(dest => dest.UserName, opt => opt.Ignore());
+            .ConstructUsing(member => new TeamMembershipResponse(
+                member.Id.Value,
+                member.TeamId.Value,
+                string.Empty, // TeamName to be filled later
+                member.UserId.Value,
+                string.Empty, // UserName to be filled later
+                member.Role,
+                member.JoinedAt,
+                member.HasLeadershipPrivileges(),
+                member.CanBeAssignedTasks(),
+                member.CanAssignTasks()))
+            .ForAllMembers(opt => opt.Ignore());
 
         // TeamMember to TeamMembershipDto (for nested DTOs)
         CreateMap<TeamMember, TeamMembershipDto>()
@@ -116,12 +117,18 @@ public class UserMappingProfile : MappingProfile
 
         // UpdateUserRequest to UpdateUserCommand (basic mapping)
         CreateMap<UpdateUserRequest, UpdateUserCommand>()
-            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
-            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
+            .ConvertUsing(src => new UpdateUserCommand(
+                new UserId(Guid.Empty), // placeholder; actual set by caller
+                src.Name,
+                src.Email,
+                null));
 
         // UpdateUserRoleRequest to UpdateUserRoleCommand (basic mapping)
         CreateMap<UpdateUserRoleRequest, UpdateUserRoleCommand>()
-            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role));
+            .ConvertUsing(src => new UpdateUserRoleCommand(
+                new UserId(Guid.Empty), // placeholder; actual set by caller
+                src.Role,
+                new UserId(Guid.Empty)));
     }
 
     /// <summary>
