@@ -1,3 +1,4 @@
+using DotNetSkills.Application.Common.Exceptions;
 namespace DotNetSkills.Application.TaskExecution.Features.CreateTask;
 
 /// <summary>
@@ -37,13 +38,13 @@ public class CreateTaskCommandHandler : IRequestHandler<CreateTaskCommand, TaskR
         var project = await _projectRepository.GetByIdAsync(request.ProjectId, cancellationToken)
             .ConfigureAwait(false);
         if (project == null)
-            throw new InvalidOperationException($"Project with ID {request.ProjectId.Value} not found.");
+            throw new NotFoundException("Project", request.ProjectId);
 
         // Get creator user
         var creator = await _userRepository.GetByIdAsync(request.CreatedBy, cancellationToken)
             .ConfigureAwait(false);
         if (creator == null)
-            throw new InvalidOperationException($"User with ID {request.CreatedBy.Value} not found.");
+            throw new NotFoundException("User", request.CreatedBy);
 
         // Validate parent task if specified
         DomainTask? parentTask = null;
@@ -52,7 +53,7 @@ public class CreateTaskCommandHandler : IRequestHandler<CreateTaskCommand, TaskR
             parentTask = await _taskRepository.GetByIdAsync(request.ParentTaskId, cancellationToken)
                 .ConfigureAwait(false);
             if (parentTask == null)
-                throw new InvalidOperationException($"Parent task with ID {request.ParentTaskId.Value} not found.");
+                throw new NotFoundException("Task", request.ParentTaskId);
             
             if (parentTask.ProjectId != request.ProjectId)
                 throw new DomainException("Parent task must belong to the same project.");
@@ -65,7 +66,7 @@ public class CreateTaskCommandHandler : IRequestHandler<CreateTaskCommand, TaskR
             assignedUser = await _userRepository.GetByIdAsync(request.AssignedUserId, cancellationToken)
                 .ConfigureAwait(false);
             if (assignedUser == null)
-                throw new InvalidOperationException($"Assigned user with ID {request.AssignedUserId.Value} not found.");
+                throw new NotFoundException("User", request.AssignedUserId);
         }
 
         // Create task using domain factory method

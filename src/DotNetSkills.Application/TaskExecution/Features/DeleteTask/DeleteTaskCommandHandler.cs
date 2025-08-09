@@ -1,3 +1,4 @@
+using DotNetSkills.Application.Common.Exceptions;
 namespace DotNetSkills.Application.TaskExecution.Features.DeleteTask;
 
 /// <summary>
@@ -31,21 +32,20 @@ public class DeleteTaskCommandHandler : IRequestHandler<DeleteTaskCommand>
         var task = await _taskRepository.GetWithSubtasksAsync(request.TaskId, cancellationToken)
             .ConfigureAwait(false);
         if (task == null)
-            throw new NotFoundException($"Task with ID {request.TaskId.Value} not found.");
+            throw new NotFoundException("Task", request.TaskId);
 
         // Validate that the user exists
         var user = await _userRepository.GetByIdAsync(request.DeletedBy, cancellationToken)
             .ConfigureAwait(false);
         if (user == null)
-            throw new NotFoundException($"User with ID {request.DeletedBy.Value} not found.");
+            throw new NotFoundException("User", request.DeletedBy);
 
         // Cancel task using domain method (soft delete)
         // This will also cancel all subtasks automatically
         task.Cancel(user);
 
         // Save task through repository
-        await _taskRepository.UpdateAsync(task, cancellationToken)
-            .ConfigureAwait(false);
+    _taskRepository.Update(task);
         await _unitOfWork.SaveChangesAsync(cancellationToken)
             .ConfigureAwait(false);
 

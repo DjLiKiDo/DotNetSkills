@@ -1,3 +1,4 @@
+using DotNetSkills.Application.Common.Exceptions;
 namespace DotNetSkills.Application.TaskExecution.Features.UpdateSubtask;
 
 /// <summary>
@@ -33,7 +34,7 @@ public class UpdateSubtaskCommandHandler : IRequestHandler<UpdateSubtaskCommand,
         var subtask = await _taskRepository.GetByIdAsync(request.TaskId, cancellationToken)
             .ConfigureAwait(false);
         if (subtask == null)
-            throw new NotFoundException($"Task with ID {request.TaskId.Value} not found.");
+            throw new NotFoundException("Task", request.TaskId);
 
         // Validate that it is indeed a subtask
         if (!subtask.IsSubtask())
@@ -43,7 +44,7 @@ public class UpdateSubtaskCommandHandler : IRequestHandler<UpdateSubtaskCommand,
         var updater = await _userRepository.GetByIdAsync(request.UpdatedByUserId, cancellationToken)
             .ConfigureAwait(false);
         if (updater == null)
-            throw new NotFoundException($"User with ID {request.UpdatedByUserId.Value} not found.");
+            throw new NotFoundException("User", request.UpdatedByUserId);
 
         // Update subtask info through domain method
         subtask.UpdateInfo(
@@ -55,8 +56,7 @@ public class UpdateSubtaskCommandHandler : IRequestHandler<UpdateSubtaskCommand,
             updater);
 
         // Save changes through repository
-        await _taskRepository.UpdateAsync(subtask, cancellationToken)
-            .ConfigureAwait(false);
+    _taskRepository.Update(subtask);
         await _unitOfWork.SaveChangesAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -64,17 +64,17 @@ public class UpdateSubtaskCommandHandler : IRequestHandler<UpdateSubtaskCommand,
 
         // Map to response DTO
         var context = new Dictionary<string, object>();
-        if (subtask.AssignedUserId.HasValue)
+        if (subtask.AssignedUserId is not null)
         {
-            var assignedUser = await _userRepository.GetByIdAsync(subtask.AssignedUserId.Value, cancellationToken)
+            var assignedUser = await _userRepository.GetByIdAsync(subtask.AssignedUserId, cancellationToken)
                 .ConfigureAwait(false);
             if (assignedUser != null)
                 context["AssignedUserName"] = assignedUser.Name;
         }
         
-        if (subtask.ParentTaskId.HasValue)
+        if (subtask.ParentTaskId is not null)
         {
-            var parentTask = await _taskRepository.GetByIdAsync(subtask.ParentTaskId.Value, cancellationToken)
+            var parentTask = await _taskRepository.GetByIdAsync(subtask.ParentTaskId, cancellationToken)
                 .ConfigureAwait(false);
             if (parentTask != null)
                 context["ParentTaskTitle"] = parentTask.Title;

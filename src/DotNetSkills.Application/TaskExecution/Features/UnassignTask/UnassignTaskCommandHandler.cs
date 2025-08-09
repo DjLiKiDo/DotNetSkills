@@ -1,3 +1,4 @@
+using DotNetSkills.Application.Common.Exceptions;
 namespace DotNetSkills.Application.TaskExecution.Features.UnassignTask;
 
 /// <summary>
@@ -33,19 +34,19 @@ public class UnassignTaskCommandHandler : IRequestHandler<UnassignTaskCommand, T
         var task = await _taskRepository.GetByIdAsync(request.TaskId, cancellationToken)
             .ConfigureAwait(false);
         if (task == null)
-            throw new NotFoundException($"Task with ID {request.TaskId.Value} not found.");
+            throw new NotFoundException("Task", request.TaskId);
 
         // Validate that the unassigner user exists
         var unassigner = await _userRepository.GetByIdAsync(request.UnassignedByUserId, cancellationToken)
             .ConfigureAwait(false);
         if (unassigner == null)
-            throw new NotFoundException($"User with ID {request.UnassignedByUserId.Value} not found.");
+            throw new NotFoundException("User", request.UnassignedByUserId);
 
         // Store previous assignee information for response
         string? previousAssigneeName = null;
-        if (task.AssignedUserId.HasValue)
+        if (task.AssignedUserId is not null)
         {
-            var previousAssignee = await _userRepository.GetByIdAsync(task.AssignedUserId.Value, cancellationToken)
+            var previousAssignee = await _userRepository.GetByIdAsync(task.AssignedUserId, cancellationToken)
                 .ConfigureAwait(false);
             previousAssigneeName = previousAssignee?.Name;
         }
@@ -54,8 +55,7 @@ public class UnassignTaskCommandHandler : IRequestHandler<UnassignTaskCommand, T
         task.Unassign(unassigner);
 
         // Save changes through repository
-        await _taskRepository.UpdateAsync(task, cancellationToken)
-            .ConfigureAwait(false);
+    _taskRepository.Update(task);
         await _unitOfWork.SaveChangesAsync(cancellationToken)
             .ConfigureAwait(false);
 

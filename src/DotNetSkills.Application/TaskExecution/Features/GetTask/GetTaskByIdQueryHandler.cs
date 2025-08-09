@@ -41,18 +41,18 @@ public class GetTaskByIdQueryHandler : IRequestHandler<GetTaskByIdQuery, TaskRes
         var context = new Dictionary<string, object>();
         
         // Get assigned user name if task is assigned
-        if (task.AssignedUserId.HasValue)
+            if (task.AssignedUserId is not null)
         {
-            var assignedUser = await _userRepository.GetByIdAsync(task.AssignedUserId.Value, cancellationToken)
+                var assignedUser = await _userRepository.GetByIdAsync(task.AssignedUserId, cancellationToken)
                 .ConfigureAwait(false);
             if (assignedUser != null)
                 context["AssignedUserName"] = assignedUser.Name;
         }
         
         // Get parent task title if this is a subtask
-        if (task.ParentTaskId.HasValue)
+            if (task.ParentTaskId is not null)
         {
-            var parentTask = await _taskRepository.GetByIdAsync(task.ParentTaskId.Value, cancellationToken)
+                var parentTask = await _taskRepository.GetByIdAsync(task.ParentTaskId, cancellationToken)
                 .ConfigureAwait(false);
             if (parentTask != null)
                 context["ParentTaskTitle"] = parentTask.Title;

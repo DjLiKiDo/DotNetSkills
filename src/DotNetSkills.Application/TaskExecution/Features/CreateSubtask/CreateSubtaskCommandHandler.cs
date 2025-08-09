@@ -1,3 +1,4 @@
+using DotNetSkills.Application.Common.Exceptions;
 namespace DotNetSkills.Application.TaskExecution.Features.CreateSubtask;
 
 /// <summary>
@@ -33,22 +34,22 @@ public class CreateSubtaskCommandHandler : IRequestHandler<CreateSubtaskCommand,
         var parentTask = await _taskRepository.GetByIdAsync(request.ParentTaskId, cancellationToken)
             .ConfigureAwait(false);
         if (parentTask == null)
-            throw new NotFoundException($"Parent task with ID {request.ParentTaskId.Value} not found.");
+            throw new NotFoundException("Task", request.ParentTaskId);
 
         // Get creator user
         var creator = await _userRepository.GetByIdAsync(request.CreatedByUserId, cancellationToken)
             .ConfigureAwait(false);
         if (creator == null)
-            throw new NotFoundException($"User with ID {request.CreatedByUserId.Value} not found.");
+            throw new NotFoundException("User", request.CreatedByUserId);
 
         // Validate assigned user if specified
         User? assignedUser = null;
-        if (request.AssignedUserId.HasValue)
+        if (request.AssignedUserId is not null)
         {
-            assignedUser = await _userRepository.GetByIdAsync(request.AssignedUserId.Value, cancellationToken)
+            assignedUser = await _userRepository.GetByIdAsync(request.AssignedUserId, cancellationToken)
                 .ConfigureAwait(false);
             if (assignedUser == null)
-                throw new NotFoundException($"Assigned user with ID {request.AssignedUserId.Value.Value} not found.");
+                throw new NotFoundException("User", request.AssignedUserId);
         }
 
         // Create subtask using domain factory method
@@ -72,8 +73,7 @@ public class CreateSubtaskCommandHandler : IRequestHandler<CreateSubtaskCommand,
         parentTask.AddSubtask(subtask);
 
         // Save subtask through repository
-        await _taskRepository.AddAsync(subtask, cancellationToken)
-            .ConfigureAwait(false);
+    _taskRepository.Add(subtask);
         await _unitOfWork.SaveChangesAsync(cancellationToken)
             .ConfigureAwait(false);
 

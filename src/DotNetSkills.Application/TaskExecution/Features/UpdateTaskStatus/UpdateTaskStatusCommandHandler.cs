@@ -1,3 +1,4 @@
+using DotNetSkills.Application.Common.Exceptions;
 namespace DotNetSkills.Application.TaskExecution.Features.UpdateTaskStatus;
 
 /// <summary>
@@ -34,13 +35,13 @@ public class UpdateTaskStatusCommandHandler : IRequestHandler<UpdateTaskStatusCo
         var task = await _taskRepository.GetByIdAsync(request.TaskId, cancellationToken)
             .ConfigureAwait(false);
         if (task == null)
-            throw new NotFoundException($"Task with ID {request.TaskId.Value} not found.");
+            throw new NotFoundException("Task", request.TaskId);
 
         // Get user performing the status update
         var user = await _userRepository.GetByIdAsync(request.UpdatedBy, cancellationToken)
             .ConfigureAwait(false);
         if (user == null)
-            throw new NotFoundException($"User with ID {request.UpdatedBy.Value} not found.");
+            throw new NotFoundException("User", request.UpdatedBy);
 
         // Execute appropriate domain method based on target status
         switch (request.Status)
@@ -75,8 +76,7 @@ public class UpdateTaskStatusCommandHandler : IRequestHandler<UpdateTaskStatusCo
         }
 
         // Save task through repository
-        await _taskRepository.UpdateAsync(task, cancellationToken)
-            .ConfigureAwait(false);
+    _taskRepository.Update(task);
         await _unitOfWork.SaveChangesAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -84,17 +84,17 @@ public class UpdateTaskStatusCommandHandler : IRequestHandler<UpdateTaskStatusCo
 
         // Map to response DTO
         var context = new Dictionary<string, object>();
-        if (task.AssignedUserId.HasValue)
+        if (task.AssignedUserId is not null)
         {
-            var assignedUser = await _userRepository.GetByIdAsync(task.AssignedUserId.Value, cancellationToken)
+            var assignedUser = await _userRepository.GetByIdAsync(task.AssignedUserId, cancellationToken)
                 .ConfigureAwait(false);
             if (assignedUser != null)
                 context["AssignedUserName"] = assignedUser.Name;
         }
         
-        if (task.ParentTaskId.HasValue)
+        if (task.ParentTaskId is not null)
         {
-            var parentTask = await _taskRepository.GetByIdAsync(task.ParentTaskId.Value, cancellationToken)
+            var parentTask = await _taskRepository.GetByIdAsync(task.ParentTaskId, cancellationToken)
                 .ConfigureAwait(false);
             if (parentTask != null)
                 context["ParentTaskTitle"] = parentTask.Title;

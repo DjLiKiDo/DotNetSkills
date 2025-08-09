@@ -1,3 +1,4 @@
+using DotNetSkills.Application.Common.Exceptions;
 namespace DotNetSkills.Application.TaskExecution.Features.UpdateTask;
 
 /// <summary>
@@ -34,13 +35,13 @@ public class UpdateTaskCommandHandler : IRequestHandler<UpdateTaskCommand, TaskR
         var task = await _taskRepository.GetByIdAsync(request.TaskId, cancellationToken)
             .ConfigureAwait(false);
         if (task == null)
-            throw new InvalidOperationException($"Task with ID {request.TaskId.Value} not found.");
+            throw new NotFoundException("Task", request.TaskId);
 
         // Get updater user
         var updater = await _userRepository.GetByIdAsync(request.UpdatedBy, cancellationToken)
             .ConfigureAwait(false);
         if (updater == null)
-            throw new InvalidOperationException($"User with ID {request.UpdatedBy.Value} not found.");
+            throw new NotFoundException("User", request.UpdatedBy);
 
         // Update task info through domain method
         task.UpdateInfo(

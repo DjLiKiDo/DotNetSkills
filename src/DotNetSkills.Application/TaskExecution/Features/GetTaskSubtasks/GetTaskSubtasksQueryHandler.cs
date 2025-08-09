@@ -1,3 +1,4 @@
+using DotNetSkills.Application.Common.Exceptions;
 namespace DotNetSkills.Application.TaskExecution.Features.GetTaskSubtasks;
 
 /// <summary>
@@ -31,7 +32,7 @@ public class GetTaskSubtasksQueryHandler : IRequestHandler<GetTaskSubtasksQuery,
             .ConfigureAwait(false);
         
         if (parentTask == null)
-            throw new NotFoundException($"Task with ID {request.TaskId.Value} not found.");
+            throw new NotFoundException("Task", request.TaskId);
 
         // Get all subtasks
         var subtasks = await _taskRepository.GetSubtasksAsync(request.TaskId, cancellationToken)
@@ -43,9 +44,9 @@ public class GetTaskSubtasksQueryHandler : IRequestHandler<GetTaskSubtasksQuery,
         foreach (var subtask in subtasks)
         {
             string? assignedUserName = null;
-            if (subtask.AssignedUserId.HasValue)
+            if (subtask.AssignedUserId is not null)
             {
-                var assignedUser = await _userRepository.GetByIdAsync(subtask.AssignedUserId.Value, cancellationToken)
+                var assignedUser = await _userRepository.GetByIdAsync(subtask.AssignedUserId, cancellationToken)
                     .ConfigureAwait(false);
                 assignedUserName = assignedUser?.Name;
             }
@@ -64,6 +65,7 @@ public class GetTaskSubtasksQueryHandler : IRequestHandler<GetTaskSubtasksQuery,
                 subtask.StartedAt,
                 subtask.CompletedAt,
                 subtask.CreatedAt,
+                subtask.UpdatedAt,
                 subtask.IsOverdue(),
                 subtask.IsAssigned());
             

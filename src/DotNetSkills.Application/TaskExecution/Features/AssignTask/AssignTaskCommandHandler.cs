@@ -1,3 +1,4 @@
+using DotNetSkills.Application.Common.Exceptions;
 namespace DotNetSkills.Application.TaskExecution.Features.AssignTask;
 
 /// <summary>
@@ -33,26 +34,25 @@ public class AssignTaskCommandHandler : IRequestHandler<AssignTaskCommand, TaskA
         var task = await _taskRepository.GetByIdAsync(request.TaskId, cancellationToken)
             .ConfigureAwait(false);
         if (task == null)
-            throw new NotFoundException($"Task with ID {request.TaskId.Value} not found.");
+            throw new NotFoundException("Task", request.TaskId);
 
         // Validate that the assignee user exists
         var assignee = await _userRepository.GetByIdAsync(request.AssignedUserId, cancellationToken)
             .ConfigureAwait(false);
         if (assignee == null)
-            throw new NotFoundException($"User with ID {request.AssignedUserId.Value} not found.");
+            throw new NotFoundException("User", request.AssignedUserId);
 
         // Validate that the assigner user exists
         var assigner = await _userRepository.GetByIdAsync(request.AssignedByUserId, cancellationToken)
             .ConfigureAwait(false);
         if (assigner == null)
-            throw new NotFoundException($"User with ID {request.AssignedByUserId.Value} not found.");
+            throw new NotFoundException("User", request.AssignedByUserId);
 
         // Assign task using domain method
         task.AssignTo(assignee, assigner);
 
         // Save changes through repository
-        await _taskRepository.UpdateAsync(task, cancellationToken)
-            .ConfigureAwait(false);
+    _taskRepository.Update(task);
         await _unitOfWork.SaveChangesAsync(cancellationToken)
             .ConfigureAwait(false);
 
