@@ -87,9 +87,32 @@ public class PerformanceMonitoringService : IPerformanceMonitoringService
         string? context = null,
         CancellationToken cancellationToken = default)
     {
+    return await ExecuteMeasuredAsync(operation, operationName, context).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Measures the execution time of an async operation without return value.
+    /// </summary>
+    public async System.Threading.Tasks.Task MeasureAsync(
+        Func<System.Threading.Tasks.Task> operation,
+        string operationName,
+        string? context = null,
+        CancellationToken cancellationToken = default)
+    {
+        await ExecuteMeasuredAsync(async () => { await operation().ConfigureAwait(false); return true; }, operationName, context).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Internal helper to execute and measure an async operation with unified logging/metrics logic.
+    /// </summary>
+    private async System.Threading.Tasks.Task<T> ExecuteMeasuredAsync<T>(
+        Func<System.Threading.Tasks.Task<T>> operation,
+        string operationName,
+        string? context)
+    {
         if (operation == null)
             throw new ArgumentNullException(nameof(operation));
-        
+
         if (string.IsNullOrWhiteSpace(operationName))
             throw new ArgumentException("Operation name cannot be null or empty.", nameof(operationName));
 
@@ -108,21 +131,18 @@ public class PerformanceMonitoringService : IPerformanceMonitoringService
             }
 
             var result = await operation().ConfigureAwait(false);
-            
+
             stopwatch.Stop();
             var elapsed = stopwatch.Elapsed;
 
-            // Log performance metrics
             LogOperationCompletion(operationName, operationId, elapsed, context, true);
 
-            // Check for slow operations
             if (elapsed > _options.SlowOperationThreshold)
             {
                 LogSlowOperation(operationName, elapsed, _options.SlowOperationThreshold, context);
             }
 
-            // Record metrics
-            RecordMetric($"operation.{operationName}.duration", elapsed.TotalMilliseconds, "ms", 
+            RecordMetric($"operation.{operationName}.duration", elapsed.TotalMilliseconds, "ms",
                 context != null ? new Dictionary<string, string> { ["context"] = context } : null);
 
             return result;
@@ -133,22 +153,6 @@ public class PerformanceMonitoringService : IPerformanceMonitoringService
             LogOperationCompletion(operationName, operationId, stopwatch.Elapsed, context, false, ex);
             throw;
         }
-    }
-
-    /// <summary>
-    /// Measures the execution time of an async operation without return value.
-    /// </summary>
-    public async System.Threading.Tasks.Task MeasureAsync(
-        Func<System.Threading.Tasks.Task> operation,
-        string operationName,
-        string? context = null,
-        CancellationToken cancellationToken = default)
-    {
-        await MeasureAsync(async () =>
-        {
-            await operation().ConfigureAwait(false);
-            return System.Threading.Tasks.Task.CompletedTask;
-        }, operationName, context, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
