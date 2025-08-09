@@ -263,12 +263,12 @@ public class ProjectRepository : BaseRepository<Project, ProjectId>, IProjectRep
             {
                 Id = p.Id.Value,
                 Name = p.Name,
-                Description = p.Description,
+                Description = p.Description ?? string.Empty,
                 Status = p.Status,
                 CreatedAt = p.CreatedAt,
                 StartDate = p.StartDate,
                 EndDate = p.EndDate,
-                TeamId = p.TeamId.Value,
+                TeamId = p.TeamId != null ? p.TeamId.Value : Guid.Empty,
                 TeamName = Context.Set<Team>()
                     .Where(t => t.Id == p.TeamId)
                     .Select(t => t.Name)
@@ -300,12 +300,12 @@ public class ProjectRepository : BaseRepository<Project, ProjectId>, IProjectRep
             {
                 Id = p.Id.Value,
                 Name = p.Name,
-                Description = p.Description,
+                Description = p.Description ?? string.Empty,
                 Status = p.Status,
                 CreatedAt = p.CreatedAt,
                 StartDate = p.StartDate,
                 EndDate = p.EndDate,
-                TeamId = p.TeamId.Value,
+                TeamId = p.TeamId != null ? p.TeamId.Value : Guid.Empty,
                 TeamName = Context.Set<Team>()
                     .Where(t => t.Id == p.TeamId)
                     .Select(t => t.Name)
@@ -356,7 +356,7 @@ public class ProjectRepository : BaseRepository<Project, ProjectId>, IProjectRep
                 Name = p.Name,
                 Status = p.Status,
                 IsActive = p.Status == ProjectStatus.Active,
-                TeamId = p.TeamId.Value,
+                TeamId = p.TeamId != null ? p.TeamId.Value : Guid.Empty,
                 TeamName = Context.Set<Team>()
                     .Where(t => t.Id == p.TeamId)
                     .Select(t => t.Name)
@@ -386,7 +386,7 @@ public class ProjectRepository : BaseRepository<Project, ProjectId>, IProjectRep
             {
                 Id = p.Id.Value,
                 Name = p.Name,
-                Description = p.Description,
+                Description = p.Description ?? string.Empty,
                 Status = p.Status,
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt,

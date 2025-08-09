@@ -35,6 +35,7 @@ Recent Additions:
 - ExceptionHandlingMiddleware now surfaces validation errors under extensions.errors to ensure consistent JSON shape.
  - Added standardized extensions.errorCode for all mapped exceptions; middleware & unit tests updated and passing.
  - AutoMapper refactor (see above) with green test verification.
+ - Nullable warnings (Infrastructure ProjectRepository.cs CS8601) resolved by adding null-coalescing and defensive checks; build now free of those specific warnings.
 
 Pending (not yet implemented):
 - Analyzer & nullable warning cleanup (ProjectRepository and async warnings).
@@ -42,6 +43,9 @@ Pending (not yet implemented):
 - Additional regression / coverage (subtask flags, domain event dispatch verification).
 - Correlation ID enrichment (optional future).
  - (AutoMapper follow-ups) Add contextual mapping tests for TaskAssignmentResponse with context.Items (AssignedUserName / AssignedByUserId) to lock behavior.
+ - Remaining warnings to address:
+   - CS1998 async method without await in TaskAssignmentEndpoints (placeholder / TODO implementation).
+   - Multiple xUnit1031 warnings (blocking task operations) in AuthorizationExtensionsTests – refactor tests to async/await pattern.
 
 ## 3. Important Context for Continuation
 
