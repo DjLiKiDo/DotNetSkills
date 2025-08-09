@@ -44,8 +44,8 @@ Pending (not yet implemented):
 - Correlation ID enrichment (optional future).
  - (AutoMapper follow-ups) Add contextual mapping tests for TaskAssignmentResponse with context.Items (AssignedUserName / AssignedByUserId) to lock behavior.
  - Remaining warnings to address:
-   - CS1998 async method without await in TaskAssignmentEndpoints (placeholder / TODO implementation).
-   - Multiple xUnit1031 warnings (blocking task operations) in AuthorizationExtensionsTests – refactor tests to async/await pattern.
+  - CS1998 async method without await in TaskAssignmentEndpoints (placeholder / TODO implementation).
+  - (Resolved) xUnit1031 warnings in AuthorizationExtensionsTests by converting test methods to async Task and awaiting policy/authorization calls.
 
 ## 3. Important Context for Continuation
 

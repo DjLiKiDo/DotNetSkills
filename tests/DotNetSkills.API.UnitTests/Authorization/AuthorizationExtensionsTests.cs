@@ -15,7 +15,7 @@ namespace DotNetSkills.API.UnitTests.Authorization;
 public class AuthorizationExtensionsTests
 {
     [Fact]
-    public void AddApiAuthorization_ShouldRegisterAllPolicies()
+    public async Task AddApiAuthorization_ShouldRegisterAllPolicies()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -30,10 +30,10 @@ public class AuthorizationExtensionsTests
         authorizationOptions.Should().NotBeNull();
 
         // Verify policies are registered by attempting to retrieve them
-        var adminPolicy = authorizationOptions.GetPolicyAsync(Policies.AdminOnly).Result;
-        var teamManagerPolicy = authorizationOptions.GetPolicyAsync(Policies.TeamManager).Result;
-        var projectManagerPolicy = authorizationOptions.GetPolicyAsync(Policies.ProjectManagerOrAdmin).Result;
-        var projectMemberPolicy = authorizationOptions.GetPolicyAsync(Policies.ProjectMemberOrAdmin).Result;
+    var adminPolicy = await authorizationOptions.GetPolicyAsync(Policies.AdminOnly);
+    var teamManagerPolicy = await authorizationOptions.GetPolicyAsync(Policies.TeamManager);
+    var projectManagerPolicy = await authorizationOptions.GetPolicyAsync(Policies.ProjectManagerOrAdmin);
+    var projectMemberPolicy = await authorizationOptions.GetPolicyAsync(Policies.ProjectMemberOrAdmin);
 
         adminPolicy.Should().NotBeNull();
         teamManagerPolicy.Should().NotBeNull();
@@ -42,7 +42,7 @@ public class AuthorizationExtensionsTests
     }
 
     [Fact]
-    public void AdminOnlyPolicy_ShouldRequireAdminRole()
+    public async Task AdminOnlyPolicy_ShouldRequireAdminRole()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -63,15 +63,15 @@ public class AuthorizationExtensionsTests
         }));
 
         // Assert
-        var adminResult = authService.AuthorizeAsync(adminUser, Policies.AdminOnly).Result;
-        var nonAdminResult = authService.AuthorizeAsync(nonAdminUser, Policies.AdminOnly).Result;
+    var adminResult = await authService.AuthorizeAsync(adminUser, Policies.AdminOnly);
+    var nonAdminResult = await authService.AuthorizeAsync(nonAdminUser, Policies.AdminOnly);
 
         adminResult.Succeeded.Should().BeTrue();
         nonAdminResult.Succeeded.Should().BeFalse();
     }
 
     [Fact]
-    public void TeamManagerPolicy_ShouldAllowAdminAndProjectManager()
+    public async Task TeamManagerPolicy_ShouldAllowAdminAndProjectManager()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -97,9 +97,9 @@ public class AuthorizationExtensionsTests
         }));
 
         // Assert
-        var adminResult = authService.AuthorizeAsync(adminUser, Policies.TeamManager).Result;
-        var projectManagerResult = authService.AuthorizeAsync(projectManagerUser, Policies.TeamManager).Result;
-        var developerResult = authService.AuthorizeAsync(developerUser, Policies.TeamManager).Result;
+    var adminResult = await authService.AuthorizeAsync(adminUser, Policies.TeamManager);
+    var projectManagerResult = await authService.AuthorizeAsync(projectManagerUser, Policies.TeamManager);
+    var developerResult = await authService.AuthorizeAsync(developerUser, Policies.TeamManager);
 
         adminResult.Succeeded.Should().BeTrue();
         projectManagerResult.Succeeded.Should().BeTrue();
@@ -107,7 +107,7 @@ public class AuthorizationExtensionsTests
     }
 
     [Fact]
-    public void ProjectManagerOrAdminPolicy_ShouldAllowAdminAndProjectManager()
+    public async Task ProjectManagerOrAdminPolicy_ShouldAllowAdminAndProjectManager()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -133,9 +133,9 @@ public class AuthorizationExtensionsTests
         }));
 
         // Assert
-        var adminResult = authService.AuthorizeAsync(adminUser, Policies.ProjectManagerOrAdmin).Result;
-        var projectManagerResult = authService.AuthorizeAsync(projectManagerUser, Policies.ProjectManagerOrAdmin).Result;
-        var viewerResult = authService.AuthorizeAsync(viewerUser, Policies.ProjectManagerOrAdmin).Result;
+    var adminResult = await authService.AuthorizeAsync(adminUser, Policies.ProjectManagerOrAdmin);
+    var projectManagerResult = await authService.AuthorizeAsync(projectManagerUser, Policies.ProjectManagerOrAdmin);
+    var viewerResult = await authService.AuthorizeAsync(viewerUser, Policies.ProjectManagerOrAdmin);
 
         adminResult.Succeeded.Should().BeTrue();
         projectManagerResult.Succeeded.Should().BeTrue();
@@ -143,7 +143,7 @@ public class AuthorizationExtensionsTests
     }
 
     [Fact]
-    public void ProjectMemberOrAdminPolicy_ShouldAllowElevatedRoles()
+    public async Task ProjectMemberOrAdminPolicy_ShouldAllowElevatedRoles()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -174,10 +174,10 @@ public class AuthorizationExtensionsTests
         }));
 
         // Assert
-        var adminResult = authService.AuthorizeAsync(adminUser, Policies.ProjectMemberOrAdmin).Result;
-        var projectManagerResult = authService.AuthorizeAsync(projectManagerUser, Policies.ProjectMemberOrAdmin).Result;
-        var developerResult = authService.AuthorizeAsync(developerUser, Policies.ProjectMemberOrAdmin).Result;
-        var viewerResult = authService.AuthorizeAsync(viewerUser, Policies.ProjectMemberOrAdmin).Result;
+    var adminResult = await authService.AuthorizeAsync(adminUser, Policies.ProjectMemberOrAdmin);
+    var projectManagerResult = await authService.AuthorizeAsync(projectManagerUser, Policies.ProjectMemberOrAdmin);
+    var developerResult = await authService.AuthorizeAsync(developerUser, Policies.ProjectMemberOrAdmin);
+    var viewerResult = await authService.AuthorizeAsync(viewerUser, Policies.ProjectMemberOrAdmin);
 
         adminResult.Succeeded.Should().BeTrue();
         projectManagerResult.Succeeded.Should().BeTrue();
@@ -186,7 +186,7 @@ public class AuthorizationExtensionsTests
     }
 
     [Fact]
-    public void ProjectMemberOrAdminPolicy_ShouldAllowProjectMembershipClaim()
+    public async Task ProjectMemberOrAdminPolicy_ShouldAllowProjectMembershipClaim()
     {
         // Arrange
         var services = new ServiceCollection();
@@ -208,8 +208,8 @@ public class AuthorizationExtensionsTests
         }));
 
         // Assert
-        var withProjectResult = authService.AuthorizeAsync(viewerWithProjectClaim, Policies.ProjectMemberOrAdmin).Result;
-        var withoutProjectResult = authService.AuthorizeAsync(viewerWithoutProjectClaim, Policies.ProjectMemberOrAdmin).Result;
+    var withProjectResult = await authService.AuthorizeAsync(viewerWithProjectClaim, Policies.ProjectMemberOrAdmin);
+    var withoutProjectResult = await authService.AuthorizeAsync(viewerWithoutProjectClaim, Policies.ProjectMemberOrAdmin);
 
         withProjectResult.Succeeded.Should().BeTrue();
         withoutProjectResult.Succeeded.Should().BeFalse();
