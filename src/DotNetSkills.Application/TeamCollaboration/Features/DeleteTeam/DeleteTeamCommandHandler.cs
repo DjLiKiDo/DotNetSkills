@@ -6,16 +6,50 @@ namespace DotNetSkills.Application.TeamCollaboration.Features.DeleteTeam;
 /// </summary>
 public class DeleteTeamCommandHandler : IRequestHandler<DeleteTeamCommand>
 {
+    private readonly ITeamRepository _teamRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IProjectRepository _projectRepository;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public DeleteTeamCommandHandler(
+        ITeamRepository teamRepository,
+        IUserRepository userRepository,
+        IProjectRepository projectRepository,
+        ICurrentUserService currentUserService,
+        IUnitOfWork unitOfWork)
+    {
+        _teamRepository = teamRepository;
+        _userRepository = userRepository;
+        _projectRepository = projectRepository;
+        _currentUserService = currentUserService;
+        _unitOfWork = unitOfWork;
+    }
+
     public async Task Handle(DeleteTeamCommand request, CancellationToken cancellationToken)
     {
-        // TODO: Implement team deletion logic
-        // 1. Get team from repository by ID
-        // 2. Validate user has permission to delete team
-        // 3. Check business rules (no active projects, etc.)
-        // 4. Remove team from repository
-        // 5. Dispatch domain events if needed
+        var currentUserId = _currentUserService.GetCurrentUserId();
+        if (currentUserId == null)
+            throw new UnauthorizedAccessException("User must be authenticated to delete teams");
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("DeleteTeamCommandHandler requires Infrastructure layer implementation");
+        var currentUser = await _userRepository.GetByIdAsync(currentUserId, cancellationToken).ConfigureAwait(false);
+        if (currentUser == null)
+            throw new UnauthorizedAccessException("Current user not found");
+
+        var team = await _teamRepository.GetByIdAsync(request.TeamId, cancellationToken).ConfigureAwait(false);
+        if (team == null)
+            throw new InvalidOperationException($"Team with ID '{request.TeamId}' not found");
+
+        if (!currentUser.CanManageTeams())
+            throw new UnauthorizedAccessException("User does not have permission to delete teams");
+
+        var activeProjects = await _projectRepository.GetByTeamIdAsync(request.TeamId, cancellationToken).ConfigureAwait(false);
+        var hasActiveProjects = activeProjects.Any(p => p.Status != ProjectStatus.Completed && p.Status != ProjectStatus.Cancelled);
+        
+        if (hasActiveProjects)
+            throw new InvalidOperationException("Cannot delete team with active projects. Complete or cancel all projects first.");
+
+        _teamRepository.Remove(team);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }

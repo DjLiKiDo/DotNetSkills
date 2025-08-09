@@ -1,39 +1,5 @@
 ## Task list (grouped) ✅
 
-
-2) Replace endpoint placeholders with MediatR integration
-- Description: Many endpoints return placeholders and TODO “Replace with MediatR.Send”. Wire endpoints to Application commands/queries, validate using FluentValidation if present, and return correct HTTP responses.
-- Benefits: Makes endpoints functional and aligned with CQRS, removes scaffolding.
-- Effort: Large (3–5 days), can split by bounded context.
-- Prompt:
-  Replace placeholder endpoint implementations with MediatR send calls.
-  Context files with TODOs:
-  - TeamCollaboration:
-    - TeamEndpoints.cs (multiple)
-    - TeamMemberEndpoints.cs (multiple)
-  - ProjectManagement:
-    - ProjectEndpoints.cs (multiple)
-    - ProjectTaskEndpoints.cs (multiple)
-  - TaskExecution:
-    - TaskEndpoints.cs (multiple)
-    - TaskAssignmentEndpoints.cs (multiple)
-  Guidelines:
-  - Use IMediator mediator injected by Minimal API parameter binding and await mediator.Send(command/query).
-  - Map route/body to existing Application layer request types; if a matching CQRS request doesn't exist yet, create it under Application with validators.
-  - Follow conventions in dotnet.instructions.md (CQRS, ValidationBehavior, ProblemDetails).
-  - Replace “Get current user ID” TODOs by reading from HttpContext.User with claims (sub or custom Id).
-  - Map HTTP status codes: 200/201 for success; 204 for deletes; 404 for missing; 400 for validation errors.
-  - Remove placeholder responses.
-  Deliverables:
-  - Endpoint files updated, wiring to handlers.
-  - New commands/queries and validators if missing.
-  - Tests to cover at least one happy path per endpoint group using WebApplicationFactory or minimal unit tests if infra is missing.
-  Acceptance:
-  - Build passes
-  - Endpoints compile
-  - Placeholder TODOs removed
-  - Basic tests passing
-
 3) Implement Application handlers for Teams, Projects, Tasks
 - Description: Many Application handlers are TODO stubs. Implement command/query handlers using rich domain models and repositories, returning DTOs via mappers.
 - Benefits: Enables functional endpoints via CQRS; unlocks end-to-end flows.

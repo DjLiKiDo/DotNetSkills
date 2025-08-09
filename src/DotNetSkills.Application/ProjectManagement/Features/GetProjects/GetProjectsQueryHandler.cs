@@ -6,17 +6,38 @@ namespace DotNetSkills.Application.ProjectManagement.Features.GetProjects;
 /// </summary>
 public class GetProjectsQueryHandler : IRequestHandler<GetProjectsQuery, PagedProjectResponse>
 {
+    private readonly IProjectRepository _projectRepository;
+    private readonly ITeamRepository _teamRepository;
+
+    public GetProjectsQueryHandler(
+        IProjectRepository projectRepository,
+        ITeamRepository teamRepository)
+    {
+        _projectRepository = projectRepository;
+        _teamRepository = teamRepository;
+    }
+
     public async Task<PagedProjectResponse> Handle(GetProjectsQuery request, CancellationToken cancellationToken)
     {
-        // TODO: Implement project retrieval logic with filtering
-        // 1. Get projects from repository with pagination and filters
-        // 2. Apply team filter if provided
-        // 3. Apply status filter if provided
-        // 4. Apply date range filters if provided
-        // 5. Apply search filter if provided
-        // 6. Map to DTOs and return paginated response
+        var (projects, totalCount) = await _projectRepository.GetPagedAsync(
+            request.Page,
+            request.PageSize,
+            request.Search,
+            request.TeamId,
+            request.Status,
+            cancellationToken).ConfigureAwait(false);
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("GetProjectsQueryHandler requires Infrastructure layer implementation");
+        var projectResponses = new List<ProjectResponse>();
+        foreach (var project in projects)
+        {
+            var team = await _teamRepository.GetByIdAsync(project.TeamId, cancellationToken).ConfigureAwait(false);
+            projectResponses.Add(ProjectResponse.FromDomain(project, team?.Name ?? "Unknown"));
+        }
+
+        return new PagedProjectResponse(
+            projectResponses.AsReadOnly(),
+            totalCount,
+            request.Page,
+            request.PageSize);
     }
 }

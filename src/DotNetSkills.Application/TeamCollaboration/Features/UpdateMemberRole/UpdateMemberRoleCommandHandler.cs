@@ -6,17 +6,47 @@ namespace DotNetSkills.Application.TeamCollaboration.Features.UpdateMemberRole;
 /// </summary>
 public class UpdateMemberRoleCommandHandler : IRequestHandler<UpdateMemberRoleCommand, TeamMemberResponse>
 {
+    private readonly ITeamRepository _teamRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UpdateMemberRoleCommandHandler(
+        ITeamRepository teamRepository,
+        IUserRepository userRepository,
+        ICurrentUserService currentUserService,
+        IUnitOfWork unitOfWork)
+    {
+        _teamRepository = teamRepository;
+        _userRepository = userRepository;
+        _currentUserService = currentUserService;
+        _unitOfWork = unitOfWork;
+    }
+
     public async Task<TeamMemberResponse> Handle(UpdateMemberRoleCommand request, CancellationToken cancellationToken)
     {
-        // TODO: Implement team member role update logic
-        // 1. Get team from repository by ID
-        // 2. Get user from repository by ID
-        // 3. Get current user (changedBy) from context
-        // 4. Call team.ChangeMemberRole() domain method (enforces business rules)
-        // 5. Save changes to repository
-        // 6. Map updated member to TeamMemberResponse DTO and return
+        var currentUserId = _currentUserService.GetCurrentUserId();
+        if (currentUserId == null)
+            throw new UnauthorizedAccessException("User must be authenticated to update member roles");
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("UpdateMemberRoleCommandHandler requires Infrastructure layer implementation");
+        var currentUser = await _userRepository.GetByIdAsync(currentUserId, cancellationToken).ConfigureAwait(false);
+        if (currentUser == null)
+            throw new UnauthorizedAccessException("Current user not found");
+
+        var team = await _teamRepository.GetWithMembersAsync(request.TeamId, cancellationToken).ConfigureAwait(false);
+        if (team == null)
+            throw new InvalidOperationException($"Team with ID '{request.TeamId}' not found");
+
+        var userToUpdate = await _userRepository.GetByIdAsync(request.UserId, cancellationToken).ConfigureAwait(false);
+        if (userToUpdate == null)
+            throw new InvalidOperationException($"User with ID '{request.UserId}' not found");
+
+        team.ChangeMemberRole(userToUpdate, request.NewRole, currentUser);
+
+        _teamRepository.Update(team);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        var updatedMember = team.GetMember(request.UserId);
+        return TeamMemberResponse.FromDomain(updatedMember!);
     }
 }

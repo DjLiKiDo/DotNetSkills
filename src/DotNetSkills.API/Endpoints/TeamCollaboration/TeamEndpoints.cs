@@ -1,5 +1,5 @@
 using DotNetSkills.API.Authorization;
-using DotNetSkills.API.Services;
+using DotNetSkills.Application.Common.Abstractions;
 using MediatR;
 
 namespace DotNetSkills.API.Endpoints.TeamCollaboration;

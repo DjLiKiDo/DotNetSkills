@@ -4,6 +4,7 @@ using DotNetSkills.API.Configuration.Options;
 using DotNetSkills.API.Configuration.Options.Validators;
 using DotNetSkills.API.Authorization;
 using DotNetSkills.API.Services;
+using DotNetSkills.Application.Common.Abstractions; // Added for ICurrentUserService abstraction
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;

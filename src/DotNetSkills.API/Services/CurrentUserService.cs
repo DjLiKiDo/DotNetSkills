@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using DotNetSkills.Application.Common.Abstractions; // Updated namespace after moving interface
 
 namespace DotNetSkills.API.Services;
 

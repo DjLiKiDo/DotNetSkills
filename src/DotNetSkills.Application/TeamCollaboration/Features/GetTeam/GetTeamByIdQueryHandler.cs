@@ -6,14 +6,19 @@ namespace DotNetSkills.Application.TeamCollaboration.Features.GetTeam;
 /// </summary>
 public class GetTeamByIdQueryHandler : IRequestHandler<GetTeamByIdQuery, TeamResponse>
 {
+    private readonly ITeamRepository _teamRepository;
+
+    public GetTeamByIdQueryHandler(ITeamRepository teamRepository)
+    {
+        _teamRepository = teamRepository;
+    }
+
     public async Task<TeamResponse> Handle(GetTeamByIdQuery request, CancellationToken cancellationToken)
     {
-        // TODO: Implement team retrieval logic by ID
-        // 1. Get team from repository by ID
-        // 2. Include team members with their user details
-        // 3. Map to DTO and return
+        var team = await _teamRepository.GetWithMembersAsync(request.TeamId, cancellationToken).ConfigureAwait(false);
+        if (team == null)
+            throw new InvalidOperationException($"Team with ID '{request.TeamId}' not found");
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("GetTeamByIdQueryHandler requires Infrastructure layer implementation");
+        return TeamResponse.FromDomain(team);
     }
 }

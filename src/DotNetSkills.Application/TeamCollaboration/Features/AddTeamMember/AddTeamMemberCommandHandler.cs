@@ -6,17 +6,47 @@ namespace DotNetSkills.Application.TeamCollaboration.Features.AddTeamMember;
 /// </summary>
 public class AddTeamMemberCommandHandler : IRequestHandler<AddTeamMemberCommand, TeamMemberResponse>
 {
+    private readonly ITeamRepository _teamRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public AddTeamMemberCommandHandler(
+        ITeamRepository teamRepository,
+        IUserRepository userRepository,
+        ICurrentUserService currentUserService,
+        IUnitOfWork unitOfWork)
+    {
+        _teamRepository = teamRepository;
+        _userRepository = userRepository;
+        _currentUserService = currentUserService;
+        _unitOfWork = unitOfWork;
+    }
+
     public async Task<TeamMemberResponse> Handle(AddTeamMemberCommand request, CancellationToken cancellationToken)
     {
-        // TODO: Implement team member addition logic
-        // 1. Get team from repository by ID
-        // 2. Get user from repository by ID
-        // 3. Get current user (addedBy) from context
-        // 4. Call team.AddMember() domain method (enforces business rules)
-        // 5. Save changes to repository
-        // 6. Map to TeamMemberResponse DTO and return
+        var currentUserId = _currentUserService.GetCurrentUserId();
+        if (currentUserId == null)
+            throw new UnauthorizedAccessException("User must be authenticated to add team members");
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("AddTeamMemberCommandHandler requires Infrastructure layer implementation");
+        var currentUser = await _userRepository.GetByIdAsync(currentUserId, cancellationToken).ConfigureAwait(false);
+        if (currentUser == null)
+            throw new UnauthorizedAccessException("Current user not found");
+
+        var team = await _teamRepository.GetWithMembersAsync(request.TeamId, cancellationToken).ConfigureAwait(false);
+        if (team == null)
+            throw new InvalidOperationException($"Team with ID '{request.TeamId}' not found");
+
+        var userToAdd = await _userRepository.GetByIdAsync(request.UserId, cancellationToken).ConfigureAwait(false);
+        if (userToAdd == null)
+            throw new InvalidOperationException($"User with ID '{request.UserId}' not found");
+
+        team.AddMember(userToAdd, request.Role, currentUser);
+
+        _teamRepository.Update(team);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        var addedMember = team.GetMember(request.UserId);
+        return TeamMemberResponse.FromDomain(addedMember!);
     }
 }

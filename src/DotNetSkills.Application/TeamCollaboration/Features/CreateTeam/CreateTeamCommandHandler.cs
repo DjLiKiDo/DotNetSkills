@@ -6,16 +6,42 @@ namespace DotNetSkills.Application.TeamCollaboration.Features.CreateTeam;
 /// </summary>
 public class CreateTeamCommandHandler : IRequestHandler<CreateTeamCommand, TeamResponse>
 {
+    private readonly ITeamRepository _teamRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public CreateTeamCommandHandler(
+        ITeamRepository teamRepository,
+        IUserRepository userRepository,
+        ICurrentUserService currentUserService,
+        IUnitOfWork unitOfWork)
+    {
+        _teamRepository = teamRepository;
+        _userRepository = userRepository;
+        _currentUserService = currentUserService;
+        _unitOfWork = unitOfWork;
+    }
+
     public async Task<TeamResponse> Handle(CreateTeamCommand request, CancellationToken cancellationToken)
     {
-        // TODO: Implement team creation logic
-        // 1. Get current user from context (requires authentication)
-        // 2. Validate user has permission to create teams
-        // 3. Create team using Team.Create() domain method
-        // 4. Save to repository
-        // 5. Map to DTO and return
+        var currentUserId = _currentUserService.GetCurrentUserId();
+        if (currentUserId == null)
+            throw new UnauthorizedAccessException("User must be authenticated to create teams");
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("CreateTeamCommandHandler requires Infrastructure layer implementation");
+        var currentUser = await _userRepository.GetByIdAsync(currentUserId, cancellationToken).ConfigureAwait(false);
+        if (currentUser == null)
+            throw new UnauthorizedAccessException("Current user not found");
+
+        var existingTeam = await _teamRepository.GetByNameAsync(request.Name, cancellationToken).ConfigureAwait(false);
+        if (existingTeam != null)
+            throw new InvalidOperationException($"Team with name '{request.Name}' already exists");
+
+        var team = Team.Create(request.Name, request.Description, currentUser);
+
+        _teamRepository.Add(team);
+        await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        return TeamResponse.FromDomain(team);
     }
 }

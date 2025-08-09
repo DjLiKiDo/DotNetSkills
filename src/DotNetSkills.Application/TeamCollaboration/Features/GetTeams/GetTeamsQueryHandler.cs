@@ -6,14 +6,28 @@ namespace DotNetSkills.Application.TeamCollaboration.Features.GetTeams;
 /// </summary>
 public class GetTeamsQueryHandler : IRequestHandler<GetTeamsQuery, PagedTeamResponse>
 {
+    private readonly ITeamRepository _teamRepository;
+
+    public GetTeamsQueryHandler(ITeamRepository teamRepository)
+    {
+        _teamRepository = teamRepository;
+    }
+
     public async Task<PagedTeamResponse> Handle(GetTeamsQuery request, CancellationToken cancellationToken)
     {
-        // TODO: Implement team retrieval logic with pagination and search
-        // 1. Get teams from repository with pagination
-        // 2. Apply search filter if provided
-        // 3. Map to DTO and return paginated response
+        var (teams, totalCount) = await _teamRepository.GetPagedAsync(
+            request.Page,
+            request.PageSize,
+            request.Search,
+            status: null,
+            cancellationToken).ConfigureAwait(false);
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("GetTeamsQueryHandler requires Infrastructure layer implementation");
+        var teamResponses = teams.Select(TeamResponse.FromDomain).ToList().AsReadOnly();
+
+        return new PagedTeamResponse(
+            teamResponses,
+            totalCount,
+            request.Page,
+            request.PageSize);
     }
 }

@@ -6,14 +6,24 @@ namespace DotNetSkills.Application.ProjectManagement.Features.GetProject;
 /// </summary>
 public class GetProjectByIdQueryHandler : IRequestHandler<GetProjectByIdQuery, ProjectResponse?>
 {
+    private readonly IProjectRepository _projectRepository;
+    private readonly ITeamRepository _teamRepository;
+
+    public GetProjectByIdQueryHandler(
+        IProjectRepository projectRepository,
+        ITeamRepository teamRepository)
+    {
+        _projectRepository = projectRepository;
+        _teamRepository = teamRepository;
+    }
+
     public async Task<ProjectResponse?> Handle(GetProjectByIdQuery request, CancellationToken cancellationToken)
     {
-        // TODO: Implement project retrieval logic
-        // 1. Get project from repository by ID
-        // 2. Return null if not found
-        // 3. Map to DTO and return
+        var project = await _projectRepository.GetByIdAsync(request.ProjectId, cancellationToken).ConfigureAwait(false);
+        if (project == null)
+            return null;
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("GetProjectByIdQueryHandler requires Infrastructure layer implementation");
+        var team = await _teamRepository.GetByIdAsync(project.TeamId, cancellationToken).ConfigureAwait(false);
+        return ProjectResponse.FromDomain(project, team?.Name ?? "Unknown");
     }
 }
