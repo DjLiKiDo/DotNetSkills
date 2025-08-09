@@ -2,21 +2,88 @@ namespace DotNetSkills.Application.TaskExecution.Features.GetTaskSubtasks;
 
 /// <summary>
 /// Handler for retrieving subtasks of a specific task.
-/// TODO: Replace with actual implementation when Infrastructure layer is available.
 /// </summary>
 public class GetTaskSubtasksQueryHandler : IRequestHandler<GetTaskSubtasksQuery, TaskSubtasksResponse>
 {
+    private readonly ITaskRepository _taskRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IMapper _mapper;
+    private readonly ILogger<GetTaskSubtasksQueryHandler> _logger;
+
+    public GetTaskSubtasksQueryHandler(
+        ITaskRepository taskRepository,
+        IUserRepository userRepository,
+        IMapper mapper,
+        ILogger<GetTaskSubtasksQueryHandler> logger)
+    {
+        _taskRepository = taskRepository ?? throw new ArgumentNullException(nameof(taskRepository));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
     public async Task<TaskSubtasksResponse> Handle(GetTaskSubtasksQuery request, CancellationToken cancellationToken)
     {
-        // TODO: Implement actual query handling with repository
-        // This would involve:
-        // 1. Retrieve the parent task by ID
-        // 2. Load all subtasks for the parent task
-        // 3. Apply any business rules for subtask visibility
-        // 4. Map to response DTOs with subtask details
-        // 5. Calculate subtask completion statistics
+        _logger.LogDebug("Retrieving subtasks for task {TaskId}", request.TaskId);
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("GetTaskSubtasksQuery requires Infrastructure layer implementation");
+        // Retrieve the parent task by ID with subtasks
+        var parentTask = await _taskRepository.GetWithSubtasksAsync(request.TaskId, cancellationToken)
+            .ConfigureAwait(false);
+        
+        if (parentTask == null)
+            throw new NotFoundException($"Task with ID {request.TaskId.Value} not found.");
+
+        // Get all subtasks
+        var subtasks = await _taskRepository.GetSubtasksAsync(request.TaskId, cancellationToken)
+            .ConfigureAwait(false);
+
+        // Map subtasks to response DTOs
+        var subtaskResponses = new List<SubtaskResponse>();
+        
+        foreach (var subtask in subtasks)
+        {
+            string? assignedUserName = null;
+            if (subtask.AssignedUserId.HasValue)
+            {
+                var assignedUser = await _userRepository.GetByIdAsync(subtask.AssignedUserId.Value, cancellationToken)
+                    .ConfigureAwait(false);
+                assignedUserName = assignedUser?.Name;
+            }
+
+            var subtaskResponse = new SubtaskResponse(
+                subtask.Id.Value,
+                subtask.Title,
+                subtask.Description,
+                subtask.Status,
+                subtask.Priority,
+                subtask.AssignedUserId?.Value,
+                assignedUserName,
+                subtask.EstimatedHours,
+                subtask.ActualHours,
+                subtask.DueDate,
+                subtask.StartedAt,
+                subtask.CompletedAt,
+                subtask.CreatedAt,
+                subtask.IsOverdue(),
+                subtask.IsAssigned());
+            
+            subtaskResponses.Add(subtaskResponse);
+        }
+
+        // Calculate completion statistics
+        var totalSubtasks = subtaskResponses.Count;
+        var completedSubtasks = subtaskResponses.Count(s => s.Status == DomainTaskStatus.Done);
+        var completionPercentage = totalSubtasks > 0 ? (decimal)completedSubtasks / totalSubtasks * 100 : 0m;
+
+        var response = new TaskSubtasksResponse(
+            parentTask.Id.Value,
+            parentTask.Title,
+            subtaskResponses.AsReadOnly(),
+            totalSubtasks,
+            completedSubtasks,
+            completionPercentage);
+
+        _logger.LogDebug("Successfully retrieved {SubtaskCount} subtasks for task {TaskId}", totalSubtasks, request.TaskId);
+        return response;
     }
 }

@@ -6,19 +6,82 @@ namespace DotNetSkills.Application.TaskExecution.Features.UpdateTask;
 /// </summary>
 public class UpdateTaskCommandHandler : IRequestHandler<UpdateTaskCommand, TaskResponse>
 {
+    private readonly ITaskRepository _taskRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+    private readonly ILogger<UpdateTaskCommandHandler> _logger;
+
+    public UpdateTaskCommandHandler(
+        ITaskRepository taskRepository,
+        IUserRepository userRepository,
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        ILogger<UpdateTaskCommandHandler> logger)
+    {
+        _taskRepository = taskRepository ?? throw new ArgumentNullException(nameof(taskRepository));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
     public async Task<TaskResponse> Handle(UpdateTaskCommand request, CancellationToken cancellationToken)
     {
-        // TODO: Implement actual command handling with repository
-        // This would involve:
-        // 1. Load existing task by ID
-        // 2. Check if task exists and can be modified (not completed)
-        // 3. Validate user has permission to update the task
-        // 4. Parse priority to TaskPriority enum
-        // 5. Update task using domain method (UpdateInfo)
-        // 6. Save task through repository
-        // 7. Map to response DTO and return
+        _logger.LogInformation("Updating task {TaskId}", request.TaskId);
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("UpdateTaskCommand requires Infrastructure layer implementation");
+        // Get existing task by ID
+        var task = await _taskRepository.GetByIdAsync(request.TaskId, cancellationToken)
+            .ConfigureAwait(false);
+        if (task == null)
+            throw new InvalidOperationException($"Task with ID {request.TaskId.Value} not found.");
+
+        // Get updater user
+        var updater = await _userRepository.GetByIdAsync(request.UpdatedBy, cancellationToken)
+            .ConfigureAwait(false);
+        if (updater == null)
+            throw new InvalidOperationException($"User with ID {request.UpdatedBy.Value} not found.");
+
+        // Update task info through domain method
+        task.UpdateInfo(
+            request.Title,
+            request.Description,
+            request.Priority,
+            request.EstimatedHours,
+            request.DueDate,
+            updater);
+
+        // Save changes through repository
+        _taskRepository.Update(task);
+        await _unitOfWork.SaveChangesAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        _logger.LogInformation("Successfully updated task {TaskId} '{Title}'", task.Id, task.Title);
+
+        // Map to response DTO
+        var context = new Dictionary<string, object>();
+        if (task.AssignedUserId != null)
+        {
+            var assignedUser = await _userRepository.GetByIdAsync(task.AssignedUserId, cancellationToken)
+                .ConfigureAwait(false);
+            if (assignedUser != null)
+                context["AssignedUserName"] = assignedUser.Name;
+        }
+        
+        if (task.ParentTaskId != null)
+        {
+            var parentTask = await _taskRepository.GetByIdAsync(task.ParentTaskId, cancellationToken)
+                .ConfigureAwait(false);
+            if (parentTask != null)
+                context["ParentTaskTitle"] = parentTask.Title;
+        }
+
+        return _mapper.Map<TaskResponse>(task, opts => 
+        {
+            foreach (var item in context)
+            {
+                opts.Items[item.Key] = item.Value;
+            }
+        });
     }
 }

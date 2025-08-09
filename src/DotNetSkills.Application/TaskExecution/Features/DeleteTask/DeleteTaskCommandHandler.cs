@@ -6,18 +6,49 @@ namespace DotNetSkills.Application.TaskExecution.Features.DeleteTask;
 /// </summary>
 public class DeleteTaskCommandHandler : IRequestHandler<DeleteTaskCommand>
 {
+    private readonly ITaskRepository _taskRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<DeleteTaskCommandHandler> _logger;
+
+    public DeleteTaskCommandHandler(
+        ITaskRepository taskRepository,
+        IUserRepository userRepository,
+        IUnitOfWork unitOfWork,
+        ILogger<DeleteTaskCommandHandler> logger)
+    {
+        _taskRepository = taskRepository ?? throw new ArgumentNullException(nameof(taskRepository));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
     public async Task Handle(DeleteTaskCommand request, CancellationToken cancellationToken)
     {
-        // TODO: Implement actual command handling with repository
-        // This would involve:
-        // 1. Load existing task by ID
-        // 2. Check if task exists and can be deleted (not completed)
-        // 3. Validate user has permission to delete the task
-        // 4. Cancel task using domain method (Cancel) - this is soft delete
-        // 5. This will also cancel all subtasks automatically
-        // 6. Save task through repository
+        _logger.LogInformation("Deleting task {TaskId}", request.TaskId);
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("DeleteTaskCommand requires Infrastructure layer implementation");
+        // Load existing task by ID
+        var task = await _taskRepository.GetWithSubtasksAsync(request.TaskId, cancellationToken)
+            .ConfigureAwait(false);
+        if (task == null)
+            throw new NotFoundException($"Task with ID {request.TaskId.Value} not found.");
+
+        // Validate that the user exists
+        var user = await _userRepository.GetByIdAsync(request.DeletedBy, cancellationToken)
+            .ConfigureAwait(false);
+        if (user == null)
+            throw new NotFoundException($"User with ID {request.DeletedBy.Value} not found.");
+
+        // Cancel task using domain method (soft delete)
+        // This will also cancel all subtasks automatically
+        task.Cancel(user);
+
+        // Save task through repository
+        await _taskRepository.UpdateAsync(task, cancellationToken)
+            .ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        _logger.LogInformation("Successfully deleted (cancelled) task {TaskId} '{Title}'", task.Id, task.Title);
     }
 }

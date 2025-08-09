@@ -2,23 +2,96 @@ namespace DotNetSkills.Application.TaskExecution.Features.CreateSubtask;
 
 /// <summary>
 /// Handler for creating a subtask under a parent task.
-/// TODO: Replace with actual implementation when Infrastructure layer is available.
 /// </summary>
 public class CreateSubtaskCommandHandler : IRequestHandler<CreateSubtaskCommand, TaskResponse>
 {
+    private readonly ITaskRepository _taskRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+    private readonly ILogger<CreateSubtaskCommandHandler> _logger;
+
+    public CreateSubtaskCommandHandler(
+        ITaskRepository taskRepository,
+        IUserRepository userRepository,
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        ILogger<CreateSubtaskCommandHandler> logger)
+    {
+        _taskRepository = taskRepository ?? throw new ArgumentNullException(nameof(taskRepository));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
     public async Task<TaskResponse> Handle(CreateSubtaskCommand request, CancellationToken cancellationToken)
     {
-        // TODO: Implement actual command handling with repository
-        // This would involve:
-        // 1. Validate that parent task exists and can have subtasks
-        // 2. Check business rules for subtask creation (depth limits, etc.)
-        // 3. Create new subtask entity with proper relationships
-        // 4. Apply assignment if AssignedUserId is provided
-        // 5. Save subtask to repository
-        // 6. Raise domain events for subtask creation
-        // 7. Return task response with subtask details
+        _logger.LogInformation("Creating subtask '{Title}' under parent task {ParentTaskId}", request.Title, request.ParentTaskId);
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("CreateSubtaskCommand requires Infrastructure layer implementation");
+        // Validate that parent task exists and can have subtasks
+        var parentTask = await _taskRepository.GetByIdAsync(request.ParentTaskId, cancellationToken)
+            .ConfigureAwait(false);
+        if (parentTask == null)
+            throw new NotFoundException($"Parent task with ID {request.ParentTaskId.Value} not found.");
+
+        // Get creator user
+        var creator = await _userRepository.GetByIdAsync(request.CreatedByUserId, cancellationToken)
+            .ConfigureAwait(false);
+        if (creator == null)
+            throw new NotFoundException($"User with ID {request.CreatedByUserId.Value} not found.");
+
+        // Validate assigned user if specified
+        User? assignedUser = null;
+        if (request.AssignedUserId.HasValue)
+        {
+            assignedUser = await _userRepository.GetByIdAsync(request.AssignedUserId.Value, cancellationToken)
+                .ConfigureAwait(false);
+            if (assignedUser == null)
+                throw new NotFoundException($"Assigned user with ID {request.AssignedUserId.Value.Value} not found.");
+        }
+
+        // Create subtask using domain factory method
+        var subtask = DomainTask.Create(
+            request.Title,
+            request.Description,
+            parentTask.ProjectId, // Subtask must be in same project as parent
+            request.Priority,
+            parentTask, // This will be the parent task
+            request.EstimatedHours,
+            request.DueDate,
+            creator);
+
+        // Assign subtask if assignee specified
+        if (assignedUser != null)
+        {
+            subtask.AssignTo(assignedUser, creator);
+        }
+
+        // Add subtask to parent (this validates business rules)
+        parentTask.AddSubtask(subtask);
+
+        // Save subtask through repository
+        await _taskRepository.AddAsync(subtask, cancellationToken)
+            .ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        _logger.LogInformation("Successfully created subtask {TaskId} '{Title}' under parent {ParentTaskId}", 
+            subtask.Id, subtask.Title, parentTask.Id);
+
+        // Map to response DTO
+        var context = new Dictionary<string, object>();
+        if (assignedUser != null)
+            context["AssignedUserName"] = assignedUser.Name;
+        context["ParentTaskTitle"] = parentTask.Title;
+
+        return _mapper.Map<TaskResponse>(subtask, opts => 
+        {
+            foreach (var item in context)
+            {
+                opts.Items[item.Key] = item.Value;
+            }
+        });
     }
 }

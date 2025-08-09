@@ -342,10 +342,13 @@ public class Task : AggregateRoot<TaskId>
         var previousStatus = Status;
         Status = TaskStatus.Cancelled;
 
-        // Cancel all subtasks
-        foreach (var subtask in _subtasks.Where(st => st.Status != TaskStatus.Done && st.Status != TaskStatus.Cancelled))
+        // Cancel all active (non-done / non-cancelled) subtasks without creating an intermediate iterator
+        foreach (var subtask in _subtasks)
         {
-            subtask.Cancel(cancelledBy);
+            if (subtask.Status != TaskStatus.Done && subtask.Status != TaskStatus.Cancelled)
+            {
+                subtask.Cancel(cancelledBy);
+            }
         }
 
         // Raise domain event

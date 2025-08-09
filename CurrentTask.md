@@ -1,45 +1,6 @@
 ## Task list (grouped) ✅
 
 
-9) Implement Team operations end-to-end
-- Description: CRUD and membership operations in Application and API have TODOs.
-- Benefits: Core team collaboration flows functional.
-- Effort: Medium-Large (2–4 days).
-- Prompt:
-  Complete TeamCollaboration CQRS and endpoints.
-  Context TODOs:
-  - Handlers: Create/Update/Delete/Get/GetTeams/AddMember/RemoveMember/UpdateMemberRole/GetMembers
-  - Endpoints: TeamEndpoints.cs and TeamMemberEndpoints.cs have placeholders and auth TODOs.
-  Requirements:
-  - Implement domain methods on Team aggregate enforcing invariants, raise events.
-  - Implement repository and handlers, wire endpoints with mediator.
-  - Add validators and mapping.
-  - Tests for at least one operation per feature.
-  Acceptance:
-  - Build passes
-  - TODOs removed
-  - Basic tests pass
-
-10) Implement TaskExecution operations
-- Description: Multiple TODOs across Create/Update/Delete/Assign/Unassign/Status/Subtasks and query handlers, plus endpoints placeholders.
-- Benefits: Enables core task management.
-- Effort: Large (3–5 days).
-- Prompt:
-  Implement TaskExecution CQRS handlers and endpoints.
-  Context TODOs:
-  - Handlers in TaskExecution features (many listed in grep)
-  - Endpoints in TaskEndpoints.cs + TaskAssignmentEndpoints.cs
-  Requirements:
-  - Domain Task aggregate must enforce rules (cannot assign completed tasks, etc.)
-  - Implement repository methods; use projection for Queries; AsSplitQuery when needed for collections.
-  - Implement validators; map DTOs; ensure status transitions are validated.
-  - Replace “Reopen()” TODO path in UpdateTaskStatus with full state machine: ToDo -> InProgress -> InReview -> Done; allow Reopen from Done/Cancelled if business rules permit.
-  - Tests for happy path + invalid transitions.
-  Acceptance:
-  - Build passes
-  - TODOs removed
-  - Tests passing
-
 11) Wire Minimal API validation using FluentValidation
 - Description: For endpoints receiving commands, ensure validators execute and return Results.ValidationProblem. Some handlers reference validation TODOs implicitly.
 - Benefits: Input safety, consistent API behavior.

@@ -125,6 +125,7 @@ public static class TaskAssignmentEndpoints
         Guid id,
         AssignTaskRequest request,
         ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -141,12 +142,8 @@ public static class TaskAssignmentEndpoints
             );
 
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("AssignTask requires Infrastructure layer implementation");
+            var response = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {
@@ -177,6 +174,7 @@ public static class TaskAssignmentEndpoints
     private static async Task<IResult> UnassignTask(
         Guid id,
         ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -191,12 +189,8 @@ public static class TaskAssignmentEndpoints
             );
 
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("UnassignTask requires Infrastructure layer implementation");
+            var response = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {

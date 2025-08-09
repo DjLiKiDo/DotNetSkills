@@ -2,23 +2,73 @@ namespace DotNetSkills.Application.TaskExecution.Features.AssignTask;
 
 /// <summary>
 /// Handler for assigning a task to a user.
-/// TODO: Replace with actual implementation when Infrastructure layer is available.
 /// </summary>
 public class AssignTaskCommandHandler : IRequestHandler<AssignTaskCommand, TaskAssignmentResponse>
 {
+    private readonly ITaskRepository _taskRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+    private readonly ILogger<AssignTaskCommandHandler> _logger;
+
+    public AssignTaskCommandHandler(
+        ITaskRepository taskRepository,
+        IUserRepository userRepository,
+        IUnitOfWork unitOfWork,
+        IMapper mapper,
+        ILogger<AssignTaskCommandHandler> logger)
+    {
+        _taskRepository = taskRepository ?? throw new ArgumentNullException(nameof(taskRepository));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
     public async Task<TaskAssignmentResponse> Handle(AssignTaskCommand request, CancellationToken cancellationToken)
     {
-        // TODO: Implement actual command handling with repository
-        // This would involve:
-        // 1. Validate that the task exists and is not already assigned
-        // 2. Validate that the user exists and can be assigned tasks
-        // 3. Check business rules for task assignment permissions
-        // 4. Update task assignment
-        // 5. Log the assignment action
-        // 6. Raise domain events for notifications
-        // 7. Return assignment response with updated status
+        _logger.LogInformation("Assigning task {TaskId} to user {AssignedUserId}", request.TaskId, request.AssignedUserId);
 
-        await Task.CompletedTask;
-        throw new NotImplementedException("AssignTaskCommand requires Infrastructure layer implementation");
+        // Validate that the task exists
+        var task = await _taskRepository.GetByIdAsync(request.TaskId, cancellationToken)
+            .ConfigureAwait(false);
+        if (task == null)
+            throw new NotFoundException($"Task with ID {request.TaskId.Value} not found.");
+
+        // Validate that the assignee user exists
+        var assignee = await _userRepository.GetByIdAsync(request.AssignedUserId, cancellationToken)
+            .ConfigureAwait(false);
+        if (assignee == null)
+            throw new NotFoundException($"User with ID {request.AssignedUserId.Value} not found.");
+
+        // Validate that the assigner user exists
+        var assigner = await _userRepository.GetByIdAsync(request.AssignedByUserId, cancellationToken)
+            .ConfigureAwait(false);
+        if (assigner == null)
+            throw new NotFoundException($"User with ID {request.AssignedByUserId.Value} not found.");
+
+        // Assign task using domain method
+        task.AssignTo(assignee, assigner);
+
+        // Save changes through repository
+        await _taskRepository.UpdateAsync(task, cancellationToken)
+            .ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        _logger.LogInformation("Successfully assigned task {TaskId} to user {AssignedUserId}", task.Id, assignee.Id);
+
+        // Map to assignment response
+        var response = _mapper.Map<TaskAssignmentResponse>(task);
+        
+        // Set additional context data
+        response = response with 
+        {
+            AssignedUserName = assignee.Name,
+            AssignedByUserId = assigner.Id.Value,
+            AssignedByUserName = assigner.Name
+        };
+
+        return response;
     }
 }

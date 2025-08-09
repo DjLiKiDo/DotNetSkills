@@ -135,6 +135,7 @@ public static class TaskEndpoints
     /// </summary>
     private static async Task<IResult> GetTasks(
         [AsParameters] GetTasksQueryParameters queryParams,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -159,34 +160,8 @@ public static class TaskEndpoints
             );
 
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(query, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            var placeholderResponse = new PagedTaskResponse(
-                Tasks: new List<TaskResponse>(),
-                PageNumber: queryParams.PageNumber,
-                PageSize: queryParams.PageSize,
-                TotalCount: 0,
-                TotalPages: 0,
-                HasNextPage: false,
-                HasPreviousPage: false,
-                FilterMetadata: new TaskFilterMetadata(
-                    queryParams.ProjectId,
-                    null,
-                    queryParams.AssignedUserId,
-                    null,
-                    queryParams.Status,
-                    queryParams.Priority,
-                    queryParams.DueDateFrom,
-                    queryParams.DueDateTo,
-                    queryParams.CreatedFrom,
-                    queryParams.CreatedTo,
-                    queryParams.SearchTerm,
-                    0, 0, 0, 0, 0
-                ));
-
-            return Results.Ok(placeholderResponse);
+            var response = await mediator.Send(query, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {
@@ -209,6 +184,7 @@ public static class TaskEndpoints
     /// </summary>
     private static async Task<IResult> GetTaskById(
         Guid id,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -217,12 +193,12 @@ public static class TaskEndpoints
             var query = new GetTaskByIdQuery(taskId);
 
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var task = await mediator.Send(query, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("GetTaskById requires Infrastructure layer implementation");
+            var task = await mediator.Send(query, cancellationToken).ConfigureAwait(false);
+            
+            if (task == null)
+                return Results.NotFound($"Task with ID {id} not found.");
+            
+            return Results.Ok(task);
         }
         catch (ArgumentException ex)
         {
@@ -246,6 +222,7 @@ public static class TaskEndpoints
     private static async Task<IResult> CreateTask(
         CreateTaskRequest request,
         ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -268,12 +245,8 @@ public static class TaskEndpoints
             );
 
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("CreateTask requires Infrastructure layer implementation");
+            var response = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.Created($"/api/v1/tasks/{response.Id}", response);
         }
         catch (ArgumentException ex)
         {
@@ -305,6 +278,7 @@ public static class TaskEndpoints
         Guid id,
         UpdateTaskRequest request,
         ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -325,12 +299,8 @@ public static class TaskEndpoints
             );
 
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("UpdateTask requires Infrastructure layer implementation");
+            var response = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {
@@ -361,6 +331,7 @@ public static class TaskEndpoints
     private static async Task<IResult> DeleteTask(
         Guid id,
         ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -375,12 +346,8 @@ public static class TaskEndpoints
             );
 
 
-            // TODO: Replace with MediatR.Send when implemented
-            // await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("DeleteTask requires Infrastructure layer implementation");
+            await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.NoContent();
         }
         catch (ArgumentException ex)
         {
@@ -412,6 +379,7 @@ public static class TaskEndpoints
         Guid id,
         UpdateTaskStatusRequest request,
         ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -429,12 +397,8 @@ public static class TaskEndpoints
             );
 
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("UpdateTaskStatus requires Infrastructure layer implementation");
+            var response = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {
