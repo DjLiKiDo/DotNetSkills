@@ -7,10 +7,14 @@ namespace DotNetSkills.Application.TeamCollaboration.Features.GetTeamMembers;
 public class GetTeamMembersQueryHandler : IRequestHandler<GetTeamMembersQuery, TeamMembersResponse>
 {
     private readonly ITeamRepository _teamRepository;
+    private readonly IMapper _mapper;
 
-    public GetTeamMembersQueryHandler(ITeamRepository teamRepository)
+    public GetTeamMembersQueryHandler(
+        ITeamRepository teamRepository,
+        IMapper mapper)
     {
         _teamRepository = teamRepository;
+        _mapper = mapper;
     }
 
     public async Task<TeamMembersResponse> Handle(GetTeamMembersQuery request, CancellationToken cancellationToken)
@@ -19,6 +23,6 @@ public class GetTeamMembersQueryHandler : IRequestHandler<GetTeamMembersQuery, T
         if (team == null)
             throw new InvalidOperationException($"Team with ID '{request.TeamId}' not found");
 
-        return TeamMembersResponse.FromDomain(team);
+        return _mapper.Map<TeamMembersResponse>(team);
     }
 }

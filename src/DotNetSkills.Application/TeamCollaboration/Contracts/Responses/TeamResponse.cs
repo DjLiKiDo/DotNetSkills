@@ -13,21 +13,6 @@ public record TeamResponse(
     DateTime UpdatedAt,
     IReadOnlyList<TeamMemberResponse> Members)
 {
-    /// <summary>
-    /// Creates a TeamResponse from domain entity.
-    /// TODO: Replace with AutoMapper when properly configured.
-    /// </summary>
-    public static TeamResponse FromDomain(Team team)
-    {
-        return new TeamResponse(
-            team.Id.Value,
-            team.Name,
-            team.Description,
-            team.MemberCount,
-            team.CreatedAt,
-            team.UpdatedAt,
-            team.Members.Select(TeamMemberResponse.FromDomain).ToList().AsReadOnly());
-    }
 }
 
 /// <summary>
@@ -38,16 +23,4 @@ public record TeamMemberResponse(
     TeamRole Role,
     DateTime JoinedAt)
 {
-    /// <summary>
-    /// Creates a TeamMemberResponse from domain entity.
-    /// TODO: Replace with AutoMapper when properly configured.
-    /// TODO: User details will need to be loaded separately via repository or included in query.
-    /// </summary>
-    public static TeamMemberResponse FromDomain(TeamMember member)
-    {
-        return new TeamMemberResponse(
-            member.UserId.Value,
-            member.Role,
-            member.JoinedAt);
-    }
 }

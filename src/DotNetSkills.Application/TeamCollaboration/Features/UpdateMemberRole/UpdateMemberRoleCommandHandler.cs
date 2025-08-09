@@ -10,17 +10,20 @@ public class UpdateMemberRoleCommandHandler : IRequestHandler<UpdateMemberRoleCo
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
     public UpdateMemberRoleCommandHandler(
         ITeamRepository teamRepository,
         IUserRepository userRepository,
         ICurrentUserService currentUserService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMapper mapper)
     {
         _teamRepository = teamRepository;
         _userRepository = userRepository;
         _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
     public async Task<TeamMemberResponse> Handle(UpdateMemberRoleCommand request, CancellationToken cancellationToken)
@@ -47,6 +50,6 @@ public class UpdateMemberRoleCommandHandler : IRequestHandler<UpdateMemberRoleCo
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         var updatedMember = team.GetMember(request.UserId);
-        return TeamMemberResponse.FromDomain(updatedMember!);
+        return _mapper.Map<TeamMemberResponse>(updatedMember!);
     }
 }

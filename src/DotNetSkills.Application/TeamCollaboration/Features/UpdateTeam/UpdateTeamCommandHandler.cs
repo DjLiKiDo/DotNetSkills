@@ -10,17 +10,20 @@ public class UpdateTeamCommandHandler : IRequestHandler<UpdateTeamCommand, TeamR
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
     public UpdateTeamCommandHandler(
         ITeamRepository teamRepository,
         IUserRepository userRepository,
         ICurrentUserService currentUserService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMapper mapper)
     {
         _teamRepository = teamRepository;
         _userRepository = userRepository;
         _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
     public async Task<TeamResponse> Handle(UpdateTeamCommand request, CancellationToken cancellationToken)
@@ -49,6 +52,6 @@ public class UpdateTeamCommandHandler : IRequestHandler<UpdateTeamCommand, TeamR
         _teamRepository.Update(team);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return TeamResponse.FromDomain(team);
+        return _mapper.Map<TeamResponse>(team);
     }
 }

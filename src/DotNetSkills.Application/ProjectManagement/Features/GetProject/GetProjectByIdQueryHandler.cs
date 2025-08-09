@@ -8,13 +8,16 @@ public class GetProjectByIdQueryHandler : IRequestHandler<GetProjectByIdQuery, P
 {
     private readonly IProjectRepository _projectRepository;
     private readonly ITeamRepository _teamRepository;
+    private readonly IMapper _mapper;
 
     public GetProjectByIdQueryHandler(
         IProjectRepository projectRepository,
-        ITeamRepository teamRepository)
+        ITeamRepository teamRepository,
+        IMapper mapper)
     {
         _projectRepository = projectRepository;
         _teamRepository = teamRepository;
+        _mapper = mapper;
     }
 
     public async Task<ProjectResponse?> Handle(GetProjectByIdQuery request, CancellationToken cancellationToken)
@@ -24,6 +27,6 @@ public class GetProjectByIdQueryHandler : IRequestHandler<GetProjectByIdQuery, P
             return null;
 
         var team = await _teamRepository.GetByIdAsync(project.TeamId, cancellationToken).ConfigureAwait(false);
-        return ProjectResponse.FromDomain(project, team?.Name ?? "Unknown");
+        return _mapper.Map<ProjectResponse>(project, opt => opt.Items["TeamName"] = team?.Name ?? "Unknown");
     }
 }

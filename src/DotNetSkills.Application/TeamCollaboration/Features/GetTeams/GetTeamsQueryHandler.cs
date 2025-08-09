@@ -7,10 +7,12 @@ namespace DotNetSkills.Application.TeamCollaboration.Features.GetTeams;
 public class GetTeamsQueryHandler : IRequestHandler<GetTeamsQuery, PagedTeamResponse>
 {
     private readonly ITeamRepository _teamRepository;
+    private readonly IMapper _mapper;
 
-    public GetTeamsQueryHandler(ITeamRepository teamRepository)
+    public GetTeamsQueryHandler(ITeamRepository teamRepository, IMapper mapper)
     {
         _teamRepository = teamRepository;
+        _mapper = mapper;
     }
 
     public async Task<PagedTeamResponse> Handle(GetTeamsQuery request, CancellationToken cancellationToken)
@@ -22,7 +24,7 @@ public class GetTeamsQueryHandler : IRequestHandler<GetTeamsQuery, PagedTeamResp
             status: null,
             cancellationToken).ConfigureAwait(false);
 
-        var teamResponses = teams.Select(TeamResponse.FromDomain).ToList().AsReadOnly();
+        var teamResponses = teams.Select(team => _mapper.Map<TeamResponse>(team)).ToList().AsReadOnly();
 
         return new PagedTeamResponse(
             teamResponses,

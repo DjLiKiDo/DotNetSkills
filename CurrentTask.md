@@ -1,27 +1,6 @@
 ## Task list (grouped) ✅
 
 
-4) Introduce AutoMapper profiles for DTO mapping
-- Description: Replace “Replace with AutoMapper when configured” TODOs in response DTOs; add profiles and mappings for User, Team, Project, Task aggregates.
-- Benefits: Centralizes mapping, reduces duplication, improves maintainability.
-- Effort: Small-Medium (0.5–1 day).
-- Prompt:
-  Add AutoMapper to Application layer and replace manual mapping TODOs.
-  Context TODOs:
-  - TeamResponse.cs (comments)
-  - TeamMembersResponse.cs
-  - ProjectResponse.cs
-  - UserResponse.cs
-  Requirements:
-  - Add AutoMapper registration in Application DependencyInjection (AddApplicationServices).
-  - Create profiles under Application for each bounded context (e.g., TeamCollaboration/Mapping/TeamProfile.cs).
-  - Replace manual ToResponse methods with mapper usage where used by handlers.
-  - Add simple unit tests verifying mappings for a few typical cases.
-  Acceptance:
-  - Build passes
-  - Mapping tests pass
-  - TODO comments removed
-
 5) Current user ID retrieval from auth context
 - Description: Replace TODOs “Get current user ID from authentication context” with a reusable helper service to extract UserId from claims; wire into endpoints.
 - Benefits: Consistent, secure identity handling; reduces duplication.

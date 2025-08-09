@@ -16,17 +16,4 @@ public record TeamMembersResponse(
     /// </summary>
     public bool IsAtCapacity => MemberCount >= MaxMembers;
 
-    /// <summary>
-    /// Creates a TeamMembersResponse from domain entity.
-    /// TODO: Replace with AutoMapper when properly configured.
-    /// </summary>
-    public static TeamMembersResponse FromDomain(Team team)
-    {
-        return new TeamMembersResponse(
-            team.Id.Value,
-            team.Name,
-            team.MemberCount,
-            Team.MaxMembers,
-            team.Members.Select(TeamMemberResponse.FromDomain).ToList().AsReadOnly());
-    }
 }

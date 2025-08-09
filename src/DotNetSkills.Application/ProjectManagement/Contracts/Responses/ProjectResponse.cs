@@ -30,23 +30,4 @@ public record ProjectResponse(
     /// </summary>
     public bool IsActive => Status == "Active";
 
-    /// <summary>
-    /// Creates a ProjectResponse from domain entity.
-    /// TODO: Replace with AutoMapper when properly configured.
-    /// </summary>
-    public static ProjectResponse FromDomain(Project project, string teamName = "Unknown")
-    {
-        return new ProjectResponse(
-            project.Id.Value,
-            project.Name,
-            project.Description,
-            project.Status.ToString(),
-            project.TeamId.Value,
-            teamName, // TODO: Load team name from repository or include in query
-            project.StartDate,
-            project.EndDate,
-            project.PlannedEndDate,
-            project.CreatedAt,
-            project.UpdatedAt);
-    }
 }

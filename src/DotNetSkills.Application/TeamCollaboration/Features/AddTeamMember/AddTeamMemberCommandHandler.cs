@@ -10,17 +10,20 @@ public class AddTeamMemberCommandHandler : IRequestHandler<AddTeamMemberCommand,
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
     public AddTeamMemberCommandHandler(
         ITeamRepository teamRepository,
         IUserRepository userRepository,
         ICurrentUserService currentUserService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMapper mapper)
     {
         _teamRepository = teamRepository;
         _userRepository = userRepository;
         _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
     public async Task<TeamMemberResponse> Handle(AddTeamMemberCommand request, CancellationToken cancellationToken)
@@ -47,6 +50,6 @@ public class AddTeamMemberCommandHandler : IRequestHandler<AddTeamMemberCommand,
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         var addedMember = team.GetMember(request.UserId);
-        return TeamMemberResponse.FromDomain(addedMember!);
+        return _mapper.Map<TeamMemberResponse>(addedMember!);
     }
 }

@@ -11,19 +11,22 @@ public class CreateProjectCommandHandler : IRequestHandler<CreateProjectCommand,
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
     public CreateProjectCommandHandler(
         IProjectRepository projectRepository,
         ITeamRepository teamRepository,
         IUserRepository userRepository,
         ICurrentUserService currentUserService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMapper mapper)
     {
         _projectRepository = projectRepository;
         _teamRepository = teamRepository;
         _userRepository = userRepository;
         _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
     public async Task<ProjectResponse> Handle(CreateProjectCommand request, CancellationToken cancellationToken)
@@ -49,6 +52,6 @@ public class CreateProjectCommandHandler : IRequestHandler<CreateProjectCommand,
         _projectRepository.Add(project);
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return ProjectResponse.FromDomain(project, team.Name);
+        return _mapper.Map<ProjectResponse>(project, opt => opt.Items["TeamName"] = team.Name);
     }
 }
