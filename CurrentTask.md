@@ -24,8 +24,13 @@ In place:
 - Result / Result<T> pattern (used by behaviors).
 - Mapping profiles auto-registered.
 
+Recent Additions:
+- Integration test for invalid task creation (POST /api/v1/tasks) now passing (400 ValidationProblemDetails) using WebApplicationFactory + FakePolicyEvaluator.
+- Adjusted TaskEndpoints: removed broad catch for CreateTask to let ValidationException bubble.
+- ExceptionHandlingMiddleware now surfaces validation errors under extensions.errors to ensure consistent JSON shape.
+ - Added standardized extensions.errorCode for all mapped exceptions; middleware & unit tests updated and passing.
+
 Pending (not yet implemented):
-- Integration test for invalid task creation (POST /api/v1/tasks) expecting 400 ValidationProblemDetails.
 - Analyzer & nullable warning cleanup (ProjectRepository and async warnings).
 - Documentation updates (exception table, validation pipeline rationale, repository sync decision).
 - Additional regression / coverage (subtask flags, domain event dispatch verification).
@@ -43,7 +48,7 @@ Pending (not yet implemented):
 ## 4. Pending Items / Next Steps
 
 Immediate (next work cycle):
-- Integration Test: Invalid CreateTask (e.g., missing Title) → 400 ValidationProblemDetails (assert errors dictionary).
+ - (Done) Add errorCode to ProblemDetails.Extensions["errorCode"] for all mapped exceptions.
 - Warning Resolution:
   - Fix nullable warnings in repositories (add null checks or null-forgiving operator where safe).
   - Convert any blocking .Result / .Wait() test usages to await.

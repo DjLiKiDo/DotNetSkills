@@ -17,10 +17,11 @@ public class ExceptionHandlingMiddlewareTests
     {
         Task NextDelegate(HttpContext _) => throw toThrow;
         var logger = new Mock<ILogger<ExceptionHandlingMiddleware>>();
-        var env = new Mock<IWebHostEnvironment>();
-        env.Setup(e => e.IsDevelopment()).Returns(true);
+    var env = new Mock<IWebHostEnvironment>();
+    env.SetupGet(e => e.EnvironmentName).Returns(Environments.Development);
         context = new DefaultHttpContext();
         context.Request.Path = "/test";
+    context.Response.Body = new MemoryStream();
         return new ExceptionHandlingMiddleware(NextDelegate, logger.Object, env.Object);
     }
 
@@ -39,6 +40,9 @@ public class ExceptionHandlingMiddlewareTests
         var (problem, status) = await InvokeAsync(new NotFoundException("Entity", 1));
         Assert.Equal((int)HttpStatusCode.NotFound, status);
         Assert.Equal("Not Found", problem.Title);
+        Assert.True(problem.Extensions.TryGetValue("errorCode", out var ec)
+            && ec is JsonElement je
+            && je.GetString() == "not_found");
     }
 
     [Fact]
@@ -47,6 +51,9 @@ public class ExceptionHandlingMiddlewareTests
         var (problem, status) = await InvokeAsync(new BusinessRuleViolationException("rule broken"));
         Assert.Equal((int)HttpStatusCode.Conflict, status);
         Assert.Equal("Business Rule Violation", problem.Title);
+        Assert.True(problem.Extensions.TryGetValue("errorCode", out var ec)
+            && ec is JsonElement je
+            && je.GetString() == "business_rule_violation");
     }
 
     [Fact]
@@ -55,6 +62,9 @@ public class ExceptionHandlingMiddlewareTests
         var (problem, status) = await InvokeAsync(new DomainException("domain failure"));
         Assert.Equal(StatusCodes.Status400BadRequest, status);
         Assert.Equal("Domain Rule Violation", problem.Title);
+        Assert.True(problem.Extensions.TryGetValue("errorCode", out var ec)
+            && ec is JsonElement je
+            && je.GetString() == "domain_rule_violation");
     }
 
     [Fact]
@@ -65,5 +75,8 @@ public class ExceptionHandlingMiddlewareTests
         var (problem, status) = await InvokeAsync(fvEx);
         Assert.Equal(StatusCodes.Status400BadRequest, status);
         Assert.Equal("Validation Failed", problem.Title);
+        Assert.True(problem.Extensions.TryGetValue("errorCode", out var ec)
+            && ec is JsonElement je
+            && je.GetString() == "validation_failed");
     }
 }

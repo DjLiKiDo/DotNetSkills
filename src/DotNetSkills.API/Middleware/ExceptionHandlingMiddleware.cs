@@ -48,6 +48,23 @@ public class ExceptionHandlingMiddleware
             problemDetails.Extensions["errors"] = vpd.Errors.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
+        // Provide a normalized errorCode for clients (snake_case) even when Title is derived differently.
+        if (!problemDetails.Extensions.ContainsKey("errorCode"))
+        {
+            var errorCode = exception switch
+            {
+                ApplicationExceptionBase appEx => string.IsNullOrWhiteSpace(appEx.ErrorCode) ? DeriveErrorCode(problemDetails.Title) : appEx.ErrorCode,
+                DomainException => "domain_rule_violation",
+                FluentValidation.ValidationException => "validation_failed",
+                ArgumentException => "invalid_argument",
+                UnauthorizedAccessException => "unauthorized",
+                KeyNotFoundException => "not_found",
+                InvalidOperationException => "invalid_operation",
+                _ => "internal_server_error"
+            };
+            problemDetails.Extensions["errorCode"] = errorCode;
+        }
+
         // Add additional context information
         problemDetails.Extensions["requestId"] = context.TraceIdentifier;
         problemDetails.Extensions["timestamp"] = DateTime.UtcNow;
@@ -228,6 +245,33 @@ public class ExceptionHandlingMiddleware
         var words = errorCode.Split(['_', '-'], StringSplitOptions.RemoveEmptyEntries)
             .Select(w => char.ToUpperInvariant(w[0]) + w[1..]);
         return string.Join(' ', words);
+    }
+
+    private static string DeriveErrorCode(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title)) return "error";
+        // Convert Title Case / spaced phrase into snake_case
+        var span = title.Trim();
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < span.Length; i++)
+        {
+            var c = span[i];
+            if (char.IsWhiteSpace(c) || c == '-' || c == '/')
+            {
+                if (sb.Length > 0 && sb[^1] != '_') sb.Append('_');
+            }
+            else if (char.IsUpper(c) && i > 0 && char.IsLetterOrDigit(span[i - 1]) && char.IsLower(span[i - 1]))
+            {
+                sb.Append('_');
+                sb.Append(char.ToLowerInvariant(c));
+            }
+            else
+            {
+                sb.Append(char.ToLowerInvariant(c));
+            }
+        }
+        var result = sb.ToString().Trim('_');
+        return string.IsNullOrWhiteSpace(result) ? "error" : result;
     }
 }
 
