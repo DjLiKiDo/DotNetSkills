@@ -224,11 +224,15 @@ public class Team : AggregateRoot<TeamId>
         if (user.Role == UserRole.Admin)
             return true;
 
+        // System-level ProjectManager can remove any member
+        if (user.Role == UserRole.ProjectManager)
+            return true;
+
         // Users can remove themselves
         if (user.Id == memberToRemove.UserId)
             return true;
 
-        // Project managers can remove any member
+        // Team-level project managers can remove any member
         if (user.GetRoleInTeam(Id) == TeamRole.ProjectManager)
             return true;
 
