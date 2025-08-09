@@ -38,19 +38,28 @@ public static class DependencyInjection
                 sqlOptions.CommandTimeout(dbOptions.CommandTimeout);
             });
 
-            if (env.IsDevelopment())
+            // Diagnostics & logging driven by DatabaseOptions (environment still respected)
+            if (dbOptions.EnableSensitiveDataLogging && env.IsDevelopment())
             {
-                if (dbOptions.EnableSensitiveDataLogging) options.EnableSensitiveDataLogging();
-                if (dbOptions.EnableDetailedErrors) options.EnableDetailedErrors();
-                if (dbOptions.EnableQueryLogging) options.LogTo(Console.WriteLine, LogLevel.Information);
+                options.EnableSensitiveDataLogging();
+            }
+            else
+            {
+                options.EnableSensitiveDataLogging(false); // ensure off outside permitted scenario
+            }
+
+            if (dbOptions.EnableDetailedErrors)
+            {
+                options.EnableDetailedErrors();
+            }
+
+            if (dbOptions.EnableQueryLogging && env.IsDevelopment())
+            {
+                options.LogTo(Console.WriteLine, LogLevel.Information);
             }
 
             // Performance optimizations
             options.EnableServiceProviderCaching();
-            if (!env.IsDevelopment())
-            {
-                options.EnableSensitiveDataLogging(false);
-            }
         });
 
         // Repository registrations (Application layer interfaces → Infrastructure implementations)
@@ -168,16 +177,21 @@ public static class DependencyInjection
                 sqlOptions.CommandTimeout(30);
             });
 
+            // NOTE: This overload is legacy; prefer AddInfrastructureServices path with DatabaseOptions.
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            if (environment == "Development")
+            var isDev = string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase);
+            if (isDev)
             {
                 options.EnableSensitiveDataLogging();
                 options.EnableDetailedErrors();
             }
+            else
+            {
+                options.EnableSensitiveDataLogging(false);
+            }
 
             // Performance optimizations
             options.EnableServiceProviderCaching();
-            options.EnableSensitiveDataLogging(false); // Disable in production
         });
 
         return services;

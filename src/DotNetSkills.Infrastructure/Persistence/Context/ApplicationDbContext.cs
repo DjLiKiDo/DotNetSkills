@@ -77,13 +77,8 @@ public class ApplicationDbContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);
-
-        // Enable sensitive data logging in development
-        if (System.Diagnostics.Debugger.IsAttached)
-        {
-            optionsBuilder.EnableSensitiveDataLogging();
-            optionsBuilder.EnableDetailedErrors();
-        }
+    // Diagnostics (sensitive data logging / detailed errors) are configured via DatabaseOptions in DI.
+    // Removed implicit debugger-based enabling to avoid overriding option-based configuration.
 
         // Configure SQL Server specific options
         if (optionsBuilder.IsConfigured && optionsBuilder is DbContextOptionsBuilder<ApplicationDbContext> typedBuilder)
