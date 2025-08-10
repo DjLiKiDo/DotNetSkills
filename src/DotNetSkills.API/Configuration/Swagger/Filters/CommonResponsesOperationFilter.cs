@@ -28,7 +28,7 @@ public class CommonResponsesOperationFilter : IOperationFilter
 
         // Add authentication/authorization responses for protected endpoints
         var requiresAuth = context.MethodInfo.GetCustomAttributes(true)
-            .Union(context.MethodInfo.DeclaringType?.GetCustomAttributes(true) ?? Array.Empty<object>())
+            .Union(context.MethodInfo.DeclaringType?.GetCustomAttributes(true) ?? [])
             .Any(attr => attr.GetType().Name == "AuthorizeAttribute");
 
         if (requiresAuth)

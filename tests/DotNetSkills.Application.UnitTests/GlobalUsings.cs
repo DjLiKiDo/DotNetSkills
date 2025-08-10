@@ -26,3 +26,23 @@ global using DotNetSkills.Domain.Common.Exceptions;
 global using DotNetSkills.Domain.UserManagement.Entities;
 global using DotNetSkills.Domain.UserManagement.ValueObjects;
 global using DotNetSkills.Domain.UserManagement.Enums;
+
+// Team Collaboration Domain references
+global using DotNetSkills.Domain.TeamCollaboration.Entities;
+global using DotNetSkills.Domain.TeamCollaboration.ValueObjects;
+global using DotNetSkills.Domain.TeamCollaboration.Enums;
+
+// Project Management Domain references
+global using DotNetSkills.Domain.ProjectManagement.Entities;
+global using DotNetSkills.Domain.ProjectManagement.ValueObjects;
+global using DotNetSkills.Domain.ProjectManagement.Enums;
+
+// Task Execution Domain references (aliased to avoid conflicts)
+global using DomainTask = DotNetSkills.Domain.TaskExecution.Entities.Task;
+global using DotNetSkills.Domain.TaskExecution.ValueObjects;
+global using DotNetSkills.Domain.TaskExecution.Enums;
+// Aliases for conflicting enum names
+global using DomainTaskStatus = DotNetSkills.Domain.TaskExecution.Enums.TaskStatus;
+
+// AutoMapper
+global using AutoMapper;

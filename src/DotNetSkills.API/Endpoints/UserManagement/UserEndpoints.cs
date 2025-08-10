@@ -1,3 +1,7 @@
+using DotNetSkills.API.Authorization;
+using DotNetSkills.Application.Common.Abstractions;
+using Microsoft.AspNetCore.Mvc;
+
 namespace DotNetSkills.API.Endpoints.UserManagement;
 
 /// <summary>
@@ -36,7 +40,7 @@ public static class UserEndpoints
         group.MapGet("", GetUsers)
             .WithName("GetUsers")
             .WithSummary("Get paginated list of users")
-            .WithDescription("Retrieves a paginated list of users with optional search filtering")
+            .WithDescription("Retrieves a paginated list of users with optional search filtering and enum-based filters. Query parameters: page (int), pageSize (int), search (string), role (UserRole), status (UserStatus). Enums are provided as strings, e.g., role=Admin, status=Active.")
             .Produces<PagedUserResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -68,8 +72,8 @@ public static class UserEndpoints
         group.MapPost("", CreateUser)
             .WithName("CreateUser")
             .WithSummary("Create a new user")
-            .WithDescription("Creates a new user account - Admin only operation")
-            .RequireAuthorization("AdminOnly") // TODO: Implement AdminOnly policy
+            .WithDescription("Creates a new user account - Admin only operation. Request body uses enum fields as strings for role/status when applicable.")
+            .RequireAuthorization(Policies.AdminOnly)
             .Accepts<CreateUserRequest>("application/json")
             .Produces<UserResponse>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -88,7 +92,7 @@ public static class UserEndpoints
         group.MapPut("{id:guid}", UpdateUser)
             .WithName("UpdateUser")
             .WithSummary("Update an existing user")
-            .WithDescription("Updates user profile information")
+            .WithDescription("Updates user profile information. Request body uses enum fields as strings where applicable.")
             .Accepts<UpdateUserRequest>("application/json")
             .Produces<UserResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
@@ -109,7 +113,7 @@ public static class UserEndpoints
             .WithName("DeleteUser")
             .WithSummary("Delete (deactivate) a user")
             .WithDescription("Soft deletes a user by deactivating their account - Admin only operation")
-            .RequireAuthorization("AdminOnly") // TODO: Implement AdminOnly policy
+            .RequireAuthorization(Policies.AdminOnly)
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -123,32 +127,39 @@ public static class UserEndpoints
     /// Handler for GET /api/v1/users endpoint.
     /// Returns paginated list of users with optional search filtering.
     /// </summary>
+    /// <param name="mediator">MediatR instance for sending queries</param>
+    /// <param name="logger">Logger for structured logging</param>
+    /// <param name="currentUserService">Service for getting current user context</param>
     /// <param name="page">Page number (default: 1)</param>
     /// <param name="pageSize">Items per page (default: 20, max: 100)</param>
     /// <param name="search">Optional search term to filter users</param>
     /// <returns>Paginated user response with metadata</returns>
     private static async Task<IResult> GetUsers(
+        IMediator mediator,
+        [FromServices] ILogger<UserManagementLogCategory> logger,
+        ICurrentUserService currentUserService,
         int page = 1,
         int pageSize = 20,
-        string? search = null)
+        string? search = null,
+        UserRole? role = null,
+        UserStatus? status = null)
     {
         try
         {
-            // Create and validate query
-            var query = new GetUsersQuery(page, pageSize, search);
-            query.Validate();
+            // Create query
+            var query = new GetUsersQuery(page, pageSize, search, role, status);
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(query);
+            // Send query through MediatR
+            var result = await mediator.Send(query);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            var placeholderResponse = new PagedUserResponse(
-                Users: new List<UserResponse>(),
-                TotalCount: 0,
-                Page: page,
-                PageSize: pageSize);
-
-            return Results.Ok(placeholderResponse);
+            return result.IsSuccess 
+                ? Results.Ok(result.Value) 
+                : Results.BadRequest(new ProblemDetails
+                {
+                    Title = "Query Failed",
+                    Detail = result.Error,
+                    Status = StatusCodes.Status400BadRequest
+                });
         }
         catch (ArgumentException ex)
         {
@@ -161,7 +172,11 @@ public static class UserEndpoints
         }
         catch (Exception ex)
         {
-            // TODO: Log exception
+            var currentUserId = currentUserService.GetCurrentUserId()?.Value.ToString() ?? "anonymous";
+            logger.LogError(ex,
+                "Unexpected error occurred while retrieving users. UserId: {UserId}, Route: {Route}, Page: {Page}, PageSize: {PageSize}, Search: {Search}, Role: {Role}, Status: {Status}",
+                currentUserId, "/api/v1/users", page, pageSize, search, role, status);
+                
             return Results.Problem(
                 title: "Internal Server Error",
                 detail: "An unexpected error occurred while processing the request",
@@ -173,29 +188,32 @@ public static class UserEndpoints
     /// Handler for GET /api/v1/users/{id} endpoint.
     /// Returns specific user details or 404 if not found.
     /// </summary>
+    /// <param name="mediator">MediatR instance for sending queries</param>
+    /// <param name="logger">Logger for structured logging</param>
+    /// <param name="currentUserService">Service for getting current user context</param>
     /// <param name="id">User unique identifier</param>
     /// <returns>User details or 404 if not found</returns>
-    private static async Task<IResult> GetUserById(Guid id)
+    private static async Task<IResult> GetUserById(IMediator mediator, [FromServices] ILogger<UserManagementLogCategory> logger, ICurrentUserService currentUserService, Guid id)
     {
         try
         {
-            // Create and validate query
-            var query = new GetUserByIdQuery(id);
-            query.Validate();
+            // Create query
+            var query = new GetUserByIdQuery(new UserId(id));
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(query);
-            // if (result == null)
-            //     return Results.NotFound();
-            // return Results.Ok(result);
+            // Send query through MediatR
+            var result = await mediator.Send(query);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            return Results.NotFound(new ProblemDetails
+            if (!result.IsSuccess)
             {
-                Title = "User Not Found",
-                Detail = $"User with ID {id} was not found",
-                Status = StatusCodes.Status404NotFound
-            });
+                return Results.NotFound(new ProblemDetails
+                {
+                    Title = "User Not Found",
+                    Detail = result.Error,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
+
+            return Results.Ok(result.Value);
         }
         catch (ArgumentException ex)
         {
@@ -208,7 +226,11 @@ public static class UserEndpoints
         }
         catch (Exception ex)
         {
-            // TODO: Log exception
+            var currentUserId = currentUserService.GetCurrentUserId()?.Value.ToString() ?? "anonymous";
+            logger.LogError(ex,
+                "Unexpected error occurred while retrieving user by ID. UserId: {UserId}, Route: {Route}, RequestedUserId: {RequestedUserId}",
+                currentUserId, $"/api/v1/users/{id}", id);
+                
             return Results.Problem(
                 title: "Internal Server Error",
                 detail: "An unexpected error occurred while processing the request",
@@ -220,25 +242,32 @@ public static class UserEndpoints
     /// Handler for POST /api/v1/users endpoint.
     /// Creates a new user account - Admin only operation.
     /// </summary>
+    /// <param name="mediator">MediatR instance for sending commands</param>
+    /// <param name="logger">Logger for structured logging</param>
+    /// <param name="currentUserService">Service for getting current user context</param>
     /// <param name="request">User creation request data</param>
     /// <returns>Created user response with 201 status</returns>
-    private static async Task<IResult> CreateUser(CreateUserRequest request)
+    private static async Task<IResult> CreateUser(IMediator mediator, [FromServices] ILogger<UserManagementLogCategory> logger, ICurrentUserService currentUserService, CreateUserRequest request)
     {
         try
         {
-            // Create and validate command
+            // Create command
             var command = request.ToCommand();
-            command.Validate();
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command);
-            // return Results.Created($"/api/v1/users/{result.Id}", result);
+            // Send command through MediatR
+            var result = await mediator.Send(command);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            return Results.Problem(
-                title: "Not Implemented",
-                detail: "User creation functionality is not yet implemented. Application layer handlers are required.",
-                statusCode: StatusCodes.Status501NotImplemented);
+            if (!result.IsSuccess)
+            {
+                return Results.BadRequest(new ProblemDetails
+                {
+                    Title = "User Creation Failed",
+                    Detail = result.Error,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
+            return Results.Created($"/api/v1/users/{result.Value!.Id}", result.Value);
         }
         catch (ArgumentException ex)
         {
@@ -260,7 +289,11 @@ public static class UserEndpoints
         }
         catch (Exception ex)
         {
-            // TODO: Log exception
+            var currentUserId = currentUserService.GetCurrentUserId()?.Value.ToString() ?? "anonymous";
+            logger.LogError(ex,
+                "Unexpected error occurred while creating user. UserId: {UserId}, Route: {Route}, RequestedUserName: {RequestedUserName}, RequestedUserEmail: {RequestedUserEmail}",
+                currentUserId, "/api/v1/users", request.Name, request.Email);
+                
             return Results.Problem(
                 title: "Internal Server Error",
                 detail: "An unexpected error occurred while processing the request",
@@ -272,26 +305,33 @@ public static class UserEndpoints
     /// Handler for PUT /api/v1/users/{id} endpoint.
     /// Updates existing user profile information.
     /// </summary>
+    /// <param name="mediator">MediatR instance for sending commands</param>
+    /// <param name="logger">Logger for structured logging</param>
+    /// <param name="currentUserService">Service for getting current user context</param>
     /// <param name="id">User unique identifier</param>
     /// <param name="request">User update request data</param>
     /// <returns>Updated user response</returns>
-    private static async Task<IResult> UpdateUser(Guid id, UpdateUserRequest request)
+    private static async Task<IResult> UpdateUser(IMediator mediator, [FromServices] ILogger<UserManagementLogCategory> logger, ICurrentUserService currentUserService, Guid id, UpdateUserRequest request)
     {
         try
         {
-            // Create and validate command
-            var command = request.ToCommand(id);
-            command.Validate();
+            // Create command
+            var command = request.ToCommand(new UserId(id));
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command);
-            // return Results.Ok(result);
+            // Send command through MediatR
+            var result = await mediator.Send(command);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            return Results.Problem(
-                title: "Not Implemented",
-                detail: "User update functionality is not yet implemented. Application layer handlers are required.",
-                statusCode: StatusCodes.Status501NotImplemented);
+            if (!result.IsSuccess)
+            {
+                return Results.BadRequest(new ProblemDetails
+                {
+                    Title = "User Update Failed",
+                    Detail = result.Error,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
+            return Results.Ok(result.Value);
         }
         catch (ArgumentException ex)
         {
@@ -313,7 +353,11 @@ public static class UserEndpoints
         }
         catch (Exception ex)
         {
-            // TODO: Log exception
+            var currentUserId = currentUserService.GetCurrentUserId()?.Value.ToString() ?? "anonymous";
+            logger.LogError(ex,
+                "Unexpected error occurred while updating user. UserId: {UserId}, Route: {Route}, TargetUserId: {TargetUserId}, RequestedUserName: {RequestedUserName}",
+                currentUserId, $"/api/v1/users/{id}", id, request.Name);
+                
             return Results.Problem(
                 title: "Internal Server Error",
                 detail: "An unexpected error occurred while processing the request",
@@ -325,27 +369,24 @@ public static class UserEndpoints
     /// Handler for DELETE /api/v1/users/{id} endpoint.
     /// Soft deletes a user by deactivating their account - Admin only operation.
     /// </summary>
+    /// <param name="mediator">MediatR instance for sending commands</param>
+    /// <param name="logger">Logger for structured logging</param>
+    /// <param name="currentUserService">Service for getting current user context</param>
     /// <param name="id">User unique identifier</param>
     /// <returns>204 No Content on successful deletion</returns>
-    private static async Task<IResult> DeleteUser(Guid id)
+    private static async Task<IResult> DeleteUser(IMediator mediator, [FromServices] ILogger<UserManagementLogCategory> logger, ICurrentUserService currentUserService, Guid id)
     {
         try
         {
             // Create and validate command
-            var command = new DeleteUserCommand(id);
-            command.Validate();
+            var command = new DeleteUserCommand(new UserId(id));
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var success = await mediator.Send(command);
-            // if (!success)
-            //     return Results.NotFound();
-            // return Results.NoContent();
+            // Send command through MediatR
+            var result = await mediator.Send(command);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            return Results.Problem(
-                title: "Not Implemented",
-                detail: "User deletion functionality is not yet implemented. Application layer handlers are required.",
-                statusCode: StatusCodes.Status501NotImplemented);
+            // Since DeleteUserCommand returns UserResponse directly, not Result<UserResponse>
+            // we treat successful execution as success
+            return Results.NoContent();
         }
         catch (ArgumentException ex)
         {
@@ -367,7 +408,11 @@ public static class UserEndpoints
         }
         catch (Exception ex)
         {
-            // TODO: Log exception
+            var currentUserId = currentUserService.GetCurrentUserId()?.Value.ToString() ?? "anonymous";
+            logger.LogError(ex,
+                "Unexpected error occurred while deleting user. UserId: {UserId}, Route: {Route}, TargetUserId: {TargetUserId}",
+                currentUserId, $"/api/v1/users/{id}", id);
+                
             return Results.Problem(
                 title: "Internal Server Error",
                 detail: "An unexpected error occurred while processing the request",
@@ -377,3 +422,8 @@ public static class UserEndpoints
 
     #endregion
 }
+
+/// <summary>
+/// Marker type for user management endpoint logging category.
+/// </summary>
+internal sealed class UserManagementLogCategory { }

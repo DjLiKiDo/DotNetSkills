@@ -342,10 +342,13 @@ public class Task : AggregateRoot<TaskId>
         var previousStatus = Status;
         Status = TaskStatus.Cancelled;
 
-        // Cancel all subtasks
-        foreach (var subtask in _subtasks.Where(st => st.Status != TaskStatus.Done && st.Status != TaskStatus.Cancelled))
+        // Cancel all active (non-done / non-cancelled) subtasks without creating an intermediate iterator
+        foreach (var subtask in _subtasks)
         {
-            subtask.Cancel(cancelledBy);
+            if (subtask.Status != TaskStatus.Done && subtask.Status != TaskStatus.Cancelled)
+            {
+                subtask.Cancel(cancelledBy);
+            }
         }
 
         // Raise domain event
@@ -448,8 +451,14 @@ public class Task : AggregateRoot<TaskId>
             return Status == TaskStatus.Done ? 100m : 0m;
         }
 
-        var completedSubtasks = _subtasks.Count(st => st.Status == TaskStatus.Done);
-        return _subtasks.Count == 0 ? 0m : (decimal)completedSubtasks / _subtasks.Count * 100m;
+    // Single-pass calculations using LINQ for clarity
+    var totalSubtasks = _subtasks.Count; // List<T>.Count is O(1)
+    if (totalSubtasks == 0) return 0m;
+
+    var completedSubtasks = _subtasks.Count(st => st.Status == TaskStatus.Done);
+    if (completedSubtasks == 0) return 0m;
+
+    return (decimal)completedSubtasks / totalSubtasks * 100m;
     }
 
     /// <summary>

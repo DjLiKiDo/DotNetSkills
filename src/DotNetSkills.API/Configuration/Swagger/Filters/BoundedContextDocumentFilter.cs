@@ -79,7 +79,7 @@ public class BoundedContextDocumentFilter : IDocumentFilter
             foreach (var operation in path.Operations.Values)
             {
                 // Add common headers
-                operation.Parameters ??= new List<OpenApiParameter>();
+                operation.Parameters ??= [];
 
                 // Request ID header for tracking
                 if (!operation.Parameters.Any(p => p.Name == "X-Request-ID"))

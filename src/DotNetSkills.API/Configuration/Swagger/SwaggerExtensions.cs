@@ -23,7 +23,29 @@ public static class SwaggerExtensions
 
         services.AddSwaggerGen(options =>
         {
-            ConfigureApiInformation(options);
+            ConfigureApiInformation(options, new("DotNetSkills API", "v1"));
+            ConfigureDocumentationSettings(options);
+            ConfigureSchemaSettings(options);
+            ConfigureTagOrganization(options);
+            ConfigureSecurity(options);
+            ConfigureCustomFilters(options);
+        });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Overload to configure Swagger using bound SwaggerOptions.
+    /// </summary>
+    public static IServiceCollection AddSwaggerDocumentation(
+        this IServiceCollection services,
+        Configuration.Options.SwaggerOptions swaggerOptions)
+    {
+        services.AddEndpointsApiExplorer();
+
+        services.AddSwaggerGen(options =>
+        {
+            ConfigureApiInformation(options, new(swaggerOptions.Title, swaggerOptions.Version));
             ConfigureDocumentationSettings(options);
             ConfigureSchemaSettings(options);
             ConfigureTagOrganization(options);
@@ -37,12 +59,12 @@ public static class SwaggerExtensions
     /// <summary>
     /// Configures the basic API information including title, description, contact, and license.
     /// </summary>
-    private static void ConfigureApiInformation(SwaggerGenOptions options)
+    private static void ConfigureApiInformation(SwaggerGenOptions options, (string Title, string Version) info)
     {
-        options.SwaggerDoc("v1", new OpenApiInfo
+        options.SwaggerDoc(info.Version, new OpenApiInfo
         {
-            Title = "DotNetSkills API",
-            Version = "v1",
+            Title = info.Title,
+            Version = info.Version,
             Description = """
                 ## DotNetSkills Project Management API
 
@@ -88,7 +110,7 @@ public static class SwaggerExtensions
                 Name = "MIT License",
                 Url = new Uri("https://opensource.org/licenses/MIT")
             }
-        });
+    });
     }
 
     /// <summary>
@@ -120,16 +142,21 @@ public static class SwaggerExtensions
     {
         // Configure response types and examples
         options.SupportNonNullableReferenceTypes();
-        options.UseInlineDefinitionsForEnums();
+    options.UseInlineDefinitionsForEnums();
         options.DescribeAllParametersInCamelCase();
 
-        // Custom schema mappings for strongly-typed IDs
+    // Custom schema mappings for strongly-typed IDs
         options.MapType<Guid>(() => new OpenApiSchema
         {
             Type = "string",
             Format = "uuid",
             Example = new Microsoft.OpenApi.Any.OpenApiString("123e4567-e89b-12d3-a456-426614174000")
         });
+
+    // Ensure enums are documented as strings with allowed values and examples
+    options.SchemaFilter<EnumSchemaFilter>();
+    // Add concrete examples for common request DTOs
+    options.SchemaFilter<RequestExamplesSchemaFilter>();
     }
 
     /// <summary>
@@ -184,10 +211,12 @@ public static class SwaggerExtensions
     private static void ConfigureCustomFilters(SwaggerGenOptions options)
     {
         // Schema filters for custom type documentation
-        options.SchemaFilter<ProblemDetailsSchemaFilter>();
+    options.SchemaFilter<ProblemDetailsSchemaFilter>();
+    options.SchemaFilter<EnumSchemaFilter>();
 
         // Operation filters for enhanced endpoint documentation
-        options.OperationFilter<CommonResponsesOperationFilter>();
+    options.OperationFilter<CommonResponsesOperationFilter>();
+    options.OperationFilter<EnumParameterExampleOperationFilter>();
         options.OperationFilter<AuthorizeOperationFilter>();
 
         // Document filters for overall API enhancement
