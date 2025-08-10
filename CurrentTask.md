@@ -18,6 +18,7 @@ Completed:
 - Unit tests added:
   - Middleware mapping tests (NotFound 404, BusinessRule 409, Validation 400, Domain 400).
   - AssignTaskCommandHandler happy path test (verifies Update + SaveChanges).
+  - AssignTaskCommandHandler negative path test (task not found → NotFoundException).
 - AssignTask handler refactored to new patterns.
 - AutoMapper configuration stabilized (all profile configuration tests passing):
   - Removed duplicate IEnumerable<object> -> List<object> map from base profile; centralized in SharedValueObjectMappingProfile.
@@ -29,25 +30,28 @@ In place:
 - Result / Result<T> pattern (used by behaviors).
 - Mapping profiles auto-registered.
 
-Recent Additions:
+Recent Additions (2025-08-10):
 - Integration test for invalid task creation (POST /api/v1/tasks) now passing (400 ValidationProblemDetails) using WebApplicationFactory + FakePolicyEvaluator.
 - Adjusted TaskEndpoints: removed broad catch for CreateTask to let ValidationException bubble.
 - ExceptionHandlingMiddleware now surfaces validation errors under extensions.errors to ensure consistent JSON shape.
- - Added standardized extensions.errorCode for all mapped exceptions; middleware & unit tests updated and passing.
- - AutoMapper refactor (see above) with green test verification.
- - Nullable warnings (Infrastructure ProjectRepository.cs CS8601) resolved by adding null-coalescing and defensive checks; build now free of those specific warnings.
- - CS1998 warning removed from TaskAssignmentEndpoints by converting placeholder handlers to synchronous methods (no unnecessary async).
- - Added TaskAssignmentMappingTests validating context-based population of AssignedUserName / AssignedByUser fields.
+- Added standardized extensions.errorCode for all mapped exceptions; middleware & unit tests updated and passing.
+- AutoMapper refactor (see above) with green test verification.
+- Nullable warnings (Infrastructure ProjectRepository.cs CS8601) resolved by adding null-coalescing and defensive checks; build now free of those specific warnings.
+- **COMPLETED:** CS1998 warning removed from TaskAssignmentEndpoints by converting UpdateSubtask method from async to synchronous (removed unnecessary async/await).
+- Added TaskAssignmentMappingTests validating context-based population of AssignedUserName / AssignedByUser fields.
+- **COMPLETED:** Exception taxonomy documentation added to README.md with comprehensive table mapping exceptions to HTTP status codes and error codes.
+- **COMPLETED:** Warning resolution completed - all nullable and async warnings resolved, build shows 0 warnings, 0 errors.
+- **COMPLETED:** Negative path test for AssignTask added (AssignTaskCommandHandlerTests.cs:68-89) verifying NotFoundException when task not found.
+
+Status Verification (2025-08-10):
+- Build: ✅ Clean (0 warnings, 0 errors)
+- Tests: ✅ All 141 tests passing across all projects
+- Code Quality: ✅ No remaining warnings or async issues
 
 Pending (not yet implemented):
-- Analyzer & nullable warning cleanup (ProjectRepository and async warnings).
-- Documentation updates (exception table, validation pipeline rationale, repository sync decision).
 - Additional regression / coverage (subtask flags, domain event dispatch verification).
 - Correlation ID enrichment (optional future).
- - (AutoMapper follow-ups) Add contextual mapping tests for TaskAssignmentResponse with context.Items (AssignedUserName / AssignedByUserId) to lock behavior.
- - Remaining warnings to address:
-  - CS1998 async method without await in TaskAssignmentEndpoints (placeholder / TODO implementation).
-  - (Resolved) xUnit1031 warnings in AuthorizationExtensionsTests by converting test methods to async Task and awaiting policy/authorization calls.
+- (AutoMapper follow-ups) Add contextual mapping tests for TaskAssignmentResponse with context.Items (AssignedUserName / AssignedByUserId) to lock behavior.
 
 ## 3. Important Context for Continuation
 
@@ -60,25 +64,27 @@ Pending (not yet implemented):
 
 ## 4. Pending Items / Next Steps
 
-Immediate (next work cycle):
- - (Done) Add errorCode to ProblemDetails.Extensions["errorCode"] for all mapped exceptions.
- - (Done) Resolve AutoMapper duplicate type map & record constructor failures (now green).
-- Warning Resolution:
-  - Fix nullable warnings in repositories (add null checks or null-forgiving operator where safe).
-  - Convert any blocking .Result / .Wait() test usages to await.
-  - Remove async keyword from methods with no awaits or add awaited operations.
-- Documentation:
-  - Add exception taxonomy table (Exception → HTTP Status → ErrorCode).
-  - Describe pipeline ordering rationale.
-  - Note 400 for validation (decision + client impact).
-  - State repository sync design reasons (simplicity, UoW flush boundary).
-- Additional Unit Tests:
-  - Negative path for AssignTask (task not found → NotFoundException).
-  - Validation failure surface test via mediator (optional).
-  - Mapping context test for TaskAssignmentResponse (ensures context items populate names & assigner IDs when provided).
-- Optional Quick Wins:
-  - Add correlation ID middleware (include X-Correlation-Id header in responses & ProblemDetails).
-  - Add error code to ProblemDetails.Extensions["errorCode"] for consistency.
+Recently Completed (2025-08-10):
+ - ✅ (Done) Add errorCode to ProblemDetails.Extensions["errorCode"] for all mapped exceptions.
+ - ✅ (Done) Resolve AutoMapper duplicate type map & record constructor failures (now green).
+ - ✅ **Warning Resolution COMPLETED:**
+   - Fix nullable warnings in repositories (add null checks or null-forgiving operator where safe).
+   - Convert any blocking .Result / .Wait() test usages to await.
+   - Remove async keyword from methods with no awaits or add awaited operations.
+ - ✅ **Documentation COMPLETED:**
+   - Add exception taxonomy table (Exception → HTTP Status → ErrorCode).
+   - Describe pipeline ordering rationale.
+   - Note 400 for validation (decision + client impact).
+   - State repository sync design reasons (simplicity, UoW flush boundary).
+ - ✅ **Additional Unit Tests COMPLETED:**
+   - Negative path for AssignTask (task not found → NotFoundException).
+
+Immediate (ready for next work cycle):
+- Validation failure surface test via mediator (optional).
+- Mapping context test for TaskAssignmentResponse (ensures context items populate names & assigner IDs when provided).
+
+Optional Quick Wins:
+- Add correlation ID middleware (include X-Correlation-Id header in responses & ProblemDetails).
 
 Medium-term:
 - Implement real domain event collection & dispatch in DomainEventDispatchBehavior.
@@ -141,7 +147,7 @@ Internal:
 - ExceptionHandlingMiddleware.cs
 - `src/DotNetSkills.Application/Common/Exceptions/*`
 - `docs/DotNet Coding Principles.md`
-- README.md (needs update for new exception & validation pipeline)
+- **README.md (✅ UPDATED with comprehensive exception handling documentation - lines 221-258)**
 - DependencyInjection.cs
 
 External References:

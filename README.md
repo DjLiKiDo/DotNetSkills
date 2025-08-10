@@ -218,6 +218,45 @@ dotnet test --collect:"XPlat Code Coverage"
 > [!NOTE]
 > This MVP version does not include user self-registration or password recovery features. All user creation is admin-only.
 
+## Exception Handling
+
+The API uses a standardized exception handling system with specific HTTP status codes and error formats:
+
+| Exception Type | HTTP Status | Error Code | Usage | Example |
+|---|---|---|---|---|
+| `NotFoundException` | 404 | `not_found` | Resource not found by ID | Task with ID 123 not found |
+| `BusinessRuleViolationException` | 409 | `business_rule_violation` | Domain business rule violations | Cannot assign task to inactive user |
+| `ValidationException` (Application) | 400 | `validation_error` | Application-level validation failures | Invalid email format |
+| `ValidationException` (FluentValidation) | 400 | `validation_error` | Request validation failures | Required field missing |
+| `DomainException` | 400 | `domain_rule_violation` | Domain invariant violations | Task priority cannot be null |
+| `ApplicationExceptionBase` (custom) | varies | custom | Application-specific errors | Custom error codes as needed |
+| Generic exceptions | 500 | `internal_server_error` | Unexpected errors | Database connection failed |
+
+### Error Response Format
+
+All errors return standardized ProblemDetails format with additional metadata:
+
+```json
+{
+  "title": "Not Found",
+  "detail": "Task with ID '123e4567-e89b-12d3-a456-426614174000' was not found",
+  "status": 404,
+  "extensions": {
+    "errorCode": "not_found"
+  }
+}
+```
+
+### Validation Pipeline
+
+The system uses a multi-layered validation approach:
+
+1. **Request Validation**: FluentValidation rules applied via `ValidationBehavior`  
+2. **Business Rules**: Domain entity validation during state changes
+3. **Application Rules**: Cross-cutting concerns in command/query handlers
+
+The pipeline order ensures validation failures are caught early and consistently formatted.
+
 ## Development Guidelines
 
 The project follows strict coding principles documented in [DotNet Coding Principles](doc/DotNet%20Coding%20Principles.md), including:

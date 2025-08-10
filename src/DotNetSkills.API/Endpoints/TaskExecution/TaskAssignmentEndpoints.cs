@@ -319,7 +319,7 @@ public static class TaskAssignmentEndpoints
     /// <summary>
     /// Handles PUT /api/v1/tasks/{taskId}/subtasks/{subtaskId} requests.
     /// </summary>
-    private static async Task<IResult> UpdateSubtask(
+    private static IResult UpdateSubtask(
         Guid taskId,
         Guid subtaskId,
         UpdateSubtaskRequest request,
@@ -348,7 +348,6 @@ public static class TaskAssignmentEndpoints
             // var response = await mediator.Send(command, cancellationToken);
 
             // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
             throw new NotImplementedException("UpdateSubtask requires Infrastructure layer implementation");
         }
         catch (ArgumentException ex)

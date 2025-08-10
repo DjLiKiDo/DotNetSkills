@@ -9,6 +9,7 @@ using DotNetSkills.Domain.TaskExecution.ValueObjects;
 using DotNetSkills.Domain.UserManagement.Entities;
 using DotNetSkills.Domain.UserManagement.ValueObjects;
 using DotNetSkills.Application.Common.Abstractions;
+using DotNetSkills.Application.Common.Exceptions;
 using System.Threading.Tasks;
 using DotNetSkills.Domain.UserManagement.Enums;
 using Moq;
@@ -62,5 +63,28 @@ public class AssignTaskCommandHandlerTests
         Assert.Equal(assigner.Id.Value, response.AssignedByUserId);
         _taskRepo.Verify(r => r.Update(task), Times.Once);
         _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task Handle_ThrowsNotFoundException_WhenTaskNotFound()
+    {
+        // Arrange
+        var taskId = TaskId.New();
+        var assigneeId = UserId.New();
+        var assignerId = UserId.New();
+
+        _taskRepo.Setup(r => r.GetByIdAsync(taskId, It.IsAny<CancellationToken>()))
+                 .ReturnsAsync((DomainTaskEntity?)null);
+
+        var handler = new AssignTaskCommandHandler(_taskRepo.Object, _userRepo.Object, _uow.Object, _mapper, _logger.Object);
+        var command = new AssignTaskCommand(taskId, assigneeId, assignerId);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(command, CancellationToken.None));
+        
+        Assert.Contains("Task", exception.Message);
+        Assert.Contains(taskId.Value.ToString(), exception.Message);
+        _taskRepo.Verify(r => r.Update(It.IsAny<DomainTaskEntity>()), Times.Never);
+        _uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 }
