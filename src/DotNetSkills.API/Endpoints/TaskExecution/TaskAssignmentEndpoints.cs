@@ -218,7 +218,7 @@ public static class TaskAssignmentEndpoints
     /// <summary>
     /// Handles POST /api/v1/tasks/{id}/subtasks requests.
     /// </summary>
-    private static async Task<IResult> CreateSubtask(
+    private static IResult CreateSubtask(
         Guid id,
         CreateSubtaskRequest request,
         ICurrentUserService currentUserService,
@@ -246,8 +246,7 @@ public static class TaskAssignmentEndpoints
             // TODO: Replace with MediatR.Send when implemented
             // var response = await mediator.Send(command, cancellationToken);
 
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
+            // Placeholder response - TODO: Replace with actual implementation using mediator.Send(command)
             throw new NotImplementedException("CreateSubtask requires Infrastructure layer implementation");
         }
         catch (ArgumentException ex)
@@ -276,7 +275,7 @@ public static class TaskAssignmentEndpoints
     /// <summary>
     /// Handles GET /api/v1/tasks/{id}/subtasks requests.
     /// </summary>
-    private static async Task<IResult> GetSubtasks(
+    private static IResult GetSubtasks(
         Guid id,
         CancellationToken cancellationToken = default)
     {

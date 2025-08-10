@@ -36,6 +36,8 @@ Recent Additions:
  - Added standardized extensions.errorCode for all mapped exceptions; middleware & unit tests updated and passing.
  - AutoMapper refactor (see above) with green test verification.
  - Nullable warnings (Infrastructure ProjectRepository.cs CS8601) resolved by adding null-coalescing and defensive checks; build now free of those specific warnings.
+ - CS1998 warning removed from TaskAssignmentEndpoints by converting placeholder handlers to synchronous methods (no unnecessary async).
+ - Added TaskAssignmentMappingTests validating context-based population of AssignedUserName / AssignedByUser fields.
 
 Pending (not yet implemented):
 - Analyzer & nullable warning cleanup (ProjectRepository and async warnings).

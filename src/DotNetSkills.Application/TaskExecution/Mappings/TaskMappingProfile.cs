@@ -94,15 +94,34 @@ public class TaskMappingProfile : MappingProfile
     {
         // Task to TaskAssignmentResponse mapping (for assignment operations)
         CreateMap<DomainTask, TaskAssignmentResponse>()
-            .ConstructUsing((task, context) => new TaskAssignmentResponse(
-                TaskId: task.Id.Value,
-                TaskTitle: task.Title,
-                AssignedUserId: task.AssignedUserId?.Value,
-                AssignedUserName: context.Items.TryGetValue("AssignedUserName", out var assignedUserNameObj) ? assignedUserNameObj as string : null,
-                AssignedAt: task.UpdatedAt,
-                AssignedByUserId: context.Items.TryGetValue("AssignedByUserId", out var assignedByIdObj) && assignedByIdObj is Guid g ? g : Guid.Empty,
-                AssignedByUserName: context.Items.TryGetValue("AssignedByUserName", out var assignedByNameObj) ? assignedByNameObj as string ?? string.Empty : string.Empty
-            ))
+            .ConstructUsing((task, context) => {
+                Guid assignedByUserId = Guid.Empty;
+                string assignedByUserName = string.Empty;
+                string? assignedUserName = null;
+                try
+                {
+                    if (context.Items.TryGetValue("AssignedUserName", out var auName))
+                        assignedUserName = auName as string;
+                    if (context.Items.TryGetValue("AssignedByUserId", out var abId) && abId is Guid g2)
+                        assignedByUserId = g2;
+                    if (context.Items.TryGetValue("AssignedByUserName", out var abName))
+                        assignedByUserName = abName as string ?? string.Empty;
+                }
+                catch
+                {
+                    // context.Items not available (mapped without options) -> defaults already set
+                }
+
+                return new TaskAssignmentResponse(
+                    TaskId: task.Id.Value,
+                    TaskTitle: task.Title,
+                    AssignedUserId: task.AssignedUserId?.Value,
+                    AssignedUserName: assignedUserName,
+                    AssignedAt: task.UpdatedAt,
+                    AssignedByUserId: assignedByUserId,
+                    AssignedByUserName: assignedByUserName
+                );
+            })
             .ForAllMembers(opt => opt.Ignore()); // Use constructor values only
     }
 
