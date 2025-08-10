@@ -103,6 +103,9 @@ public static class DependencyInjection
         // Domain Event Dispatcher (placeholder - needs MediatR integration)
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
+        // Domain Event Collection Service for request-scoped tracking
+        services.AddScoped<IDomainEventCollectionService, DomainEventCollectionService>();
+
         // External services (placeholders for future implementation)
         // services.AddScoped<IEmailService, SmtpEmailService>();
         // services.AddScoped<INotificationService, SignalRNotificationService>();

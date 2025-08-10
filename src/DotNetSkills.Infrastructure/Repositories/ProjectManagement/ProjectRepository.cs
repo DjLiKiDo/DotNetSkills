@@ -12,7 +12,8 @@ public class ProjectRepository : BaseRepository<Project, ProjectId>, IProjectRep
     /// Initializes a new instance of the ProjectRepository class.
     /// </summary>
     /// <param name="context">The database context.</param>
-    public ProjectRepository(ApplicationDbContext context) : base(context)
+    public ProjectRepository(ApplicationDbContext context, IDomainEventCollectionService eventCollectionService) 
+        : base(context, eventCollectionService)
     {
     }
 

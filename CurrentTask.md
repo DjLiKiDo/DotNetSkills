@@ -8,6 +8,12 @@
 - Mapping fixes: SubtaskResponse now includes UpdatedAt, IsAssigned etc.; handlers aligned.
 - Domain vs application: DomainException remains for invariant violations; Application exceptions for workflow/resource concerns.
 - Chosen status codes: Validation mapped to 400 (not 422) for consistency with other client errors.
+- **Domain Events Architecture**: Full domain event collection and dispatch system implemented:
+  - **IDomainEventCollectionService**: Thread-safe aggregate tracking using AsyncLocal
+  - **DomainEventDispatchBehavior**: Dispatches events after successful command execution
+  - **IAggregateRoot**: Non-generic interface for polymorphic aggregate handling
+  - **DomainEventNotification<T>**: Wrapper for Clean Architecture compliance
+  - **Integration**: Repository operations register modified aggregates automatically
 
 ## 2. Current Status
 
@@ -48,6 +54,20 @@ Recent Additions (2025-08-10):
   - Integrates with ExceptionHandlingMiddleware to include correlation IDs in ProblemDetails
   - Added comprehensive unit tests covering all scenarios (48 tests total, all passing)
   - Updated middleware pipeline order: CorrelationId → ExceptionHandling → ...
+- **COMPLETED (2025-08-10):** Domain Event Collection & Dispatch System:
+  - **IDomainEventCollectionService**: Interface and implementation for tracking modified aggregates during request lifecycle
+  - **DomainEventCollectionService**: Thread-safe implementation using AsyncLocal<HashSet<IAggregateRoot>>
+  - **IAggregateRoot**: Non-generic interface enabling polymorphic handling of different aggregate root types
+  - **AggregateRoot<TId>**: Updated to implement IAggregateRoot with GetId() and GetTypeName() methods
+  - **DomainEventDispatchBehavior**: Complete MediatR pipeline behavior implementation replacing placeholder
+  - **UnitOfWork**: Simplified to focus on data persistence, delegates event handling to behavior
+  - **BaseRepository**: Updated to register modified aggregates on Add/Update operations
+  - **DomainEventNotification<T>**: Wrapper class bridging IDomainEvent to INotification for Clean Architecture compliance
+  - **DomainEventDispatcher**: Uses reflection to create generic notification wrappers for MediatR dispatching
+  - **TaskAssignedDomainEventHandler**: Example event handler demonstrating end-to-end functionality
+  - **Comprehensive Testing**: 160 tests total, all passing with full coverage of domain event infrastructure
+  - **Clean Architecture Compliance**: Maintains dependency rules while enabling cross-aggregate communication
+  - **Thread Safety**: AsyncLocal ensures proper isolation of aggregate tracking per request context
   - Added logging scope integration for structured logging
   - Documented middleware pipeline and correlation ID functionality in README.md
 

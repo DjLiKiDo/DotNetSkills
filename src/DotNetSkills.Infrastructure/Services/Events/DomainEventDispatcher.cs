@@ -1,4 +1,5 @@
 using MediatR;
+using DotNetSkills.Application.Common.Events;
 
 namespace DotNetSkills.Infrastructure.Services.Events;
 
@@ -46,8 +47,12 @@ public class DomainEventDispatcher : IDomainEventDispatcher
 
         try
         {
-            // Publish the event via MediatR
-            await _mediator.Publish(domainEvent, cancellationToken);
+            // Wrap the domain event in a notification wrapper for MediatR
+            var wrapperType = typeof(DomainEventNotification<>).MakeGenericType(typeof(TDomainEvent));
+            var wrapper = Activator.CreateInstance(wrapperType, domainEvent);
+            
+            // Publish the wrapped event via MediatR
+            await _mediator.Publish(wrapper!, cancellationToken);
             
             _logger.LogDebug(
                 "Successfully dispatched domain event {EventType} with CorrelationId {CorrelationId}",
@@ -94,7 +99,11 @@ public class DomainEventDispatcher : IDomainEventDispatcher
         {
             try
             {
-                await _mediator.Publish(domainEvent, cancellationToken);
+                // Wrap the domain event in a notification wrapper for MediatR
+                var wrapperType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
+                var wrapper = Activator.CreateInstance(wrapperType, domainEvent);
+                
+                await _mediator.Publish(wrapper!, cancellationToken);
                 dispatchedCount++;
                 
                 _logger.LogDebug(
@@ -154,8 +163,12 @@ public class DomainEventDispatcher : IDomainEventDispatcher
 
         try
         {
-            // Publish the event via MediatR
-            await _mediator.Publish(domainEvent, cancellationToken);
+            // Wrap the domain event in a notification wrapper for MediatR
+            var wrapperType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
+            var wrapper = Activator.CreateInstance(wrapperType, domainEvent);
+            
+            // Publish the wrapped event via MediatR
+            await _mediator.Publish(wrapper!, cancellationToken);
             
             _logger.LogDebug(
                 "Successfully dispatched domain event {EventType} with CorrelationId {CorrelationId}",
