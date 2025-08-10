@@ -36,6 +36,6 @@ public static class UserRoleExtensions
             "read:*", "create:*", "update:*", "delete:*",
             "manage:users", "manage:system"
         },
-        _ => Array.Empty<string>()
+        _ => []
     };
 }

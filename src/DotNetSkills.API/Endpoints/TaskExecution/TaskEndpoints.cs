@@ -1,3 +1,6 @@
+using DotNetSkills.API.Authorization;
+using DotNetSkills.Application.Common.Abstractions;
+
 namespace DotNetSkills.API.Endpoints.TaskExecution;
 
 /// <summary>
@@ -35,7 +38,7 @@ public static class TaskEndpoints
         group.MapGet("", GetTasks)
             .WithName("GetTasks")
             .WithSummary("Get tasks with filtering")
-            .WithDescription("Retrieves a paginated list of tasks with comprehensive filtering options including project, assignee, status, priority, due dates, and search terms")
+            .WithDescription("Retrieves a paginated list of tasks with comprehensive filtering. Query parameters: pageNumber (int), pageSize (int), projectId (Guid), assignedUserId (Guid), status (TaskStatus), priority (TaskPriority), dueDateFrom (date), dueDateTo (date), createdFrom (date), createdTo (date), searchTerm (string), includeSubtasks (bool), onlyOverdue (bool), onlyUnassigned (bool), sortBy (string), sortDirection (asc|desc). Enums are provided as strings, e.g., status=InProgress, priority=High.")
             .Produces<PagedTaskResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
@@ -65,7 +68,7 @@ public static class TaskEndpoints
             .WithName("CreateTask")
             .WithSummary("Create a new task")
             .WithDescription("Creates a new task with optional assignment and parent task relationship. Supports business rules for single assignment and one-level subtask nesting")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Produces<TaskResponse>(StatusCodes.Status201Created)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -82,7 +85,7 @@ public static class TaskEndpoints
             .WithName("UpdateTask")
             .WithSummary("Update task information")
             .WithDescription("Updates task information while respecting domain constraints and status restrictions. Completed tasks cannot be modified")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Produces<TaskResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -100,7 +103,7 @@ public static class TaskEndpoints
             .WithName("DeleteTask")
             .WithSummary("Delete task (soft delete)")
             .WithDescription("Deletes a task by cancelling it (soft delete). This operation also cancels all subtasks automatically")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -118,7 +121,7 @@ public static class TaskEndpoints
             .WithName("UpdateTaskStatus")
             .WithSummary("Update task status")
             .WithDescription("Updates task status with proper state transition validation. Supports all valid status transitions according to domain business rules")
-            .RequireAuthorization("ProjectMemberOrAdmin")
+            .RequireAuthorization(Policies.ProjectMemberOrAdmin)
             .Produces<TaskResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
@@ -132,6 +135,7 @@ public static class TaskEndpoints
     /// </summary>
     private static async Task<IResult> GetTasks(
         [AsParameters] GetTasksQueryParameters queryParams,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -139,8 +143,8 @@ public static class TaskEndpoints
             var query = new GetTasksQuery(
                 queryParams.PageNumber,
                 queryParams.PageSize,
-                queryParams.ProjectId,
-                queryParams.AssignedUserId,
+                queryParams.ProjectId.HasValue ? new ProjectId(queryParams.ProjectId.Value) : null,
+                queryParams.AssignedUserId.HasValue ? new UserId(queryParams.AssignedUserId.Value) : null,
                 queryParams.Status,
                 queryParams.Priority,
                 queryParams.DueDateFrom,
@@ -155,36 +159,9 @@ public static class TaskEndpoints
                 queryParams.SortDirection
             );
 
-            query.Validate();
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(query, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            var placeholderResponse = new PagedTaskResponse(
-                Tasks: new List<TaskResponse>(),
-                PageNumber: queryParams.PageNumber,
-                PageSize: queryParams.PageSize,
-                TotalCount: 0,
-                TotalPages: 0,
-                HasNextPage: false,
-                HasPreviousPage: false,
-                FilterMetadata: new TaskFilterMetadata(
-                    queryParams.ProjectId,
-                    null,
-                    queryParams.AssignedUserId,
-                    null,
-                    queryParams.Status,
-                    queryParams.Priority,
-                    queryParams.DueDateFrom,
-                    queryParams.DueDateTo,
-                    queryParams.CreatedFrom,
-                    queryParams.CreatedTo,
-                    queryParams.SearchTerm,
-                    0, 0, 0, 0, 0
-                ));
-
-            return Results.Ok(placeholderResponse);
+            var response = await mediator.Send(query, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {
@@ -193,7 +170,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Invalid Query Parameters");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while retrieving tasks",
@@ -207,6 +184,7 @@ public static class TaskEndpoints
     /// </summary>
     private static async Task<IResult> GetTaskById(
         Guid id,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -214,14 +192,13 @@ public static class TaskEndpoints
             var taskId = new TaskId(id);
             var query = new GetTaskByIdQuery(taskId);
 
-            query.Validate();
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var task = await mediator.Send(query, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("GetTaskById requires Infrastructure layer implementation");
+            var task = await mediator.Send(query, cancellationToken).ConfigureAwait(false);
+            
+            if (task == null)
+                return Results.NotFound($"Task with ID {id} not found.");
+            
+            return Results.Ok(task);
         }
         catch (ArgumentException ex)
         {
@@ -230,7 +207,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Invalid Task ID");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while retrieving the task",
@@ -244,14 +221,16 @@ public static class TaskEndpoints
     /// </summary>
     private static async Task<IResult> CreateTask(
         CreateTaskRequest request,
+        ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            request.Validate();
 
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+                return Results.Unauthorized();
 
             var command = new CreateTaskCommand(
                 request.Title,
@@ -265,14 +244,9 @@ public static class TaskEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("CreateTask requires Infrastructure layer implementation");
+            var response = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.Created($"/api/v1/tasks/{response.Id}", response);
         }
         catch (ArgumentException ex)
         {
@@ -288,13 +262,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
-        {
-            return Results.Problem(
-                detail: "An error occurred while creating the task",
-                statusCode: StatusCodes.Status500InternalServerError,
-                title: "Internal Server Error");
-        }
+        // Allow other exceptions (including validation) to bubble to middleware
     }
 
     /// <summary>
@@ -303,14 +271,16 @@ public static class TaskEndpoints
     private static async Task<IResult> UpdateTask(
         Guid id,
         UpdateTaskRequest request,
+        ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            request.Validate();
 
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+                return Results.Unauthorized();
 
             var command = new UpdateTaskCommand(
                 new TaskId(id),
@@ -322,14 +292,9 @@ public static class TaskEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("UpdateTask requires Infrastructure layer implementation");
+            var response = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {
@@ -345,7 +310,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while updating the task",
@@ -359,26 +324,24 @@ public static class TaskEndpoints
     /// </summary>
     private static async Task<IResult> DeleteTask(
         Guid id,
+        ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+                return Results.Unauthorized();
 
             var command = new DeleteTaskCommand(
                 new TaskId(id),
                 currentUserId
             );
 
-            command.Validate();
 
-            // TODO: Replace with MediatR.Send when implemented
-            // await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("DeleteTask requires Infrastructure layer implementation");
+            await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.NoContent();
         }
         catch (ArgumentException ex)
         {
@@ -394,7 +357,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while deleting the task",
@@ -409,14 +372,16 @@ public static class TaskEndpoints
     private static async Task<IResult> UpdateTaskStatus(
         Guid id,
         UpdateTaskStatusRequest request,
+        ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            request.Validate();
 
-            // TODO: Get current user ID from authentication context
-            var currentUserId = new UserId(Guid.NewGuid()); // Placeholder - replace with actual user from JWT
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId == null)
+                return Results.Unauthorized();
 
             var command = new UpdateTaskStatusCommand(
                 new TaskId(id),
@@ -425,14 +390,9 @@ public static class TaskEndpoints
                 currentUserId
             );
 
-            command.Validate();
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("UpdateTaskStatus requires Infrastructure layer implementation");
+            var response = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {
@@ -448,7 +408,7 @@ public static class TaskEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-        catch (Exception ex)
+    catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while updating task status",
@@ -467,8 +427,8 @@ public record GetTasksQueryParameters(
     int PageSize = 20,
     Guid? ProjectId = null,
     Guid? AssignedUserId = null,
-    string? Status = null,
-    string? Priority = null,
+    DomainTaskStatus? Status = null,
+    TaskPriority? Priority = null,
     DateTime? DueDateFrom = null,
     DateTime? DueDateTo = null,
     DateTime? CreatedFrom = null,

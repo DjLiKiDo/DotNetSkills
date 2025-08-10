@@ -20,7 +20,7 @@ public class AuthorizeOperationFilter : IOperationFilter
         if (hasAuthorize || isProtectedEndpoint)
         {
             // Add security requirement for JWT Bearer token
-            operation.Security ??= new List<OpenApiSecurityRequirement>();
+            operation.Security ??= [];
 
             var jwtSecurityRequirement = new OpenApiSecurityRequirement
             {
@@ -33,7 +33,7 @@ public class AuthorizeOperationFilter : IOperationFilter
                             Id = "Bearer"
                         }
                     },
-                    Array.Empty<string>()
+                    []
                 }
             };
 
@@ -93,8 +93,8 @@ public class AuthorizeOperationFilter : IOperationFilter
             return "Requires authentication";
         }
 
-        var policies = new List<string>();
-        var roles = new List<string>();
+        List<string> policies = [];
+        List<string> roles = [];
 
         foreach (var attr in attributes)
         {
@@ -114,7 +114,7 @@ public class AuthorizeOperationFilter : IOperationFilter
             }
         }
 
-        var authInfo = new List<string>();
+        List<string> authInfo = [];
 
         if (policies.Any())
         {

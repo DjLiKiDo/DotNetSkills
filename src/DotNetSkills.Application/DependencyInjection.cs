@@ -1,4 +1,6 @@
 using DotNetSkills.Domain;
+using FluentValidation;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
@@ -25,23 +27,34 @@ public static class DependencyInjection
             services.AddTransient(serviceType, implementationType);
         }
 
-        // MediatR registration for CQRS pattern
-        // services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
+        // MediatR registration for CQRS pattern (v12+ API)
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(assembly);
+            
+            // MediatR behaviors registration - order matters!
+            // 1. Logging - capture all operations early
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+            // 2. Validation - short‑circuit before expensive work
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+            // 3. Performance - measure only after validation passes
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(PerformanceBehavior<,>));
+            // 4. Domain events - dispatch after successful handler execution
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(DomainEventDispatchBehavior<,>));
+        });
 
         // AutoMapper registration for entity ↔ DTO mapping
-        // services.AddAutoMapper(assembly);
+        services.AddAutoMapper(assembly);
 
-        // FluentValidation registration
-        // services.AddValidatorsFromAssembly(assembly);
+        // FluentValidation registration with validator discovery
+        services.AddValidatorsFromAssembly(assembly, ServiceLifetime.Transient);
 
-        // Application services registration
-        // Example: services.AddTransient<IApplicationService, ApplicationService>();
+        // Repository interfaces (to be implemented by Infrastructure layer)
+        // services.AddScoped<IUserRepository, UserRepository>();
+        // services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        // Command and Query handlers (automatically registered by MediatR)
-        // Example: services.AddTransient<IRequestHandler<CreateUserCommand, UserResponse>, CreateUserCommandHandler>();
-
-        // Domain event dispatchers (when implemented)
-        // Example: services.AddTransient<IDomainEventDispatcher, DomainEventDispatcher>();
+        // Domain event dispatcher (when implemented)
+        // services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         return services;
     }
