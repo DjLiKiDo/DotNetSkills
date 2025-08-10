@@ -2,7 +2,7 @@
 name: critical-software-agent
 description: Use proactively after any significant code changes for quality reviews, security audits, and refactoring recommendations. MUST BE USED for code quality validation, security vulnerability detection, and performance optimization analysis.
 tools: ["Read", "Grep", "Glob", "LS", "Bash", "TodoWrite", "WebSearch"]
-model: claude-sonnet-4-20250514
+model: sonnet
 ---
 
 # Critical Software Agent

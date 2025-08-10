@@ -2,7 +2,7 @@
 name: qa-testing
 description: Use when implementing test strategies, automated testing, or quality validation. MUST BE USED for test plan creation, test automation, and defect management processes.
 tools: ["Read", "Write", "Edit", "Bash", "Glob", "Grep", "TodoWrite"]
-model: claude-sonnet-4-20250514
+model: sonnet
 ---
 
 # QA Testing Agent

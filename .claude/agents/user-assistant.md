@@ -2,7 +2,7 @@
 name: user-assistant
 description: Use when providing user support, gathering feedback, or improving customer experience. MUST BE USED for onboarding assistance, user education, and customer success initiatives.
 tools: ["Read", "Write", "Edit", "Grep", "TodoWrite", "WebSearch"]
-model: claude-sonnet-4-20250514
+model: sonnet
 ---
 
 # User Assistant Agent

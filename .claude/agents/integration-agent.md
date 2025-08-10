@@ -2,7 +2,7 @@
 name: integration-agent
 description: Use when connecting external services, APIs, or managing system integrations. MUST BE USED for third-party API integration, data synchronization, and inter-system communication.
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "TodoWrite", "WebFetch"]
-model: claude-sonnet-4-20250514
+model: sonnet
 ---
 
 # Integration Agent

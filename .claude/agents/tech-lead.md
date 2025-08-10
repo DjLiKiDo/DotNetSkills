@@ -2,7 +2,7 @@
 name: tech-lead
 description: Use when making architectural decisions, technical leadership, or cross-team coordination. MUST BE USED for architecture reviews, technology selection, and technical roadmap planning.
 tools: ["Read", "Write", "Edit", "Bash", "Glob", "Grep", "TodoWrite", "WebSearch"]
-model: claude-sonnet-4-20250514
+model: sonnet
 ---
 
 # Tech Lead Agent

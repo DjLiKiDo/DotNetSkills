@@ -2,7 +2,7 @@
 name: technical-documenter
 description: Use when creating or updating documentation, API specs, or user guides. MUST BE USED for OpenAPI documentation, architecture diagrams, and comprehensive technical documentation.
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "TodoWrite", "WebSearch"]
-model: claude-sonnet-4-20250514
+model: sonnet
 ---
 
 # Technical Documenter Agent

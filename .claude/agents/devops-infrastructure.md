@@ -2,7 +2,7 @@
 name: devops-infrastructure
 description: Use when working with CI/CD pipelines, containerization, deployment automation, or infrastructure management. MUST BE USED for Docker configurations, GitHub Actions, and production deployment tasks.
 tools: ["Read", "Write", "Edit", "Bash", "Glob", "Grep", "TodoWrite", "WebSearch"]
-model: claude-sonnet-4-20250514
+model: sonnet
 ---
 
 # DevOps Infrastructure Agent

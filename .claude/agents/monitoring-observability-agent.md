@@ -2,7 +2,7 @@
 name: monitoring-observability-agent
 description: Use when implementing logging, metrics, alerts, or performance monitoring. MUST BE USED for Application Insights integration, health checks, and system observability features.
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "TodoWrite", "WebSearch"]
-model: claude-sonnet-4-20250514
+model: sonnet
 ---
 
 # Monitoring Observability Agent

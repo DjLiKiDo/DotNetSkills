@@ -2,7 +2,7 @@
 name: frontend-developer
 description: Use when working with user interfaces, client-side functionality, or frontend framework integration. MUST BE USED for React/Vue/Angular components, API integration, and user experience implementation.
 tools: ["Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep", "TodoWrite"]
-model: claude-sonnet-4-20250514
+model: sonnet
 ---
 
 # Frontend Developer Agent
