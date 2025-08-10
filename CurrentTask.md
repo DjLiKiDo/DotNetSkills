@@ -42,6 +42,14 @@ Recent Additions (2025-08-10):
 - **COMPLETED:** Exception taxonomy documentation added to README.md with comprehensive table mapping exceptions to HTTP status codes and error codes.
 - **COMPLETED:** Warning resolution completed - all nullable and async warnings resolved, build shows 0 warnings, 0 errors.
 - **COMPLETED:** Negative path test for AssignTask added (AssignTaskCommandHandlerTests.cs:68-89) verifying NotFoundException when task not found.
+- **COMPLETED (2025-08-10):** Correlation ID middleware implementation:
+  - Created `CorrelationIdMiddleware` that handles X-Correlation-Id headers in requests and responses
+  - Auto-generates correlation IDs when not provided by clients
+  - Integrates with ExceptionHandlingMiddleware to include correlation IDs in ProblemDetails
+  - Added comprehensive unit tests covering all scenarios (48 tests total, all passing)
+  - Updated middleware pipeline order: CorrelationId → ExceptionHandling → ...
+  - Added logging scope integration for structured logging
+  - Documented middleware pipeline and correlation ID functionality in README.md
 
 Status Verification (2025-08-10):
 - Build: ✅ Clean (0 warnings, 0 errors)
@@ -84,7 +92,7 @@ Immediate (ready for next work cycle):
 - Mapping context test for TaskAssignmentResponse (ensures context items populate names & assigner IDs when provided).
 
 Optional Quick Wins:
-- Add correlation ID middleware (include X-Correlation-Id header in responses & ProblemDetails).
+- ✅ **COMPLETED:** Add correlation ID middleware (include X-Correlation-Id header in responses & ProblemDetails).
 
 Medium-term:
 - Implement real domain event collection & dispatch in DomainEventDispatchBehavior.

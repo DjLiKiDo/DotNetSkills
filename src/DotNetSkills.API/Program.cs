@@ -27,6 +27,7 @@ var app = builder.Build();
 app.Services.ValidateConfiguration();
 
 // Configure the HTTP request pipeline.
+app.UseCorrelationId();
 app.UseExceptionHandling();
 
 var swaggerOptions = app.Services.GetRequiredService<IOptions<SwaggerOptions>>().Value;

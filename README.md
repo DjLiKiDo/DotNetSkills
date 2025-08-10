@@ -257,6 +257,48 @@ The system uses a multi-layered validation approach:
 
 The pipeline order ensures validation failures are caught early and consistently formatted.
 
+### HTTP Request Pipeline
+
+The API implements a carefully ordered middleware pipeline for optimal request processing:
+
+```
+Request → CorrelationId → ExceptionHandling → HTTPS → CORS → Authentication → Authorization → Endpoints
+```
+
+#### Correlation ID Middleware
+
+The `CorrelationIdMiddleware` provides request tracing capabilities:
+
+- **Auto-generation**: Creates a unique correlation ID if not provided in request headers
+- **Header Support**: Accepts incoming `X-Correlation-Id` header from clients
+- **Response Headers**: Always includes `X-Correlation-Id` in response headers
+- **Error Integration**: Correlation IDs are included in ProblemDetails for error responses
+- **Logging Context**: Adds correlation ID to logging scope for structured logging
+
+**Usage Example:**
+```http
+# Request with correlation ID
+GET /api/v1/users
+X-Correlation-Id: my-custom-trace-123
+
+# Response includes the same ID
+HTTP/1.1 200 OK
+X-Correlation-Id: my-custom-trace-123
+```
+
+**Error Response Integration:**
+```json
+{
+  "title": "Validation Failed",
+  "status": 400,
+  "extensions": {
+    "errorCode": "validation_failed",
+    "correlationId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "requestId": "0HMEQ9H6J4D1S:00000001",
+    "timestamp": "2025-01-10T15:30:00.000Z"
+  }
+}
+
 ## Development Guidelines
 
 The project follows strict coding principles documented in [DotNet Coding Principles](doc/DotNet%20Coding%20Principles.md), including:

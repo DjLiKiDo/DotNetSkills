@@ -68,6 +68,12 @@ public class ExceptionHandlingMiddleware
         // Add additional context information
         problemDetails.Extensions["requestId"] = context.TraceIdentifier;
         problemDetails.Extensions["timestamp"] = DateTime.UtcNow;
+        
+        // Add correlation ID if available
+        if (context.Items.TryGetValue(CorrelationIdMiddleware.CorrelationIdKey, out var correlationId))
+        {
+            problemDetails.Extensions["correlationId"] = correlationId;
+        }
 
         // Include stack trace in development
     if (_environment.IsDevelopment() && exception is not DomainException)
