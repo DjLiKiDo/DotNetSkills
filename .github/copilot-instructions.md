@@ -1,39 +1,59 @@
-## Copilot Instructions (Essential Playbook)
-Concise, project-specific rules so an AI agent can contribute productively. Read this first; consult full docs in: docs/, README.md, CLAUDE.md.
 
-### 1. Architecture Guardrails
-Dependency flow: API → Application → Domain; Infrastructure → Application → Domain. Inner layers never reference outer ones. Keep domain pure (no EF/ASP.NET). Use MediatR for all use cases (no direct service orchestration from endpoints).
+# DotNetSkills Copilot Instructions
 
-### 2. Project Layout (Bounded Contexts)
-Contexts: UserManagement, TeamCollaboration, ProjectManagement, TaskExecution present across Domain & Application. Mirror folder names when adding features. Place endpoints in API/Endpoints/<Context>. Application layer holds Commands/Queries, Validators, Mappings. Infrastructure supplies EF repositories + caching decorators + UoW.
+> Read this first. For details, see `docs/`, `README.md`, and `CLAUDE.md`.
 
-### 3. DI & Pipeline (Key Files)
-API: src/DotNetSkills.API/DependencyInjection.cs (AddApiServices) wires options (Swagger/Cors/Jwt), JSON config, ProblemDetails, auth (conditional JwtOptions.Enabled), health checks, current user service. Program.cs builds pipeline: UseExceptionHandling → Swagger (dev) → HTTPS → CORS → Auth (conditional) → Map*Endpoints.
-Application: DependencyInjection registers MediatR behaviors order: Logging → Validation → Performance → DomainEventDispatch (respect this sequence). AutoMapper & FluentValidation auto-discovered.
-Infrastructure: DependencyInjection sets DbContext (SQL Server + retry), registers repositories and wraps each with Cached* decorator, adds UnitOfWork + DomainEventDispatcher, memory cache.
+## Architecture & Layering
+- Clean Architecture: API → Application → Domain; Infrastructure → Application → Domain. Inner layers never reference outer ones.
+- Domain layer is pure C# (no EF/ASP.NET dependencies). All business logic lives in domain entities, value objects, and domain events.
+- Use MediatR for all use cases. Endpoints never orchestrate services directly.
 
-### 4. Endpoint Pattern
-Group endpoints per context: var g = app.MapGroup("/api/v1/<resource>").RequireAuthorization(); Add .WithSummary()/.Produces<>(). Handler signature: async (Command/Query dto, IMediator mediator) => await mediator.Send(dto). Do NOT inject DbContext or repositories into endpoints. Throw domain/validation exceptions; middleware + ProblemDetails handles translation.
+## Project Structure
+- Bounded contexts: `UserManagement`, `TeamCollaboration`, `ProjectManagement`, `TaskExecution` (mirrored in Domain & Application).
+- Endpoints live in `src/DotNetSkills.API/Endpoints/<Context>`. Application layer holds Commands/Queries, Validators, Mappings. Infrastructure provides EF repositories, caching decorators, and UnitOfWork.
 
-### 5. Domain Modeling Rules
-Use rich entities (methods enforce invariants) + strongly-typed IDs (record XxxId(Guid Value)). Value objects for constrained primitives (EmailAddress). Raise domain events inside aggregate methods; they are dispatched post handler via DomainEventDispatchBehavior. No public setters leaking invariants.
+## Dependency Injection & Pipeline
+- API: `DependencyInjection.cs` wires Swagger, CORS, JWT, ProblemDetails, health checks, current user service. `Program.cs` builds pipeline: ExceptionHandling → Swagger (dev) → HTTPS → CORS → Auth (conditional) → Map*Endpoints.
+- Application: `DependencyInjection.cs` registers MediatR behaviors in order: Logging → Validation → Performance → DomainEventDispatch. AutoMapper & FluentValidation are auto-discovered.
+- Infrastructure: `DependencyInjection.cs` sets up DbContext (SQL Server + retry), repositories, caching decorators, UnitOfWork, DomainEventDispatcher, memory cache.
 
-### 6. Repositories & Caching
-Application defines interfaces (no IQueryable exposure). Infrastructure implements concrete repo + cached decorator (e.g., UserRepository + CachedUserRepository). When adding a new aggregate: implement base repo, then wrap with Cached<Aggregate>Repository using IMemoryCache (5–10m sensible default) and register it in Infrastructure DI similarly to existing ones.
+## Endpoint Pattern
+- Group endpoints per context: `app.MapGroup("/api/v1/<resource>").RequireAuthorization()`.
+- Handler signature: `async (Command/Query dto, IMediator mediator) => await mediator.Send(dto)`.
+- Do NOT inject DbContext or repositories into endpoints. Throw domain/validation exceptions; middleware + ProblemDetails handles translation.
 
-### 7. Validation & Mapping
-Create FluentValidation validators beside commands. Rely on ValidationBehavior—handlers assume valid input. For mapping, add AutoMapper Profile per bounded context; endpoints never manually construct deep DTO graphs (delegate to Application result DTO).
+## Domain Modeling
+- Rich entities: methods enforce invariants, no public setters leaking invariants.
+- Strongly-typed IDs: `record XxxId(Guid Value)`.
+- Value objects for constrained primitives (e.g., `EmailAddress`).
+- Domain events raised inside aggregate methods, dispatched post-handler via DomainEventDispatchBehavior.
 
-### 8. Options & Configuration
-Add new option class under API/Configuration/Options + validator under Options/Validators; bind & validate in AddApiServices (ValidateOnStart). NEVER scatter configuration lookups in handlers—inject typed options or abstractions.
+## Repositories & Caching
+- Application defines interfaces (never expose IQueryable).
+- Infrastructure implements concrete repo + cached decorator (e.g., `UserRepository`, `CachedUserRepository`).
+- For new aggregates: implement base repo, wrap with cached decorator (IMemoryCache, 5–10m default), register in Infrastructure DI.
 
-### 9. Testing Focus
-Add unit tests per domain rule (Domain.UnitTests). Handler tests go in Application.UnitTests. Use builder/test data patterns (follow existing *Builder when added). Don’t spin up real DbContext in unit tests—mock repositories. Integration tests (future) will use Testcontainers; keep constructors friendly to DI.
+## Validation & Mapping
+- Create FluentValidation validators beside commands. ValidationBehavior ensures handlers receive valid input.
+- Add AutoMapper Profile per bounded context. Endpoints never manually construct deep DTO graphs—delegate to Application result DTO.
 
-### 10. Common Pitfalls to Avoid
-Do not: access ApplicationDbContext outside Infrastructure; bypass MediatR; return IQueryable; put business logic in handlers instead of entities; expose primitive IDs instead of strongly-typed; catch-and-swallow exceptions in endpoints.
+## Options & Configuration
+- Add new option class under `API/Configuration/Options` + validator under `Options/Validators`. Bind & validate in `AddApiServices` (ValidateOnStart).
+- NEVER scatter configuration lookups in handlers—inject typed options or abstractions.
 
-### 11. Typical Workflow (macOS zsh)
+## Testing
+- Unit tests per domain rule: `Domain.UnitTests`. Handler tests: `Application.UnitTests`. Use builder/test data patterns (see existing *Builder).
+- Do not spin up real DbContext in unit tests—mock repositories. Integration tests use Testcontainers.
+
+## Common Pitfalls
+- Never access ApplicationDbContext outside Infrastructure.
+- Never bypass MediatR.
+- Never return IQueryable from repositories.
+- Never put business logic in handlers instead of entities.
+- Never expose primitive IDs instead of strongly-typed.
+- Never catch-and-swallow exceptions in endpoints.
+
+## Typical Workflow (macOS zsh)
 ```bash
 dotnet restore && dotnet build
 dotnet ef database update --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
@@ -41,21 +61,25 @@ dotnet run --project src/DotNetSkills.API
 dotnet test
 ```
 
-### 12. Adding a New Feature (Checklist)
-1. Define domain entity/value object changes (Domain/<Context>/...).
-2. Add repository interface method (Application/<Context>/.../Abstractions or existing interface).
+## Adding a New Feature (Checklist)
+1. Define domain entity/value object changes (`Domain/<Context>/...`).
+2. Add repository interface method (`Application/<Context>/.../Abstractions` or existing interface).
 3. Create Command + Validator + Handler + Mapping (Application).
 4. Implement repository method + caching decorator registration (Infrastructure DI).
-5. Expose endpoint calling mediator (API/Endpoints/<Context>). Ensure auth policy if needed.
-6. Add tests (domain + handler). Run dotnet test.
+5. Expose endpoint calling mediator (`API/Endpoints/<Context>`). Ensure auth policy if needed.
+6. Add tests (domain + handler). Run `dotnet test`.
 
-### 13. Auth & Current User
-JWT optional (JwtOptions.Enabled). When enabled, use ICurrentUserService (registered in API) inside handlers instead of HttpContext access. Add new policies in API Authorization folder; reference by name in endpoints.
+## Auth & Current User
+- JWT optional (`JwtOptions.Enabled`). When enabled, use `ICurrentUserService` (registered in API) inside handlers instead of HttpContext access.
+- Add new policies in `API/Authorization`; reference by name in endpoints.
 
-### 14. Performance Practices
-Prefer projection queries (Select into DTO) for read models. Avoid N+1: use Include cautiously; consider AsNoTracking for reads. Keep async all the way—no .Result/.Wait().
+## Performance
+- Prefer projection queries (Select into DTO) for read models.
+- Avoid N+1: use Include cautiously; consider AsNoTracking for reads.
+- Keep async all the way—no `.Result`/`.Wait()`.
 
-### 15. When Unsure
-Search existing context folder for analogous feature; replicate structure & naming. Keep diff minimal and layered boundaries intact.
+## When Unsure
+- Search context folder for analogous feature; replicate structure & naming. Keep diffs minimal and layered boundaries intact.
 
-Refer to docs/DotNet Coding Principles.md & CLAUDE.md for extended explanations. Keep this file concise—update when conventions change.
+---
+For extended explanations, see `docs/DotNet Coding Principles.md` & `CLAUDE.md`. Update this file when conventions change.
