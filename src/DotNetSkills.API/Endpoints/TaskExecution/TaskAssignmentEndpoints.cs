@@ -219,15 +219,15 @@ public static class TaskAssignmentEndpoints
     /// <summary>
     /// Handles POST /api/v1/tasks/{id}/subtasks requests.
     /// </summary>
-    private static IResult CreateSubtask(
+    private static async Task<IResult> CreateSubtask(
         Guid id,
         CreateSubtaskRequest request,
         ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
         {
-
             var currentUserId = currentUserService.GetCurrentUserId();
             if (currentUserId == null)
                 return Results.Unauthorized();
@@ -243,12 +243,8 @@ public static class TaskAssignmentEndpoints
                 currentUserId
             );
 
-
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation using mediator.Send(command)
-            throw new NotImplementedException("CreateSubtask requires Infrastructure layer implementation");
+            var response = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.Created($"/api/v1/tasks/{response.Id}", response);
         }
         catch (ArgumentException ex)
         {
@@ -264,7 +260,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-    catch (Exception)
+        catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while creating the subtask",
@@ -276,8 +272,9 @@ public static class TaskAssignmentEndpoints
     /// <summary>
     /// Handles GET /api/v1/tasks/{id}/subtasks requests.
     /// </summary>
-    private static IResult GetSubtasks(
+    private static async Task<IResult> GetSubtasks(
         Guid id,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -285,21 +282,8 @@ public static class TaskAssignmentEndpoints
             var taskId = new TaskId(id);
             var query = new GetTaskSubtasksQuery(taskId);
 
-
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(query, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            var placeholderResponse = new TaskSubtasksResponse(
-                ParentTaskId: id,
-                ParentTaskTitle: "Sample Task",
-                Subtasks: [],
-                TotalSubtasks: 0,
-                CompletedSubtasks: 0,
-                CompletionPercentage: 0m
-            );
-
-            return Results.Ok(placeholderResponse);
+            var response = await mediator.Send(query, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {
@@ -308,7 +292,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Invalid Task ID");
         }
-    catch (Exception)
+        catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while retrieving subtasks",

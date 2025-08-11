@@ -171,12 +171,12 @@ public class ApiTestFixture : IAsyncLifetime
 **Effort:** 5-6 days  
 **Dependencies:** None
 
-1. **Complete Core Handlers** (3 days) [IN PROGRESS]
+1. **Complete Core Handlers** (3 days) [COMPLETED]
    - ✅ Implement ArchiveProjectCommandHandler
    - ✅ Complete CreateTaskInProjectCommandHandler
    - ✅ Implement UpdateTaskInProjectCommandHandler
    - ✅ Fix DeleteUserCommandHandler
-   - Wire MediatR to API endpoints
+   - ✅ Wire MediatR to API endpoints
 
 **COMPLETED ITEMS:**
 - ✅ PR #8 Review Remediation (DomainEventDispatcher refactor, UpdateSubtask endpoint fix, comprehensive testing)
@@ -184,6 +184,7 @@ public class ApiTestFixture : IAsyncLifetime
 - ✅ CreateTaskInProjectCommandHandler Implementation (August 11, 2025)
 - ✅ UpdateTaskInProjectCommandHandler Implementation (August 11, 2025)
 - ✅ DeleteUserCommandHandler Implementation (August 11, 2025)
+- ✅ MediatR API Endpoints Wiring (TaskAssignmentEndpoints - CreateSubtask, GetSubtasks) (August 11, 2025)
 
 2. **AutoMapper Configuration** (1 day)
    - Configure mapping profiles
