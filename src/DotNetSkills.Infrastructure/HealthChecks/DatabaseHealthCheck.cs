@@ -1,4 +1,6 @@
+
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using DotNetSkills.Infrastructure.Persistence;
 
 namespace DotNetSkills.Infrastructure.HealthChecks;
 

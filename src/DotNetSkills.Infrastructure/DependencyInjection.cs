@@ -136,7 +136,7 @@ public static class DependencyInjection
         // Health checks for database and external dependencies
         services.AddHealthChecks()
             .AddDbContextCheck<ApplicationDbContext>("Database")
-            .AddCheck<DatabaseHealthCheck>("Database-Custom")
+            .AddCheck<DatabaseHealthCheck>("Database-Performance")
             .AddCheck<CacheHealthCheck>("MemoryCache");
 
         // Logging enhancements for development

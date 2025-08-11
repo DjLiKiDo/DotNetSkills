@@ -1,3 +1,12 @@
+
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace DotNetSkills.Infrastructure.HealthChecks;
 
 /// <summary>
@@ -16,7 +25,7 @@ public class CacheHealthCheck : IHealthCheck
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public System.Threading.Tasks.Task<HealthCheckResult> CheckHealthAsync(
+    public Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
