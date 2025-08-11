@@ -70,6 +70,7 @@ global using DotNetSkills.Infrastructure.Repositories.ProjectManagement;
 global using DotNetSkills.Infrastructure.Repositories.TaskExecution;
 global using DotNetSkills.Infrastructure.Services.Events;
 global using DotNetSkills.Infrastructure.Common.Configuration;
+global using DotNetSkills.Infrastructure.Security;
 
 // Health checks and options
 global using Microsoft.Extensions.Diagnostics.HealthChecks;

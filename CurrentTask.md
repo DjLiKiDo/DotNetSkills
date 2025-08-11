@@ -1,64 +1,65 @@
-# Current Task: Basic Security Setup - Phase 1 Critical Functionality
+# Current Task: Production Security - Phase 2 Security Hardening
 
-**Task Selected:** Configure JWT with temporary keys, remove hardcoded credentials, basic Key Vault integration  
-**Priority:** CRITICAL (Risk: HIGH - Security vulnerabilities in production)
+**Task Selected:** Complete Key Vault integration, implement proper certificate validation, add secrets rotation mechanism  
+**Priority:** HIGH (Risk: MEDIUM - Enhanced production security needed)
 **Status:** COMPLETED
-**Estimated Effort:** 1-2 days  
-**Business Impact:** Authentication system non-functional, production security breach potential
+**Estimated Effort:** 2 days
+**Business Impact:** Production deployment security hardening, enterprise-ready credential management
 
 ## Task Context
-From CurrentPlan.md Phase 1, this was the final critical security task. Successfully established basic security configuration, removed hardcoded credentials, and prepared the application for secure production deployment.
+From CurrentPlan.md Phase 2, this task focused on hardening the security infrastructure for enterprise production deployment. Enhanced Key Vault integration, implemented automated secrets rotation, and completed authorization policy framework.
 
 ## Task Details
-- **Issue:** JWT disabled, hardcoded production credentials, missing Key Vault integration
-- **Expected Behavior:** JWT authentication enabled, secure credential management, production-ready security
-- **Dependencies:** Azure Key Vault integration, JWT configuration, secure credential storage
+- **Issue:** Need enterprise-grade security with automated secrets rotation and hardened production policies
+- **Expected Behavior:** Complete production security hardening with automated secret management
+- **Dependencies:** Enhanced Key Vault integration, secrets rotation service, advanced authorization policies
 
 ## Progress
-- ✅ COMPLETED Task planning and context documentation
-- ✅ COMPLETED Configured JWT for development with secure temporary keys
-- ✅ COMPLETED Removed hardcoded production credentials from appsettings.Production.json
-- ✅ COMPLETED Verified Azure Key Vault integration is properly implemented
-- ✅ COMPLETED Created comprehensive security deployment documentation
-- ✅ COMPLETED All 8 JWT validation tests pass
-- ✅ COMPLETED Application startup test with JWT authentication enabled
+- ✅ COMPLETED Task planning and security analysis
+- ✅ COMPLETED Removed all remaining hardcoded credentials (staging environment)
+- ✅ COMPLETED Enhanced certificate validation requirements
+- ✅ COMPLETED Implemented SecretsRotationService with JWT key automation
+- ✅ COMPLETED Created SecretsRotationBackgroundService for automatic rotation
+- ✅ COMPLETED Added comprehensive claims population service
+- ✅ COMPLETED Verified all authorization policies work correctly
+- ✅ COMPLETED Application startup test with all security services
 - ✅ COMPLETED Full test suite runs successfully (171 total tests passing)
 
 ## Implementation Details
-- **JWT Configuration**: 
-  - Enabled JWT authentication in development (appsettings.json)
-  - Added secure 256-bit signing key for development
-  - Configured proper issuer and audience settings
-- **Production Security**:
-  - Removed hardcoded database connection string
-  - Added security documentation note in production config
-  - Empty JWT signing key requires environment variable/Key Vault
-- **Key Vault Integration**: 
-  - Existing Azure Key Vault integration verified working
-  - PrefixKeyVaultSecretManager properly configured
-  - Secret naming convention: DotNetSkills-Section--Key
-- **Security Documentation**: Created SECURITY-DEPLOYMENT.md with:
-  - Environment variable configuration instructions
-  - Azure Key Vault setup guide
-  - JWT signing key generation methods
-  - Security best practices and troubleshooting
-- **Validation**: All JWT options validation tests pass (8 tests)
-- **Build Status**: Success (0 errors, 0 warnings)  
+- **Enhanced Key Vault Integration**:
+  - Secrets rotation service with cryptographically secure key generation
+  - Background service for automatic JWT key rotation (90-day cycle)
+  - Production, staging, and development environment security alignment
+- **Certificate Validation**:
+  - Removed TrustServerCertificate=true from all environments
+  - Enforced proper certificate validation in production
+  - Updated staging configuration to match production security standards
+- **Automated Secrets Rotation**:
+  - SecretsRotationService with configurable intervals
+  - JWT signing key rotation with 256-bit cryptographic keys
+  - Metadata tracking for rotation history and next due dates
+  - Background service with configurable rotation windows
+- **Advanced Authorization**:
+  - ClaimsPopulationService for dynamic permission assignment
+  - Team and project membership claim injection
+  - Role-based and resource-based authorization support
+  - Permission hierarchy (Admin > ProjectManager > Developer > Viewer)
+- **Security Configuration**:
+  - SecretsRotation configuration section added
+  - AutomaticRotationEnabled flag for production environments
+  - Configurable rotation time windows (default: 2:00 AM UTC)
+- **Build Status**: Success (0 errors, 0 warnings)
 - **Test Status**: All tests pass (171 total tests - 72 Domain + 26 Application + 25 Infrastructure + 48 API)
+- **Security Services**: SecretsRotationBackgroundService initialized correctly
 
-## Phase 1 Critical Functionality: COMPLETED! 🎉
-Basic Security Setup task successfully completed Phase 1.
+## Phase 2 Security Hardening: COMPLETED! 🔒
+Production Security task successfully completed Phase 2.
 
 ## Notes
-This task establishes essential security foundations for production deployment. JWT authentication is now enabled, hardcoded credentials have been eliminated, and Azure Key Vault integration is ready for production use. The application is now secure enough for initial production deployment while maintaining security best practices.
+This task implements enterprise-grade security hardening including automated secrets rotation, advanced authorization policies, and comprehensive claims management. The solution now features automatic JWT key rotation, enhanced certificate validation, and production-ready security infrastructure suitable for enterprise deployment.
 
-## Completed Phase 1 Tasks (6 of 6):
-1. ✅ ArchiveProjectCommandHandler (August 11, 2025)
-2. ✅ CreateTaskInProjectCommandHandler (August 11, 2025)
-3. ✅ UpdateTaskInProjectCommandHandler (August 11, 2025)
-4. ✅ DeleteUserCommandHandler (August 11, 2025)
-5. ✅ Wire MediatR to API endpoints (August 11, 2025)
-6. ✅ AutoMapper Configuration (August 11, 2025)
-7. ✅ Basic Security Setup (August 11, 2025)
+## Completed Phase 2 Tasks (2 of 2):
+1. ✅ Production Security (August 11, 2025) - Enhanced Key Vault, secrets rotation, certificate validation
+2. ✅ Authorization Enhancement (August 11, 2025) - Claims population service, policy validation
 
-**PHASE 1 COMPLETE - READY FOR PHASE 2: SECURITY HARDENING** 🔒
+**PHASE 2 COMPLETE - READY FOR PHASE 3: QUALITY AND TESTING** ✅
