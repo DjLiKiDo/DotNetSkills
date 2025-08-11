@@ -29,6 +29,21 @@ public class DomainEventDispatcher : IDomainEventDispatcher
     }
 
     /// <summary>
+    /// Creates a domain event notification wrapper for MediatR publishing.
+    /// </summary>
+    /// <param name="domainEvent">The domain event to wrap</param>
+    /// <returns>The wrapped domain event notification</returns>
+    /// <exception cref="InvalidOperationException">Thrown when wrapper creation fails</exception>
+    private object CreateDomainEventNotificationWrapper(IDomainEvent domainEvent)
+    {
+        var wrapperType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
+        var wrapper = Activator.CreateInstance(wrapperType, domainEvent);
+        if (wrapper is null)
+            throw new InvalidOperationException($"Failed to create notification wrapper for domain event type {domainEvent.GetType().Name}");
+        return wrapper;
+    }
+
+    /// <summary>
     /// Dispatches a single domain event to its registered handlers.
     /// </summary>
     /// <param name="domainEvent">The domain event to dispatch</param>
@@ -48,11 +63,10 @@ public class DomainEventDispatcher : IDomainEventDispatcher
         try
         {
             // Wrap the domain event in a notification wrapper for MediatR
-            var wrapperType = typeof(DomainEventNotification<>).MakeGenericType(typeof(TDomainEvent));
-            var wrapper = Activator.CreateInstance(wrapperType, domainEvent);
+            var wrapper = CreateDomainEventNotificationWrapper(domainEvent);
             
             // Publish the wrapped event via MediatR
-            await _mediator.Publish(wrapper!, cancellationToken);
+            await _mediator.Publish(wrapper, cancellationToken);
             
             _logger.LogDebug(
                 "Successfully dispatched domain event {EventType} with CorrelationId {CorrelationId}",
@@ -100,10 +114,9 @@ public class DomainEventDispatcher : IDomainEventDispatcher
             try
             {
                 // Wrap the domain event in a notification wrapper for MediatR
-                var wrapperType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
-                var wrapper = Activator.CreateInstance(wrapperType, domainEvent);
+                var wrapper = CreateDomainEventNotificationWrapper(domainEvent);
                 
-                await _mediator.Publish(wrapper!, cancellationToken);
+                await _mediator.Publish(wrapper, cancellationToken);
                 dispatchedCount++;
                 
                 _logger.LogDebug(
@@ -112,6 +125,14 @@ public class DomainEventDispatcher : IDomainEventDispatcher
                     domainEvent.CorrelationId,
                     dispatchedCount,
                     eventsList.Count);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("Failed to create notification wrapper"))
+            {
+                _logger.LogError(ex,
+                    "Domain event wrapper creation failed for {EventType}",
+                    domainEvent.GetType().Name);
+
+                failedEvents.Add((domainEvent, ex));
             }
             catch (Exception ex)
             {
@@ -164,11 +185,10 @@ public class DomainEventDispatcher : IDomainEventDispatcher
         try
         {
             // Wrap the domain event in a notification wrapper for MediatR
-            var wrapperType = typeof(DomainEventNotification<>).MakeGenericType(domainEvent.GetType());
-            var wrapper = Activator.CreateInstance(wrapperType, domainEvent);
+            var wrapper = CreateDomainEventNotificationWrapper(domainEvent);
             
             // Publish the wrapped event via MediatR
-            await _mediator.Publish(wrapper!, cancellationToken);
+            await _mediator.Publish(wrapper, cancellationToken);
             
             _logger.LogDebug(
                 "Successfully dispatched domain event {EventType} with CorrelationId {CorrelationId}",

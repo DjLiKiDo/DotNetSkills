@@ -1,5 +1,6 @@
 using DotNetSkills.API.Authorization;
 using DotNetSkills.Application.Common.Abstractions;
+using DotNetSkills.Application.Common.Exceptions;
 
 namespace DotNetSkills.API.Endpoints.TaskExecution;
 
@@ -319,11 +320,12 @@ public static class TaskAssignmentEndpoints
     /// <summary>
     /// Handles PUT /api/v1/tasks/{taskId}/subtasks/{subtaskId} requests.
     /// </summary>
-    private static IResult UpdateSubtask(
+    private static async Task<IResult> UpdateSubtask(
         Guid taskId,
         Guid subtaskId,
         UpdateSubtaskRequest request,
         ICurrentUserService currentUserService,
+        IMediator mediator,
         CancellationToken cancellationToken = default)
     {
         try
@@ -343,12 +345,8 @@ public static class TaskAssignmentEndpoints
                 currentUserId
             );
 
-
-            // TODO: Replace with MediatR.Send when implemented
-            // var response = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            throw new NotImplementedException("UpdateSubtask requires Infrastructure layer implementation");
+            var response = await mediator.Send(command, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {
@@ -357,6 +355,20 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Invalid Request");
         }
+        catch (NotFoundException ex)
+        {
+            return Results.Problem(
+                detail: ex.Message,
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Resource Not Found");
+        }
+        catch (BusinessRuleViolationException ex)
+        {
+            return Results.Problem(
+                detail: ex.Message,
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Business Rule Violation");
+        }
         catch (DomainException ex)
         {
             return Results.Problem(
@@ -364,7 +376,7 @@ public static class TaskAssignmentEndpoints
                 statusCode: StatusCodes.Status409Conflict,
                 title: "Business Rule Violation");
         }
-    catch (Exception)
+        catch (Exception)
         {
             return Results.Problem(
                 detail: "An error occurred while updating the subtask",
