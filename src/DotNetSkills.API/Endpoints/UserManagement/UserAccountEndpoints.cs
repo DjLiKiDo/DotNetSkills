@@ -1,3 +1,10 @@
+using DotNetSkills.Application.Common.Abstractions;
+using DotNetSkills.Application.UserManagement.Features.ActivateUser;
+using DotNetSkills.Application.UserManagement.Features.DeactivateUser;
+using DotNetSkills.Application.UserManagement.Features.UpdateUserRole;
+using DotNetSkills.Application.UserManagement.Features.GetUserTeamMemberships;
+using MediatR;
+
 namespace DotNetSkills.API.Endpoints.UserManagement;
 
 public static class UserAccountEndpoints
@@ -57,6 +64,8 @@ public static class UserAccountEndpoints
     }
 
     private static async Task<IResult> ActivateUserAsync(
+        IMediator mediator,
+        ICurrentUserService currentUserService,
         string id,
         CancellationToken cancellationToken = default)
     {
@@ -71,13 +80,8 @@ public static class UserAccountEndpoints
             }
 
             var command = new ActivateUserCommand(new UserId(userId));
-
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("ActivateUserAsync requires Application layer implementation");
+            var result = await mediator.Send(command, cancellationToken);
+            return Results.Ok(result);
         }
         catch (DomainException ex)
         {
@@ -99,14 +103,17 @@ public static class UserAccountEndpoints
         }
         catch (Exception ex)
         {
+            var currentUserId = currentUserService.GetCurrentUserId()?.Value.ToString() ?? "anonymous";
             return Results.Problem(
                 title: "An error occurred while activating the user",
-                detail: ex.Message,
+                detail: $"{ex.Message} (UserId: {currentUserId})",
                 statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 
     private static async Task<IResult> DeactivateUserAsync(
+        IMediator mediator,
+        ICurrentUserService currentUserService,
         string id,
         CancellationToken cancellationToken = default)
     {
@@ -120,16 +127,15 @@ public static class UserAccountEndpoints
                 }));
             }
 
-            var command = new DeactivateUserCommand(
-                new UserId(userId), 
-                new UserId(Guid.NewGuid())); // TODO: Replace with actual current user ID from authentication
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId is null)
+            {
+                return Results.Unauthorized();
+            }
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("DeactivateUserAsync requires Application layer implementation");
+            var command = new DeactivateUserCommand(new UserId(userId), currentUserId);
+            var result = await mediator.Send(command, cancellationToken);
+            return Results.Ok(result);
         }
         catch (DomainException ex)
         {
@@ -151,14 +157,17 @@ public static class UserAccountEndpoints
         }
         catch (Exception ex)
         {
+            var currentUserId = currentUserService.GetCurrentUserId()?.Value.ToString() ?? "anonymous";
             return Results.Problem(
                 title: "An error occurred while deactivating the user",
-                detail: ex.Message,
+                detail: $"{ex.Message} (UserId: {currentUserId})",
                 statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 
     private static async Task<IResult> UpdateUserRoleAsync(
+        IMediator mediator,
+        ICurrentUserService currentUserService,
         string id,
         UpdateUserRoleRequest request,
         CancellationToken cancellationToken = default)
@@ -173,17 +182,15 @@ public static class UserAccountEndpoints
                 }));
             }
 
-            var command = new UpdateUserRoleCommand(
-                new UserId(userId), 
-                request.Role,
-                new UserId(Guid.NewGuid())); // TODO: Replace with actual current user ID from authentication
+            var currentUserId = currentUserService.GetCurrentUserId();
+            if (currentUserId is null)
+            {
+                return Results.Unauthorized();
+            }
 
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(command, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("UpdateUserRoleAsync requires Application layer implementation");
+            var command = new UpdateUserRoleCommand(new UserId(userId), request.Role, currentUserId);
+            var result = await mediator.Send(command, cancellationToken);
+            return Results.Ok(result);
         }
         catch (DomainException ex)
         {
@@ -205,14 +212,17 @@ public static class UserAccountEndpoints
         }
         catch (Exception ex)
         {
+            var currentUserId = currentUserService.GetCurrentUserId()?.Value.ToString() ?? "anonymous";
             return Results.Problem(
                 title: "An error occurred while updating the user role",
-                detail: ex.Message,
+                detail: $"{ex.Message} (UserId: {currentUserId})",
                 statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 
     private static async Task<IResult> GetUserTeamMembershipsAsync(
+        IMediator mediator,
+        ICurrentUserService currentUserService,
         string id,
         CancellationToken cancellationToken = default)
     {
@@ -227,13 +237,8 @@ public static class UserAccountEndpoints
             }
 
             var query = new GetUserTeamMembershipsQuery(new UserId(userId));
-
-            // TODO: Replace with MediatR.Send when implemented
-            // var result = await mediator.Send(query, cancellationToken);
-
-            // Placeholder response - TODO: Replace with actual implementation
-            await Task.CompletedTask;
-            throw new NotImplementedException("GetUserTeamMembershipsAsync requires Application layer implementation");
+            var result = await mediator.Send(query, cancellationToken);
+            return Results.Ok(result);
         }
         catch (ArgumentException ex)
         {
@@ -246,9 +251,10 @@ public static class UserAccountEndpoints
         }
         catch (Exception ex)
         {
+            var currentUserId = currentUserService.GetCurrentUserId()?.Value.ToString() ?? "anonymous";
             return Results.Problem(
                 title: "An error occurred while retrieving user team memberships",
-                detail: ex.Message,
+                detail: $"{ex.Message} (UserId: {currentUserId})",
                 statusCode: StatusCodes.Status500InternalServerError);
         }
     }
