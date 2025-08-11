@@ -1,7 +1,6 @@
 ---
 name: marketing-analytics-agent
 description: Use when analyzing user behavior, creating marketing campaigns, or implementing analytics tracking. MUST BE USED for user engagement analysis, A/B testing, and conversion optimization.
-tools: ["Read", "Write", "Edit", "Bash", "Grep", "TodoWrite", "WebSearch"]
 model: sonnet
 ---
 

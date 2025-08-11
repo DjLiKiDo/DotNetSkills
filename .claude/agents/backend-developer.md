@@ -1,8 +1,8 @@
 ---
 name: backend-developer
 description: Use proactively when implementing server-side business logic, APIs, database operations, or working with .NET Core, Entity Framework, MediatR patterns. MUST BE USED for CQRS implementation, repository patterns, and Clean Architecture backend layers.
-tools: ["Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep", "LS", "TodoWrite"]
 model: sonnet
+color: blue
 ---
 
 # Backend Developer Agent

@@ -1,7 +1,6 @@
 ---
 name: ux-ui-designer
 description: Use when designing user interfaces, improving user experience, or creating design systems. MUST BE USED for wireframe creation, user flow design, and interface specification.
-tools: ["Read", "Write", "Edit", "Grep", "TodoWrite", "WebSearch"]
 model: sonnet
 ---
 

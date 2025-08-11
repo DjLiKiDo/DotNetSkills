@@ -1,7 +1,6 @@
 ---
 name: product-owner
 description: Use when defining product vision, prioritizing features, or making strategic decisions. MUST BE USED for roadmap planning, user story prioritization, and business value assessment.
-tools: ["Read", "Write", "Edit", "Grep", "TodoWrite", "WebSearch"]
 model: sonnet
 ---
 

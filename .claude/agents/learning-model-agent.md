@@ -1,7 +1,6 @@
 ---
 name: learning-model-agent
 description: Use when implementing AI/ML features, recommendation systems, or data analytics. MUST BE USED for machine learning model integration, predictive analytics, and intelligent automation features.
-tools: ["Read", "Write", "Edit", "Bash", "Grep", "TodoWrite", "WebSearch"]
 model: sonnet
 ---
 
