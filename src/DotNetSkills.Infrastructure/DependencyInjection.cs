@@ -1,5 +1,7 @@
 using FluentValidation;
 using DotNetSkills.Infrastructure.Security;
+using DotNetSkills.Infrastructure.HealthChecks;
+using DotNetSkills.Infrastructure.Common.Performance;
 
 namespace DotNetSkills.Infrastructure;
 
@@ -116,10 +118,26 @@ public static class DependencyInjection
 
         // Caching (memory cache for development, Redis for production)
         services.AddMemoryCache();
+
+        // Performance monitoring
+        services.Configure<PerformanceMonitoringOptions>(options =>
+        {
+            options.SlowOperationThreshold = TimeSpan.FromMilliseconds(1000);
+            options.EnableMetricRecording = true;
+            options.LogOperationStart = false;
+        });
+        services.AddSingleton<IPerformanceMonitoringService>(provider =>
+        {
+            var logger = provider.GetRequiredService<ILogger<PerformanceMonitoringService>>();
+            var options = provider.GetRequiredService<IOptions<PerformanceMonitoringOptions>>().Value;
+            return new PerformanceMonitoringService(logger, options);
+        });
         
         // Health checks for database and external dependencies
         services.AddHealthChecks()
-            .AddDbContextCheck<ApplicationDbContext>("Database");
+            .AddDbContextCheck<ApplicationDbContext>("Database")
+            .AddCheck<DatabaseHealthCheck>("Database-Custom")
+            .AddCheck<CacheHealthCheck>("MemoryCache");
 
         // Logging enhancements for development
         if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
