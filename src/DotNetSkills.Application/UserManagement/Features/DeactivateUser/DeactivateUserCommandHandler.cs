@@ -4,7 +4,7 @@ namespace DotNetSkills.Application.UserManagement.Features.DeactivateUser;
 /// Handler for DeactivateUserCommand that orchestrates user deactivation using domain methods.
 /// Implements CQRS pattern with MediatR and follows Clean Architecture principles.
 /// </summary>
-public class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserCommand, Result<UserResponse>>
+public class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserCommand, UserResponse>
 {
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -36,8 +36,8 @@ public class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserComman
     /// </summary>
     /// <param name="request">The deactivate user command.</param>
     /// <param name="cancellationToken">Cancellation token for async operations.</param>
-    /// <returns>Result containing UserResponse on success or error details on failure.</returns>
-    public async Task<Result<UserResponse>> Handle(DeactivateUserCommand request, CancellationToken cancellationToken)
+    /// <returns>UserResponse on success.</returns>
+    public async Task<UserResponse> Handle(DeactivateUserCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -51,7 +51,7 @@ public class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserComman
             if (user == null)
             {
                 _logger.LogWarning("User not found: {UserId}", request.UserId.Value);
-                return Result<UserResponse>.Failure("User not found");
+                throw new DomainException("User not found");
             }
 
             // Load the user making the deactivation for authorization validation
@@ -62,7 +62,7 @@ public class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserComman
             {
                 _logger.LogWarning("User performing the deactivation not found: {DeactivatedById}", 
                     request.DeactivatedById.Value);
-                return Result<UserResponse>.Failure("User performing the deactivation not found");
+                throw new DomainException("User performing the deactivation not found");
             }
 
             // Admin-only operation validation through domain BusinessRules
@@ -70,14 +70,14 @@ public class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserComman
             {
                 _logger.LogWarning("User {DeactivatedById} does not have sufficient privileges to deactivate user {UserId}", 
                     request.DeactivatedById.Value, request.UserId.Value);
-                return Result<UserResponse>.Failure("Insufficient privileges to deactivate this user");
+                throw new DomainException("Insufficient privileges to deactivate this user");
             }
 
             // Prevent users from deactivating themselves
             if (request.UserId == request.DeactivatedById)
             {
                 _logger.LogWarning("User {UserId} attempted to deactivate themselves", request.UserId.Value);
-                return Result<UserResponse>.Failure("Cannot deactivate your own account");
+                throw new DomainException("Cannot deactivate your own account");
             }
 
             // Additional admin-only check for deactivation (only admins can deactivate users)
@@ -85,7 +85,7 @@ public class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserComman
             {
                 _logger.LogWarning("Non-admin user {DeactivatedById} attempted to deactivate user {UserId}", 
                     request.DeactivatedById.Value, request.UserId.Value);
-                return Result<UserResponse>.Failure("Only administrators can deactivate user accounts");
+                throw new DomainException("Only administrators can deactivate user accounts");
             }
 
             // Check if user is already deactivated (idempotent operation)
@@ -96,7 +96,7 @@ public class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserComman
                 
                 // Map to response and return success (idempotent behavior)
                 var existingUserResponse = _mapper.Map<UserResponse>(user);
-                return Result<UserResponse>.Success(existingUserResponse);
+                return existingUserResponse;
             }
 
             // Use domain method to deactivate user - domain handles business rules and events
@@ -116,13 +116,16 @@ public class DeactivateUserCommandHandler : IRequestHandler<DeactivateUserComman
             // Domain events for user deactivation are raised by entity through domain event system
             // The deactivation itself doesn't raise domain events, but this could be extended
             // if business requirements change to include audit trails or notifications
-            return Result<UserResponse>.Success(userResponse);
+            return userResponse;
+        }
+        catch (DomainException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while deactivating user {UserId}", 
-                request.UserId.Value);
-            return Result<UserResponse>.Failure("An unexpected error occurred while deactivating the user");
+            _logger.LogError(ex, "Unexpected error occurred while deactivating user {UserId}", request.UserId.Value);
+            throw new ApplicationException("An unexpected error occurred while deactivating the user", ex);
         }
     }
 }

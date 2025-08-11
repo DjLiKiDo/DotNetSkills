@@ -64,32 +64,12 @@ public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
     }
 
     /// <summary>
-    /// Logs the response based on whether it's a successful or failed Result.
+    /// Logs successful request completion. Failure scenarios are logged in the catch block of Handle.
+    /// (Result wrapper pattern removed per ADR-0001; all failures now expressed via exceptions.)
     /// </summary>
-    /// <param name="requestName">The name of the request.</param>
-    /// <param name="correlationId">The correlation ID for tracking.</param>
-    /// <param name="response">The response to log.</param>
-    private void LogResponse(string requestName, Guid correlationId, TResponse response)
+    private void LogResponse(string requestName, Guid correlationId, TResponse _)
     {
-        // Check if response is a Result type and log accordingly
-        if (response is Result result)
-        {
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Request {RequestName} completed successfully with correlation ID {CorrelationId}", 
-                    requestName, correlationId);
-            }
-            else
-            {
-                _logger.LogWarning("Request {RequestName} completed with failure with correlation ID {CorrelationId}: {ErrorMessage}", 
-                    requestName, correlationId, result.Error);
-            }
-        }
-        else
-        {
-            // For non-Result responses, log as successful completion
-            _logger.LogInformation("Request {RequestName} completed successfully with correlation ID {CorrelationId}", 
-                requestName, correlationId);
-        }
+        _logger.LogInformation("Request {RequestName} completed successfully with correlation ID {CorrelationId}",
+            requestName, correlationId);
     }
 }

@@ -5,7 +5,7 @@ namespace DotNetSkills.Application.UserManagement.Features.CheckUserExists;
 /// Returns true if user exists, false otherwise.
 /// Used by FluentValidation validators for cross-entity validation and authorization checks.
 /// </summary>
-public class CheckUserExistsQueryHandler : IRequestHandler<CheckUserExistsQuery, Result<bool>>
+public class CheckUserExistsQueryHandler : IRequestHandler<CheckUserExistsQuery, bool>
 {
     private readonly IUserRepository _userRepository;
     private readonly ILogger<CheckUserExistsQueryHandler> _logger;
@@ -29,8 +29,8 @@ public class CheckUserExistsQueryHandler : IRequestHandler<CheckUserExistsQuery,
     /// </summary>
     /// <param name="request">The check user exists query.</param>
     /// <param name="cancellationToken">Cancellation token for async operations.</param>
-    /// <returns>Result containing boolean indicating if user exists (true) or not (false).</returns>
-    public async Task<Result<bool>> Handle(CheckUserExistsQuery request, CancellationToken cancellationToken)
+    /// <returns>True if user exists; false otherwise.</returns>
+    public async Task<bool> Handle(CheckUserExistsQuery request, CancellationToken cancellationToken)
     {
         try
         {
@@ -45,13 +45,12 @@ public class CheckUserExistsQueryHandler : IRequestHandler<CheckUserExistsQuery,
             _logger.LogInformation("User existence check result for {UserId}: Exists={Exists}",
                 request.UserId.Value, userExists);
 
-            return Result<bool>.Success(userExists);
+            return userExists;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while checking user existence: {UserId}",
-                request.UserId.Value);
-            return Result<bool>.Failure("An unexpected error occurred while checking user existence");
+            _logger.LogError(ex, "Unexpected error occurred while checking user existence: {UserId}", request.UserId.Value);
+            throw new ApplicationException("An unexpected error occurred while checking user existence", ex);
         }
     }
 }

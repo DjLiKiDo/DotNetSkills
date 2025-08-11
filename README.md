@@ -257,6 +257,37 @@ The system uses a multi-layered validation approach:
 
 The pipeline order ensures validation failures are caught early and consistently formatted.
 
+#### Application Layer Contract (ADR-0001)
+
+The Application layer now uses an **exception-only contract** for signaling failures (see `docs/adr/0001-result-handling-decision.md`). The previously used `Result` / `Result<T>` wrapper pattern has been deprecated and SHOULD NOT be used in new code. All `IRequest` implementations return their successful DTO/primitive directly:
+
+```csharp
+// Before (deprecated)
+public sealed record CreateUserCommand(...) : IRequest<Result<UserResponse>>;
+
+// After (current contract)
+public sealed record CreateUserCommand(...) : IRequest<UserResponse>;
+
+// Handler excerpt
+public async Task<UserResponse> Handle(CreateUserCommand request, CancellationToken ct)
+{
+   // Throw for failures
+   if (!emailIsUnique)
+      throw new DomainException("Email already exists");
+
+   return new UserResponse(...); // Success path
+}
+```
+
+Guidelines:
+1. Validation failures are surfaced as `FluentValidation.ValidationException` (thrown by the pipeline behavior before the handler runs).
+2. Domain rule or invariant violations throw `DomainException` (inside aggregates or handler guards).
+3. Cross-cutting / orchestration issues throw a dedicated `ApplicationException` (or derive from `ApplicationExceptionBase`).
+4. Handlers MUST NOT return null for successes (use nullable return types only when absence is a legitimate, documented outcome, e.g., `UserResponse?`).
+5. Endpoints rely on global exception middleware to translate exceptions to consistent ProblemDetails responses—DO NOT catch and convert to ad‑hoc error objects in handlers.
+
+Migration Impact: Legacy handlers using `Result` were refactored; the `Result` / `Result<T>` utilities and related extension methods have been fully removed (see ADR-0001). New contributions MUST NOT reintroduce wrapper result patterns.
+
 ### HTTP Request Pipeline
 
 The API implements a carefully ordered middleware pipeline for optimal request processing:
@@ -301,7 +332,7 @@ X-Correlation-Id: my-custom-trace-123
 
 ## Development Guidelines
 
-The project follows strict coding principles documented in [DotNet Coding Principles](doc/DotNet%20Coding%20Principles.md), including:
+The project follows strict coding principles documented in [DotNet Coding Principles](docs/DotNet%20Coding%20Principles.md), including:
 
 - **SOLID Principles**: Single responsibility, open/closed, Liskov substitution, interface segregation, and dependency inversion
 - **Clean Architecture**: Proper layer separation with dependency inversion
@@ -310,9 +341,10 @@ The project follows strict coding principles documented in [DotNet Coding Princi
 
 ## Documentation
 
-- [Product Requirements Document](doc/prd.md) - Complete specifications and business requirements
+- [Product Requirements Document](docs/prd.md) - Complete specifications and business requirements
 - [Implementation Plan](plan/feature-dotnetskills-mvp-1.md) - Detailed development roadmap
-- [DotNet Coding Principles](doc/DotNet%20Coding%20Principles.md) - Project-specific coding standards
+- [DotNet Coding Principles](docs/DotNet%20Coding%20Principles.md) - Project-specific coding standards
+- [Architecture Decision Records](docs/adr) - Key architectural decisions (see ADR-0001 for error handling contract)
 
 ## Roadmap
 

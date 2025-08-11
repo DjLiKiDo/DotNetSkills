@@ -4,7 +4,7 @@ namespace DotNetSkills.Application.UserManagement.Features.UpdateUser;
 /// Handler for UpdateUserCommand that orchestrates user profile updates using domain methods.
 /// Implements CQRS pattern with MediatR and follows Clean Architecture principles.
 /// </summary>
-public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Result<UserResponse>>
+public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, UserResponse>
 {
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -35,8 +35,8 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Resul
     /// </summary>
     /// <param name="request">The update user command.</param>
     /// <param name="cancellationToken">Cancellation token for async operations.</param>
-    /// <returns>Result containing UserResponse on success or error details on failure.</returns>
-    public async Task<Result<UserResponse>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
+    /// <returns>UserResponse on success.</returns>
+    public async Task<UserResponse> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -50,21 +50,11 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Resul
             if (user == null)
             {
                 _logger.LogWarning("User not found: {UserId}", request.UserId.Value);
-                return Result<UserResponse>.Failure("User not found");
+                throw new DomainException("User not found");
             }
 
             // Create EmailAddress value object from string input
-            EmailAddress emailAddress;
-            try
-            {
-                emailAddress = new EmailAddress(request.Email);
-            }
-            catch (ArgumentException ex)
-            {
-                _logger.LogWarning("Invalid email address provided: {Email}. Error: {Error}", 
-                    request.Email, ex.Message);
-                return Result<UserResponse>.Failure($"Invalid email address: {ex.Message}");
-            }
+            EmailAddress emailAddress = new EmailAddress(request.Email);
 
             // Check email uniqueness if email is being changed
             if (user.Email.Value != request.Email)
@@ -74,23 +64,13 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Resul
 
                 if (existingUser != null && existingUser.Id != user.Id)
                 {
-                    _logger.LogWarning("Email address {Email} is already in use by another user", 
-                        request.Email);
-                    return Result<UserResponse>.Failure("Email address is already in use");
+                    _logger.LogWarning("Email address {Email} is already in use by another user", request.Email);
+                    throw new DomainException("Email address is already in use");
                 }
             }
 
             // Use domain method to update profile - domain enforces business rules
-            try
-            {
-                user.UpdateProfile(request.Name, emailAddress);
-            }
-            catch (ArgumentException ex)
-            {
-                _logger.LogWarning("Invalid profile data for user {UserId}: {Error}", 
-                    request.UserId.Value, ex.Message);
-                return Result<UserResponse>.Failure($"Invalid profile data: {ex.Message}");
-            }
+            user.UpdateProfile(request.Name, emailAddress);
 
             // Update user in repository and save changes with transaction management
             _userRepository.Update(user);
@@ -103,13 +83,21 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Resul
                 request.UserId.Value);
 
             // Domain events are dispatched automatically through DomainEventDispatchBehavior
-            return Result<UserResponse>.Success(userResponse);
+            return userResponse;
+        }
+        catch (DomainException)
+        {
+            throw;
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Invalid argument while updating user {UserId}", request.UserId.Value);
+            throw new DomainException(ex.Message, ex);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating user {UserId}", 
-                request.UserId.Value);
-            return Result<UserResponse>.Failure("An unexpected error occurred while updating the user");
+            _logger.LogError(ex, "Unexpected error occurred while updating user {UserId}", request.UserId.Value);
+            throw new ApplicationException("An unexpected error occurred while updating the user", ex);
         }
     }
 }

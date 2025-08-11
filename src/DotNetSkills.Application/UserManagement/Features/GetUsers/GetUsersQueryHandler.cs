@@ -4,7 +4,7 @@ namespace DotNetSkills.Application.UserManagement.Features.GetUsers;
 /// Handler for GetUsersQuery that retrieves paginated users with filtering and search capabilities.
 /// Supports role filtering, status filtering, and case-insensitive search by name and email.
 /// </summary>
-public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, Result<PagedUserResponse>>
+public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, PagedUserResponse>
 {
     private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
@@ -32,8 +32,8 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, Result<PagedU
     /// </summary>
     /// <param name="request">The get users query with pagination and filtering parameters.</param>
     /// <param name="cancellationToken">Cancellation token for async operations.</param>
-    /// <returns>Result containing PagedUserResponse with users and pagination metadata.</returns>
-    public async Task<Result<PagedUserResponse>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
+    /// <returns>PagedUserResponse with users and pagination metadata.</returns>
+    public async Task<PagedUserResponse> Handle(GetUsersQuery request, CancellationToken cancellationToken)
     {
         try
         {
@@ -44,13 +44,13 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, Result<PagedU
             if (request.Page <= 0)
             {
                 _logger.LogWarning("Invalid page number: {Page}", request.Page);
-                return Result<PagedUserResponse>.Failure("Page number must be greater than 0");
+                throw new DomainException("Page number must be greater than 0");
             }
 
             if (request.PageSize <= 0 || request.PageSize > 100)
             {
                 _logger.LogWarning("Invalid page size: {PageSize}", request.PageSize);
-                return Result<PagedUserResponse>.Failure("Page size must be between 1 and 100");
+                throw new DomainException("Page size must be between 1 and 100");
             }
 
             // Get paginated users from repository with filtering
@@ -76,12 +76,16 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, Result<PagedU
             _logger.LogInformation("Successfully retrieved {Count} users out of {TotalCount} total users for page {Page}",
                 userResponses.Count, totalCount, request.Page);
 
-            return Result<PagedUserResponse>.Success(pagedResponse);
+            return pagedResponse;
+        }
+        catch (DomainException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error occurred while retrieving users with pagination");
-            return Result<PagedUserResponse>.Failure("An unexpected error occurred while retrieving users");
+            throw new ApplicationException("An unexpected error occurred while retrieving users", ex);
         }
     }
 }

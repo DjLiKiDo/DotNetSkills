@@ -150,16 +150,8 @@ public static class UserEndpoints
             var query = new GetUsersQuery(page, pageSize, search, role, status);
 
             // Send query through MediatR
-            var result = await mediator.Send(query);
-
-            return result.IsSuccess 
-                ? Results.Ok(result.Value) 
-                : Results.BadRequest(new ProblemDetails
-                {
-                    Title = "Query Failed",
-                    Detail = result.Error,
-                    Status = StatusCodes.Status400BadRequest
-                });
+            var response = await mediator.Send(query);
+            return Results.Ok(response);
         }
         catch (ArgumentException ex)
         {
@@ -201,19 +193,17 @@ public static class UserEndpoints
             var query = new GetUserByIdQuery(new UserId(id));
 
             // Send query through MediatR
-            var result = await mediator.Send(query);
-
-            if (!result.IsSuccess)
+            var user = await mediator.Send(query);
+            if (user is null)
             {
                 return Results.NotFound(new ProblemDetails
                 {
                     Title = "User Not Found",
-                    Detail = result.Error,
+                    Detail = $"User with ID '{id}' was not found",
                     Status = StatusCodes.Status404NotFound
                 });
             }
-
-            return Results.Ok(result.Value);
+            return Results.Ok(user);
         }
         catch (ArgumentException ex)
         {
@@ -255,19 +245,8 @@ public static class UserEndpoints
             var command = request.ToCommand();
 
             // Send command through MediatR
-            var result = await mediator.Send(command);
-
-            if (!result.IsSuccess)
-            {
-                return Results.BadRequest(new ProblemDetails
-                {
-                    Title = "User Creation Failed",
-                    Detail = result.Error,
-                    Status = StatusCodes.Status400BadRequest
-                });
-            }
-
-            return Results.Created($"/api/v1/users/{result.Value!.Id}", result.Value);
+            var created = await mediator.Send(command);
+            return Results.Created($"/api/v1/users/{created.Id}", created);
         }
         catch (ArgumentException ex)
         {
@@ -319,19 +298,8 @@ public static class UserEndpoints
             var command = request.ToCommand(new UserId(id));
 
             // Send command through MediatR
-            var result = await mediator.Send(command);
-
-            if (!result.IsSuccess)
-            {
-                return Results.BadRequest(new ProblemDetails
-                {
-                    Title = "User Update Failed",
-                    Detail = result.Error,
-                    Status = StatusCodes.Status400BadRequest
-                });
-            }
-
-            return Results.Ok(result.Value);
+            var updated = await mediator.Send(command);
+            return Results.Ok(updated);
         }
         catch (ArgumentException ex)
         {
@@ -382,10 +350,7 @@ public static class UserEndpoints
             var command = new DeleteUserCommand(new UserId(id));
 
             // Send command through MediatR
-            var result = await mediator.Send(command);
-
-            // Since DeleteUserCommand returns UserResponse directly, not Result<UserResponse>
-            // we treat successful execution as success
+            await mediator.Send(command);
             return Results.NoContent();
         }
         catch (ArgumentException ex)

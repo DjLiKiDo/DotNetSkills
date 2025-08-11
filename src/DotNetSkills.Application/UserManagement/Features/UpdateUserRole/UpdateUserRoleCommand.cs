@@ -10,4 +10,4 @@ namespace DotNetSkills.Application.UserManagement.Features.UpdateUserRole;
 public record UpdateUserRoleCommand(
     UserId UserId,
     UserRole Role,
-    UserId ChangedById) : IRequest<Result<UserResponse>>;
+    UserId ChangedById) : IRequest<UserResponse>;

@@ -5,4 +5,4 @@ namespace DotNetSkills.Application.UserManagement.Features.GetUser;
 /// Returns null if the user is not found, wrapped in a Result pattern.
 /// </summary>
 /// <param name="UserId">The unique identifier of the user to retrieve.</param>
-public record GetUserByIdQuery(UserId UserId) : IRequest<Result<UserResponse?>>;
+public record GetUserByIdQuery(UserId UserId) : IRequest<UserResponse?>;

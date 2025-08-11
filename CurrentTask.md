@@ -1,189 +1,113 @@
-## 1. Key Discussion Points & Decisions
+## Current Task: Architectural Decision – Result<T> Consistency Strategy
 
-- Exception taxonomy: Introduced ApplicationExceptionBase with NotFoundException (404), BusinessRuleViolationException (409), ValidationException (400).
-- Centralized handling: ExceptionHandlingMiddleware maps Application + Domain + FluentValidation + generic errors to ProblemDetails.
-- Validation strategy: Pipeline ValidationBehavior executes early (after Logging, before Performance). Uses FluentValidation; on failure currently returns Result failure or throws FluentValidation.ValidationException for non-Result responses.
-- Repository pattern: Kept synchronous Add/Update; persistence via UnitOfWork.SaveChangesAsync only.
-- Strongly-typed IDs: Use nullable checks (id is not null) instead of .HasValue; consistent messaging (NotFoundException(entity, key)).
-- Mapping fixes: SubtaskResponse now includes UpdatedAt, IsAssigned etc.; handlers aligned.
-- Domain vs application: DomainException remains for invariant violations; Application exceptions for workflow/resource concerns.
-- Chosen status codes: Validation mapped to 400 (not 422) for consistency with other client errors.
-- **Domain Events Architecture**: Full domain event collection and dispatch system implemented:
-  - **IDomainEventCollectionService**: Thread-safe aggregate tracking using AsyncLocal
-  - **DomainEventDispatchBehavior**: Dispatches events after successful command execution
-  - **IAggregateRoot**: Non-generic interface for polymorphic aggregate handling
-  - **DomainEventNotification<T>**: Wrapper for Clean Architecture compliance
-  - **Integration**: Repository operations register modified aggregates automatically
+Date: 2025-08-11
+Status: In Progress (Decision Captured – Implementation Pending)
 
-## 2. Current Status
+### 1. Context
 
-Completed:
-- ValidationBehavior implemented and ordered: Logging → Validation → Performance → DomainEventDispatch.
-- Behavior ordering corrected in Application DependencyInjection.
-- ExceptionHandlingMiddleware operational with new mappings.
-- Unit tests added:
-  - Middleware mapping tests (NotFound 404, BusinessRule 409, Validation 400, Domain 400).
-  - AssignTaskCommandHandler happy path test (verifies Update + SaveChanges).
-  - AssignTaskCommandHandler negative path test (task not found → NotFoundException).
-- AssignTask handler refactored to new patterns.
-- AutoMapper configuration stabilized (all profile configuration tests passing):
-  - Removed duplicate IEnumerable<object> -> List<object> map from base profile; centralized in SharedValueObjectMappingProfile.
-  - Added SharedValueObjectMappingProfile for strongly-typed IDs & value objects to eliminate DuplicateTypeMapConfigurationException.
-  - Added ConstructUsing mappings for record DTOs (TaskAssignmentResponse, TeamMembershipResponse) to satisfy positional constructors.
-  - Adjusted Task & User mappings to rely on constructor projections and ignore member mapping after construction.
+The Application layer currently exhibits a mixed error-handling approach:
+- Some handlers (legacy/earlier) return plain DTO / void and signal failures via typed exceptions.
+- ValidationBehavior supports two flows: (a) throwing FluentValidation.ValidationException, (b) creating failure Result/Result<T>.
+- Middleware (ExceptionHandlingMiddleware) already centralizes exception → ProblemDetails translation with taxonomy (NotFound, BusinessRuleViolation, Validation, Domain, generic 500).
 
-In place:
-- Result / Result<T> pattern (used by behaviors).
-- Mapping profiles auto-registered.
+This dual model increases cognitive overhead and creates ambiguity for contributors (When do I return Result? When do I throw?). We need a single, explicit architectural stance before expanding features further.
 
-Recent Additions (2025-08-10):
-- Integration test for invalid task creation (POST /api/v1/tasks) now passing (400 ValidationProblemDetails) using WebApplicationFactory + FakePolicyEvaluator.
-- Adjusted TaskEndpoints: removed broad catch for CreateTask to let ValidationException bubble.
-- ExceptionHandlingMiddleware now surfaces validation errors under extensions.errors to ensure consistent JSON shape.
-- Added standardized extensions.errorCode for all mapped exceptions; middleware & unit tests updated and passing.
-- AutoMapper refactor (see above) with green test verification.
-- Nullable warnings (Infrastructure ProjectRepository.cs CS8601) resolved by adding null-coalescing and defensive checks; build now free of those specific warnings.
-- **COMPLETED:** CS1998 warning removed from TaskAssignmentEndpoints by converting UpdateSubtask method from async to synchronous (removed unnecessary async/await).
-- Added TaskAssignmentMappingTests validating context-based population of AssignedUserName / AssignedByUser fields.
-- **COMPLETED:** Exception taxonomy documentation added to README.md with comprehensive table mapping exceptions to HTTP status codes and error codes.
-- **COMPLETED:** Warning resolution completed - all nullable and async warnings resolved, build shows 0 warnings, 0 errors.
-- **COMPLETED:** Negative path test for AssignTask added (AssignTaskCommandHandlerTests.cs:68-89) verifying NotFoundException when task not found.
-- **COMPLETED (2025-08-10):** Correlation ID middleware implementation:
-  - Created `CorrelationIdMiddleware` that handles X-Correlation-Id headers in requests and responses
-  - Auto-generates correlation IDs when not provided by clients
-  - Integrates with ExceptionHandlingMiddleware to include correlation IDs in ProblemDetails
-  - Added comprehensive unit tests covering all scenarios (48 tests total, all passing)
-  - Updated middleware pipeline order: CorrelationId → ExceptionHandling → ...
-- **COMPLETED (2025-08-10):** Domain Event Collection & Dispatch System:
-  - **IDomainEventCollectionService**: Interface and implementation for tracking modified aggregates during request lifecycle
-  - **DomainEventCollectionService**: Thread-safe implementation using AsyncLocal<HashSet<IAggregateRoot>>
-  - **IAggregateRoot**: Non-generic interface enabling polymorphic handling of different aggregate root types
-  - **AggregateRoot<TId>**: Updated to implement IAggregateRoot with GetId() and GetTypeName() methods
-  - **DomainEventDispatchBehavior**: Complete MediatR pipeline behavior implementation replacing placeholder
-  - **UnitOfWork**: Simplified to focus on data persistence, delegates event handling to behavior
-  - **BaseRepository**: Updated to register modified aggregates on Add/Update operations
-  - **DomainEventNotification<T>**: Wrapper class bridging IDomainEvent to INotification for Clean Architecture compliance
-  - **DomainEventDispatcher**: Uses reflection to create generic notification wrappers for MediatR dispatching
-  - **TaskAssignedDomainEventHandler**: Example event handler demonstrating end-to-end functionality
-  - **Comprehensive Testing**: 160 tests total, all passing with full coverage of domain event infrastructure
-  - **Clean Architecture Compliance**: Maintains dependency rules while enabling cross-aggregate communication
-  - **Thread Safety**: AsyncLocal ensures proper isolation of aggregate tracking per request context
-  - Added logging scope integration for structured logging
-  - Documented middleware pipeline and correlation ID functionality in README.md
+### 2. Options Considered
 
-Status Verification (2025-08-10):
-- Build: ✅ Clean (0 warnings, 0 errors)
-- Tests: ✅ All 141 tests passing across all projects
-- Code Quality: ✅ No remaining warnings or async issues
+| # | Option | Summary | Pros | Cons | Effort |
+|---|--------|---------|------|------|--------|
+| 1 | Exceptions Only | All handlers return DTO; failures always throw typed exceptions | Simplest pipeline; leverages existing middleware; low migration cost | Exceptions for expected failures (validation/business) | Low |
+| 2 | Result Everywhere | All handlers return Result/Result<T> | Explicit success/failure; avoids exceptions for expected cases | Boilerplate in endpoints; need translation to HTTP; refactor all handlers | High |
+| 3 | Hybrid (Commands=Result, Queries=DTO) | Split by intent (state change vs read) | Semantic clarity; fewer changes to queries | Two mental models remain; complexity in behaviors | Medium |
+| 4 | Internal Result, External Exceptions | Handlers use Result, behavior converts to exceptions | Encapsulates pattern; consistent external contract | Indirection; added complexity without current need | High |
+| 5 | DU Library (ErrorOr/OneOf) | Strongly typed union for success/failure | Rich modeling; fewer runtime surprises | Adds dependency; overkill now | High |
 
-Pending (not yet implemented):
-- Additional regression / coverage (subtask flags, domain event dispatch verification).
-- Correlation ID enrichment (optional future).
-- (AutoMapper follow-ups) Add contextual mapping tests for TaskAssignmentResponse with context.Items (AssignedUserName / AssignedByUserId) to lock behavior.
+### 3. Evaluation (Qualitative)
 
-## 3. Important Context for Continuation
+| Criterion | 1 Exc | 2 Result | 3 Hybrid | 4 Internal DU | 5 External DU |
+|-----------|-------|----------|----------|---------------|---------------|
+| Simplicity | High | Low | Medium | Low | Low |
+| Migration Cost | Minimal | High | Medium | High | High |
+| Alignment w/ Existing Middleware | Strong | Weak (needs adapters) | Medium | Strong | Medium |
+| Boilerplate Risk | Low | High | Medium | Medium | Medium |
+| Team Cognitive Load | Low | Medium | Medium | High | High |
+| Extensibility (Future CQRS/Event sourcing) | Adequate | Adequate | Adequate | Adequate | Adequate |
+| Test Ergonomics | Good (Assert.Throws) | Good (pattern match) | Mixed | Mixed | Mixed |
 
-- ValidationBehavior short-circuits before PerformanceBehavior; failing requests will not appear in performance metrics.
-- ValidationBehavior currently mixes two approaches: returns failed Result for handlers returning Result/Result<T>; throws FluentValidation.ValidationException for other responses.
-- ExceptionHandlingMiddleware formats ApplicationExceptionBase using ErrorCode → Title (snake_case to Title Case).
-- Domain events dispatch behavior is currently a placeholder (no actual event collection logic yet).
-- All repository Update/Add calls are synchronous; do not introduce async variants unless globally adopted.
-- Tests rely on Moq, AutoMapper real profiles, and direct handler invocation (no full pipeline simulation yet).
+### 4. Decision
 
-## 4. Pending Items / Next Steps
+Adopt Option 1: Exceptions Only as the standard for the Application layer.
 
-Recently Completed (2025-08-10):
- - ✅ (Done) Add errorCode to ProblemDetails.Extensions["errorCode"] for all mapped exceptions.
- - ✅ (Done) Resolve AutoMapper duplicate type map & record constructor failures (now green).
- - ✅ **Warning Resolution COMPLETED:**
-   - Fix nullable warnings in repositories (add null checks or null-forgiving operator where safe).
-   - Convert any blocking .Result / .Wait() test usages to await.
-   - Remove async keyword from methods with no awaits or add awaited operations.
- - ✅ **Documentation COMPLETED:**
-   - Add exception taxonomy table (Exception → HTTP Status → ErrorCode).
-   - Describe pipeline ordering rationale.
-   - Note 400 for validation (decision + client impact).
-   - State repository sync design reasons (simplicity, UoW flush boundary).
- - ✅ **Additional Unit Tests COMPLETED:**
-   - Negative path for AssignTask (task not found → NotFoundException).
+### 5. Rationale
+1. Existing robust ExceptionHandlingMiddleware + taxonomy already invested; leveraging sunk cost.
+2. Lowest friction for contributors; aligns with Minimal API + ProblemDetails expectations.
+3. Performance impact of using exceptions for validation/business rule failures is negligible compared to I/O (DB/network) in current architecture.
+4. Simplifies pipeline behaviors: ValidationBehavior will always throw on failure (no dual path), reducing branching complexity.
+5. Avoids premature abstraction; Result<T> can still be introduced narrowly later if a use case genuinely benefits (e.g., batch operations returning partial successes).
 
-Immediate (ready for next work cycle):
-- Validation failure surface test via mediator (optional).
-- Mapping context test for TaskAssignmentResponse (ensures context items populate names & assigner IDs when provided).
+### 6. Non-Goals
+- Do NOT introduce a discriminated-union library now.
+- Do NOT refactor domain entities (they already throw DomainException for invariant breaches – remains valid).
+- Do NOT wrap all exceptions into Result retroactively.
 
-Optional Quick Wins:
-- ✅ **COMPLETED:** Add correlation ID middleware (include X-Correlation-Id header in responses & ProblemDetails).
+### 7. Impacted Components
+- ValidationBehavior: remove CreateValidationResult pathway and Result branching.
+- Existing handlers (if any) returning Result/Result<T>: normalize return type to direct DTO / primitive.
+- Tests asserting Result failures: convert to Assert.Throws<SpecificException>().
+- Documentation: update guidelines to reflect exceptions-only policy.
 
-Medium-term:
-- Implement real domain event collection & dispatch in DomainEventDispatchBehavior.
-- Broaden handler tests (UnassignTask, UpdateTaskStatus).
-- Add projections / caching coverage tests.
-- Introduce Result<T> consistency (decide whether to migrate all handlers or stick to exceptions).
+### 8. Risks & Mitigations
+| Risk | Mitigation |
+|------|------------|
+| Overuse of generic Exception in new code | Enforce use of specific ApplicationExceptionBase descendants in reviews |
+| Future need for composable functional error flows | Introduce localized Result adapter later without global mandate |
+| Silent reintroduction of Result by newcomers | Add ADR + CONTRIBUTING note + optional Roslyn analyzer (deferred) |
 
-Future enhancements:
-- Correlation + tracing (Activity / W3C TraceContext).
-- Structured ProblemDetails error codes reference doc.
-- PerformanceBehavior metrics export (e.g., OpenTelemetry).
+### 9. Migration Plan (Phased)
+1. Code Audit: Identify handlers returning Result / Result<T> (grep: "Result<" in Application layer).
+2. Refactor ValidationBehavior: delete Result-return branch; always throw FluentValidation.ValidationException.
+3. Update handlers: replace `return Result<T>.Success(obj)` with `return obj;` and throw for failures.
+4. Adjust tests: remove assertions over result.IsSuccess; use exception assertions.
+5. Docs: Add ADR file (docs/adr/000X-result-handling-decision.md) summarizing this section.
+6. Update README / Coding Principles with a short rule: "Handlers throw typed exceptions; they do not return Result<T>".
+7. (Optional) Add TODO for analyzer to flag new Result usage in Application.
 
-## 5. Relevant Code Snippets
+### 10. Acceptance Criteria
+- No handlers in Application return Result / Result<T>.
+- ValidationBehavior contains a single failure path (throw).
+- All tests green post-refactor.
+- ADR committed & referenced in README.
 
-ValidationBehavior ordering (DependencyInjection):
-```csharp
-cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(PerformanceBehavior<,>));
-cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(DomainEventDispatchBehavior<,>));
-```
+### 11. Deferred Items
+- Analyzer enforcement (deferred until need arises).
+- Partial-success bulk operations pattern (no current use case).
 
-ValidationBehavior core decision:
-```csharp
-if (failures.Count != 0)
-    return CreateValidationResult<TResponse>(failures);
-```
-
-ExceptionHandlingMiddleware mapping excerpt:
-```csharp
-exception switch
-{
-  ApplicationExceptionBase appEx => new ProblemDetails { Status = appEx.StatusCode, Title = FormatTitle(appEx.ErrorCode), Detail = appEx.Message },
-  DomainException domainEx => new ProblemDetails { Status = 400, Title = "Domain Rule Violation", Detail = domainEx.Message },
-  FluentValidation.ValidationException valEx => CreateValidationProblemDetails(valEx, context.Request.Path),
-  _ => new ProblemDetails { Status = 500, Title = "Internal Server Error" }
-};
-```
-
-AssignTask handler (core flow):
-```csharp
-var task = await _taskRepository.GetByIdAsync(request.TaskId, ct) ?? throw new NotFoundException("Task", request.TaskId);
-var assignee = await _userRepository.GetByIdAsync(request.AssignedUserId, ct) ?? throw new NotFoundException("User", request.AssignedUserId);
-var assigner = await _userRepository.GetByIdAsync(request.AssignedByUserId, ct) ?? throw new NotFoundException("User", request.AssignedByUserId);
-task.AssignTo(assignee, assigner);
-_taskRepository.Update(task);
-await _unitOfWork.SaveChangesAsync(ct);
-```
-
-Middleware tests added (file):
-ExceptionHandlingMiddlewareTests.cs
-
-Handler test added (file):
-AssignTaskCommandHandlerTests.cs
-
-## 6. Documentation / Resource Links
-
-Internal:
-- ValidationBehavior.cs
-- ExceptionHandlingMiddleware.cs
-- `src/DotNetSkills.Application/Common/Exceptions/*`
-- `docs/DotNet Coding Principles.md`
-- **README.md (✅ UPDATED with comprehensive exception handling documentation - lines 221-258)**
-- DependencyInjection.cs
-
-External References:
-- FluentValidation: https://docs.fluentvalidation.net
-- RFC 7807 (ProblemDetails): https://datatracker.ietf.org/doc/html/rfc7807
-- Clean Architecture: https://blog.cleancoder.com/
-- DDD Reference: https://domainlanguage.com/ddd/
+### 12. Next Immediate Actions
+- Implement Steps 1–4 of Migration Plan.
 
 ---
+## Action Queue (To Execute Next)
+- [x] Step 1: Scan Application for Result usages. (Completed – all occurrences identified in UserManagement handlers)
+- [x] Step 2: Refactor ValidationBehavior. (Completed – now always throws ValidationException; no Result path)
+- [x] Step 3: Normalize handlers. (Completed – all UserManagement handlers return direct DTO/primitive)
+- [x] Step 4: Update tests. (Completed – no Result assertions remained; test suite green)
+- [x] Step 5: Draft ADR file. (Completed – ADR 0001 committed and updated after cleanup)
+- [x] Step 6: Update README excerpt. (Completed – exception-only contract section added & later updated after removal)
+- [x] Step 7: Remove legacy Result utilities (Result/Result<T>/extensions) – fully deleted, logging behavior simplified, validators & endpoints refactored.
+- [x] Step 8: Endpoint consistency audit – all API endpoints free of Result pattern (`IsSuccess`, `Value`, `Error`).
 
-This plan contains the required context and actionable next steps for seamless continuation.
+### Completion Summary (2025-08-11)
+All planned migration steps executed plus cleanup extensions (Result class removal, endpoint refactor, validator updates, LoggingBehavior simplification). Build and full test suite pass (160 tests). ADR updated to reflect completed removal. README reflects final state. Pending (Deferred): optional Roslyn analyzer to enforce rule.
+
+### Deferred / Follow-Up Tracking
+- Roslyn analyzer to forbid Result-like wrappers (deferred)
+- Specialized response type for future batch partial-success scenarios (not currently needed)
+
+### Verification Log
+- grep confirmed no `IRequest<Result`, `Result<`, `IsSuccess`, `result.Value`, `result.Error` usages in Application or API layers post-cleanup.
+- Build succeeded post-removal. Tests: 160 passed, 0 failed.
+
+
+---
+Document authored automatically based on architectural evaluation.
+

@@ -4,7 +4,7 @@ namespace DotNetSkills.Application.UserManagement.Features.GetUserTeamMembership
 /// Handler for GetUserTeamMembershipsQuery that retrieves all team memberships for a specific user.
 /// Returns team membership details including team information and user roles within teams.
 /// </summary>
-public class GetUserTeamMembershipsQueryHandler : IRequestHandler<GetUserTeamMembershipsQuery, Result<TeamMembershipListDto>>
+public class GetUserTeamMembershipsQueryHandler : IRequestHandler<GetUserTeamMembershipsQuery, TeamMembershipListDto>
 {
     private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
@@ -32,8 +32,8 @@ public class GetUserTeamMembershipsQueryHandler : IRequestHandler<GetUserTeamMem
     /// </summary>
     /// <param name="request">The get user team memberships query.</param>
     /// <param name="cancellationToken">Cancellation token for async operations.</param>
-    /// <returns>Result containing TeamMembershipListDto with user's team memberships.</returns>
-    public async Task<Result<TeamMembershipListDto>> Handle(GetUserTeamMembershipsQuery request, CancellationToken cancellationToken)
+    /// <returns>TeamMembershipListDto with user's team memberships.</returns>
+    public async Task<TeamMembershipListDto> Handle(GetUserTeamMembershipsQuery request, CancellationToken cancellationToken)
     {
         try
         {
@@ -46,7 +46,7 @@ public class GetUserTeamMembershipsQueryHandler : IRequestHandler<GetUserTeamMem
             if (user == null)
             {
                 _logger.LogWarning("User not found for team memberships query: {UserId}", request.UserId.Value);
-                return Result<TeamMembershipListDto>.Failure("User not found");
+                throw new DomainException("User not found");
             }
 
             // Map user team memberships to DTOs
@@ -56,13 +56,16 @@ public class GetUserTeamMembershipsQueryHandler : IRequestHandler<GetUserTeamMem
             _logger.LogInformation("Successfully retrieved {Count} team memberships for user: {UserId}",
                 teamMembershipListDto.TeamMemberships.Count, request.UserId.Value);
 
-            return Result<TeamMembershipListDto>.Success(teamMembershipListDto);
+            return teamMembershipListDto;
+        }
+        catch (DomainException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while retrieving team memberships for user {UserId}",
-                request.UserId.Value);
-            return Result<TeamMembershipListDto>.Failure("An unexpected error occurred while retrieving team memberships");
+            _logger.LogError(ex, "Unexpected error occurred while retrieving team memberships for user {UserId}", request.UserId.Value);
+            throw new ApplicationException("An unexpected error occurred while retrieving team memberships", ex);
         }
     }
 }
