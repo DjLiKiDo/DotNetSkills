@@ -5,7 +5,7 @@ namespace DotNetSkills.Application.UserManagement.Features.ValidateUserEmail;
 /// Returns true if email is available (unique), false if already taken.
 /// Used by FluentValidation validators for cross-entity validation.
 /// </summary>
-public class ValidateUserEmailQueryHandler : IRequestHandler<ValidateUserEmailQuery, Result<bool>>
+public class ValidateUserEmailQueryHandler : IRequestHandler<ValidateUserEmailQuery, bool>
 {
     private readonly IUserRepository _userRepository;
     private readonly ILogger<ValidateUserEmailQueryHandler> _logger;
@@ -29,8 +29,8 @@ public class ValidateUserEmailQueryHandler : IRequestHandler<ValidateUserEmailQu
     /// </summary>
     /// <param name="request">The validate user email query.</param>
     /// <param name="cancellationToken">Cancellation token for async operations.</param>
-    /// <returns>Result containing boolean indicating if email is available (true) or taken (false).</returns>
-    public async Task<Result<bool>> Handle(ValidateUserEmailQuery request, CancellationToken cancellationToken)
+    /// <returns>True if email is available; false if taken.</returns>
+    public async Task<bool> Handle(ValidateUserEmailQuery request, CancellationToken cancellationToken)
     {
         try
         {
@@ -41,21 +41,11 @@ public class ValidateUserEmailQueryHandler : IRequestHandler<ValidateUserEmailQu
             if (string.IsNullOrWhiteSpace(request.Email))
             {
                 _logger.LogWarning("Empty email provided for validation");
-                return Result<bool>.Failure("Email cannot be empty");
+                throw new DomainException("Email cannot be empty");
             }
 
             // Create EmailAddress value object from string
-            EmailAddress emailAddress;
-            try
-            {
-                emailAddress = new EmailAddress(request.Email);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning("Invalid email format provided: {Email}, Error: {Error}",
-                    request.Email, ex.Message);
-                return Result<bool>.Failure($"Invalid email format: {ex.Message}");
-            }
+            EmailAddress emailAddress = new EmailAddress(request.Email);
 
             // Check if email is already taken by another user
             var existingUser = await _userRepository.GetByEmailAsync(emailAddress, cancellationToken)
@@ -81,13 +71,21 @@ public class ValidateUserEmailQueryHandler : IRequestHandler<ValidateUserEmailQu
             _logger.LogInformation("Email validation result for {Email}: Available={Available}",
                 request.Email, isEmailAvailable);
 
-            return Result<bool>.Success(isEmailAvailable);
+            return isEmailAvailable;
+        }
+        catch (DomainException)
+        {
+            throw;
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Invalid argument for email validation: {Email}", request.Email);
+            throw new DomainException(ex.Message, ex);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while validating email uniqueness: {Email}",
-                request.Email);
-            return Result<bool>.Failure("An unexpected error occurred while validating email uniqueness");
+            _logger.LogError(ex, "Unexpected error occurred while validating email uniqueness: {Email}", request.Email);
+            throw new ApplicationException("An unexpected error occurred while validating email uniqueness", ex);
         }
     }
 }

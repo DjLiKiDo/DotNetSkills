@@ -79,4 +79,52 @@ public class ExceptionHandlingMiddlewareTests
             && ec is JsonElement je
             && je.GetString() == "validation_failed");
     }
+
+    [Fact]
+    public async Task ExceptionHandling_WithCorrelationId_IncludesInProblemDetails()
+    {
+        // Arrange
+        const string correlationId = "test-correlation-12345";
+        var exception = new DomainException("Test domain error");
+        var middleware = CreateMiddleware(exception, out var context);
+        
+        // Simulate correlation ID being set by CorrelationIdMiddleware
+        context.Items[CorrelationIdMiddleware.CorrelationIdKey] = correlationId;
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var problem = await JsonSerializer.DeserializeAsync<ProblemDetails>(context.Response.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        
+        problem.Should().NotBeNull();
+        problem!.Extensions.Should().ContainKey("correlationId");
+        
+        var correlationIdValue = problem.Extensions["correlationId"];
+        correlationIdValue.Should().BeOfType<JsonElement>();
+        
+        var correlationIdElement = (JsonElement)correlationIdValue;
+        correlationIdElement.GetString().Should().Be(correlationId);
+    }
+
+    [Fact]
+    public async Task ExceptionHandling_WithoutCorrelationId_DoesNotIncludeInProblemDetails()
+    {
+        // Arrange
+        var exception = new DomainException("Test domain error");
+        var middleware = CreateMiddleware(exception, out var context);
+        
+        // Do not set correlation ID in context items
+
+        // Act
+        await middleware.InvokeAsync(context);
+
+        // Assert
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        var problem = await JsonSerializer.DeserializeAsync<ProblemDetails>(context.Response.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        
+        problem.Should().NotBeNull();
+        problem!.Extensions.Should().NotContainKey("correlationId");
+    }
 }

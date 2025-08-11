@@ -12,7 +12,9 @@ public class TaskRepository : BaseRepository<DotNetSkills.Domain.TaskExecution.E
     /// Initializes a new instance of the TaskRepository class.
     /// </summary>
     /// <param name="context">The database context.</param>
-    public TaskRepository(ApplicationDbContext context) : base(context)
+    /// <param name="eventCollectionService">The domain event collection service.</param>
+    public TaskRepository(ApplicationDbContext context, IDomainEventCollectionService eventCollectionService) 
+        : base(context, eventCollectionService)
     {
     }
 

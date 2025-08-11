@@ -8,4 +8,4 @@ namespace DotNetSkills.Application.UserManagement.Features.DeactivateUser;
 /// <param name="DeactivatedById">The ID of the user performing the deactivation (must be an admin).</param>
 public record DeactivateUserCommand(
     UserId UserId,
-    UserId DeactivatedById) : IRequest<Result<UserResponse>>;
+    UserId DeactivatedById) : IRequest<UserResponse>;

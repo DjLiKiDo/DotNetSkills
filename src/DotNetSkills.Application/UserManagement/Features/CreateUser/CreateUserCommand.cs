@@ -8,4 +8,4 @@ public record CreateUserCommand(
     string Name,
     string Email,
     UserRole Role,
-    UserId? CreatedById = null) : IRequest<Result<UserResponse>>;
+    UserId? CreatedById = null) : IRequest<UserResponse>;

@@ -57,9 +57,8 @@ public class DeactivateUserCommandValidator : AbstractValidator<DeactivateUserCo
         try
         {
             var query = new CheckUserExistsQuery(userId);
-            var result = await _mediator.Send(query, cancellationToken).ConfigureAwait(false);
-
-            return result.IsSuccess && result.Value;
+            var exists = await _mediator.Send(query, cancellationToken).ConfigureAwait(false);
+            return exists;
         }
         catch (Exception)
         {

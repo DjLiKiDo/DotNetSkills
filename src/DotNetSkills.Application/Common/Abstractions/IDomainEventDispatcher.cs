@@ -1,3 +1,5 @@
+using Task = System.Threading.Tasks.Task;
+
 namespace DotNetSkills.Application.Common.Abstractions;
 
 /// <summary>
