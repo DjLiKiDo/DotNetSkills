@@ -218,9 +218,121 @@ dotnet test --collect:"XPlat Code Coverage"
 > [!NOTE]
 > This MVP version does not include user self-registration or password recovery features. All user creation is admin-only.
 
+## Exception Handling
+
+The API uses a standardized exception handling system with specific HTTP status codes and error formats:
+
+| Exception Type | HTTP Status | Error Code | Usage | Example |
+|---|---|---|---|---|
+| `NotFoundException` | 404 | `not_found` | Resource not found by ID | Task with ID 123 not found |
+| `BusinessRuleViolationException` | 409 | `business_rule_violation` | Domain business rule violations | Cannot assign task to inactive user |
+| `ValidationException` (Application) | 400 | `validation_error` | Application-level validation failures | Invalid email format |
+| `ValidationException` (FluentValidation) | 400 | `validation_error` | Request validation failures | Required field missing |
+| `DomainException` | 400 | `domain_rule_violation` | Domain invariant violations | Task priority cannot be null |
+| `ApplicationExceptionBase` (custom) | varies | custom | Application-specific errors | Custom error codes as needed |
+| Generic exceptions | 500 | `internal_server_error` | Unexpected errors | Database connection failed |
+
+### Error Response Format
+
+All errors return standardized ProblemDetails format with additional metadata:
+
+```json
+{
+  "title": "Not Found",
+  "detail": "Task with ID '123e4567-e89b-12d3-a456-426614174000' was not found",
+  "status": 404,
+  "extensions": {
+    "errorCode": "not_found"
+  }
+}
+```
+
+### Validation Pipeline
+
+The system uses a multi-layered validation approach:
+
+1. **Request Validation**: FluentValidation rules applied via `ValidationBehavior`  
+2. **Business Rules**: Domain entity validation during state changes
+3. **Application Rules**: Cross-cutting concerns in command/query handlers
+
+The pipeline order ensures validation failures are caught early and consistently formatted.
+
+#### Application Layer Contract (ADR-0001)
+
+The Application layer now uses an **exception-only contract** for signaling failures (see `docs/adr/0001-result-handling-decision.md`). The previously used `Result` / `Result<T>` wrapper pattern has been deprecated and SHOULD NOT be used in new code. All `IRequest` implementations return their successful DTO/primitive directly:
+
+```csharp
+// Before (deprecated)
+public sealed record CreateUserCommand(...) : IRequest<Result<UserResponse>>;
+
+// After (current contract)
+public sealed record CreateUserCommand(...) : IRequest<UserResponse>;
+
+// Handler excerpt
+public async Task<UserResponse> Handle(CreateUserCommand request, CancellationToken ct)
+{
+   // Throw for failures
+   if (!emailIsUnique)
+      throw new DomainException("Email already exists");
+
+   return new UserResponse(...); // Success path
+}
+```
+
+Guidelines:
+1. Validation failures are surfaced as `FluentValidation.ValidationException` (thrown by the pipeline behavior before the handler runs).
+2. Domain rule or invariant violations throw `DomainException` (inside aggregates or handler guards).
+3. Cross-cutting / orchestration issues throw a dedicated `ApplicationException` (or derive from `ApplicationExceptionBase`).
+4. Handlers MUST NOT return null for successes (use nullable return types only when absence is a legitimate, documented outcome, e.g., `UserResponse?`).
+5. Endpoints rely on global exception middleware to translate exceptions to consistent ProblemDetails responses—DO NOT catch and convert to ad‑hoc error objects in handlers.
+
+Migration Impact: Legacy handlers using `Result` were refactored; the `Result` / `Result<T>` utilities and related extension methods have been fully removed (see ADR-0001). New contributions MUST NOT reintroduce wrapper result patterns.
+
+### HTTP Request Pipeline
+
+The API implements a carefully ordered middleware pipeline for optimal request processing:
+
+```
+Request → CorrelationId → ExceptionHandling → HTTPS → CORS → Authentication → Authorization → Endpoints
+```
+
+#### Correlation ID Middleware
+
+The `CorrelationIdMiddleware` provides request tracing capabilities:
+
+- **Auto-generation**: Creates a unique correlation ID if not provided in request headers
+- **Header Support**: Accepts incoming `X-Correlation-Id` header from clients
+- **Response Headers**: Always includes `X-Correlation-Id` in response headers
+- **Error Integration**: Correlation IDs are included in ProblemDetails for error responses
+- **Logging Context**: Adds correlation ID to logging scope for structured logging
+
+**Usage Example:**
+```http
+# Request with correlation ID
+GET /api/v1/users
+X-Correlation-Id: my-custom-trace-123
+
+# Response includes the same ID
+HTTP/1.1 200 OK
+X-Correlation-Id: my-custom-trace-123
+```
+
+**Error Response Integration:**
+```json
+{
+  "title": "Validation Failed",
+  "status": 400,
+  "extensions": {
+    "errorCode": "validation_failed",
+    "correlationId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "requestId": "0HMEQ9H6J4D1S:00000001",
+    "timestamp": "2025-01-10T15:30:00.000Z"
+  }
+}
+
 ## Development Guidelines
 
-The project follows strict coding principles documented in [DotNet Coding Principles](doc/DotNet%20Coding%20Principles.md), including:
+The project follows strict coding principles documented in [DotNet Coding Principles](docs/DotNet%20Coding%20Principles.md), including:
 
 - **SOLID Principles**: Single responsibility, open/closed, Liskov substitution, interface segregation, and dependency inversion
 - **Clean Architecture**: Proper layer separation with dependency inversion
@@ -229,9 +341,10 @@ The project follows strict coding principles documented in [DotNet Coding Princi
 
 ## Documentation
 
-- [Product Requirements Document](doc/prd.md) - Complete specifications and business requirements
+- [Product Requirements Document](docs/prd.md) - Complete specifications and business requirements
 - [Implementation Plan](plan/feature-dotnetskills-mvp-1.md) - Detailed development roadmap
-- [DotNet Coding Principles](doc/DotNet%20Coding%20Principles.md) - Project-specific coding standards
+- [DotNet Coding Principles](docs/DotNet%20Coding%20Principles.md) - Project-specific coding standards
+- [Architecture Decision Records](docs/adr) - Key architectural decisions (see ADR-0001 for error handling contract)
 
 ## Roadmap
 

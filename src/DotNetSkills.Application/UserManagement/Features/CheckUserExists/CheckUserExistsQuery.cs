@@ -6,4 +6,4 @@ namespace DotNetSkills.Application.UserManagement.Features.CheckUserExists;
 /// Used by validators for cross-entity validation and authorization checks.
 /// </summary>
 /// <param name="UserId">The unique identifier of the user to check for existence.</param>
-public record CheckUserExistsQuery(UserId UserId) : IRequest<Result<bool>>;
+public record CheckUserExistsQuery(UserId UserId) : IRequest<bool>;

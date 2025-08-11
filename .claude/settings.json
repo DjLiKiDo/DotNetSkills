@@ -1,0 +1,209 @@
+{
+  "agents": {
+    "backend-developer": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep", "LS", "TodoWrite"],
+      "auto_use": {
+        "triggers": ["implement", "create API", "CQRS", "MediatR", "Entity Framework", "repository", "domain logic", "backend"],
+        "conditions": ["when working with .NET server-side code", "when implementing business logic", "when creating APIs"]
+      }
+    },
+    "critical-software-agent": {
+      "model": "claude-sonnet-4-20250514", 
+      "tools": ["Read", "Grep", "Glob", "LS", "Bash", "TodoWrite", "WebSearch"],
+      "auto_use": {
+        "triggers": ["review", "audit", "security", "performance", "refactor", "quality"],
+        "conditions": ["after significant code changes", "before releases", "when performance issues detected"]
+      }
+    },
+    "data-curator-manager": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "TodoWrite"],
+      "auto_use": {
+        "triggers": ["database", "migration", "GDPR", "data quality", "privacy", "schema"],
+        "conditions": ["when working with data models", "when privacy compliance needed"]
+      }
+    },
+    "devops-infrastructure": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep", "TodoWrite", "WebSearch"],
+      "auto_use": {
+        "triggers": ["deploy", "CI/CD", "Docker", "pipeline", "infrastructure", "GitHub Actions"],
+        "conditions": ["when deploying applications", "when configuring build processes"]
+      }
+    },
+    "frontend-developer": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "MultiEdit", "Bash", "Glob", "Grep", "TodoWrite"],
+      "auto_use": {
+        "triggers": ["UI", "frontend", "React", "Vue", "Angular", "component", "interface"],
+        "conditions": ["when working with user interfaces", "when implementing client-side features"]
+      }
+    },
+    "functional-analyst": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Grep", "Glob", "TodoWrite", "WebSearch"],
+      "auto_use": {
+        "triggers": ["requirements", "user story", "business rules", "specification", "analysis"],
+        "conditions": ["when gathering requirements", "when defining system specifications"]
+      }
+    },
+    "integration-agent": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "TodoWrite", "WebFetch"],
+      "auto_use": {
+        "triggers": ["API integration", "external service", "webhook", "synchronization", "third-party"],
+        "conditions": ["when connecting to external systems", "when implementing integrations"]
+      }
+    },
+    "learning-model-agent": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Bash", "Grep", "TodoWrite", "WebSearch"],
+      "auto_use": {
+        "triggers": ["ML", "AI", "machine learning", "recommendation", "analytics", "prediction"],
+        "conditions": ["when implementing AI features", "when working with data analysis"]
+      }
+    },
+    "legal-compliance-agent": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Grep", "Glob", "TodoWrite", "WebSearch"],
+      "auto_use": {
+        "triggers": ["GDPR", "compliance", "privacy", "legal", "security policy", "audit"],
+        "conditions": ["when privacy compliance needed", "when security policies required"]
+      }
+    },
+    "marketing-analytics-agent": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Bash", "Grep", "TodoWrite", "WebSearch"],
+      "auto_use": {
+        "triggers": ["analytics", "A/B test", "conversion", "user behavior", "marketing", "metrics"],
+        "conditions": ["when implementing tracking", "when analyzing user behavior"]
+      }
+    },
+    "monitoring-observability-agent": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Bash", "Grep", "TodoWrite", "WebSearch"],
+      "auto_use": {
+        "triggers": ["logging", "monitoring", "metrics", "alerts", "observability", "telemetry"],
+        "conditions": ["when implementing monitoring", "when setting up logging"]
+      }
+    },
+    "product-owner": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Grep", "TodoWrite", "WebSearch"],
+      "auto_use": {
+        "triggers": ["roadmap", "prioritize", "vision", "strategy", "backlog", "business value"],
+        "conditions": ["when making strategic decisions", "when prioritizing features"]
+      }
+    },
+    "qa-testing": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep", "TodoWrite"],
+      "auto_use": {
+        "triggers": ["test", "QA", "testing", "validation", "quality", "defect"],
+        "conditions": ["when implementing tests", "when validating functionality"]
+      }
+    },
+    "tech-lead": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep", "TodoWrite", "WebSearch"],
+      "auto_use": {
+        "triggers": ["architecture", "technical decision", "design", "leadership", "coordination"],
+        "conditions": ["when making architectural decisions", "when coordinating technical efforts"]
+      }
+    },
+    "technical-documenter": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "TodoWrite", "WebSearch"],
+      "auto_use": {
+        "triggers": ["documentation", "API docs", "manual", "guide", "diagram"],
+        "conditions": ["when creating documentation", "when updating technical guides"]
+      }
+    },
+    "ux-ui-designer": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Grep", "TodoWrite", "WebSearch"],
+      "auto_use": {
+        "triggers": ["design", "UX", "UI", "wireframe", "mockup", "user experience"],
+        "conditions": ["when designing interfaces", "when improving user experience"]
+      }
+    },
+    "user-assistant": {
+      "model": "claude-sonnet-4-20250514",
+      "tools": ["Read", "Write", "Edit", "Grep", "TodoWrite", "WebSearch"],
+      "auto_use": {
+        "triggers": ["support", "onboarding", "feedback", "user education", "help"],
+        "conditions": ["when providing user support", "when creating user guides"]
+      }
+    }
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "name": "format-code",
+        "command": "dotnet format --no-restore --verbosity quiet",
+        "description": "Format .NET code after edits",
+        "tools": ["Write", "Edit", "MultiEdit"],
+        "file_patterns": ["*.cs"]
+      },
+      {
+        "name": "build-check", 
+        "command": "dotnet build --no-restore --verbosity quiet",
+        "description": "Verify build after code changes",
+        "tools": ["Write", "Edit", "MultiEdit"],
+        "file_patterns": ["*.cs", "*.csproj"]
+      }
+    ],
+    "PostCommit": [
+      {
+        "name": "test-suite",
+        "command": "dotnet test --no-build --verbosity quiet",
+        "description": "Run tests after commit",
+        "agents": ["backend-developer", "qa-testing"]
+      }
+    ]
+  },
+  "environment": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_NOLOGO": "true",
+    "ASPNETCORE_ENVIRONMENT": "Development",
+    "ConnectionStrings__DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=DotNetSkillsDB;Trusted_Connection=true;MultipleActiveResultSets=true"
+  },
+  "coordination": {
+    "sequential_workflows": [
+      {
+        "name": "feature-development",
+        "agents": ["functional-analyst", "ux-ui-designer", "backend-developer", "frontend-developer", "qa-testing"],
+        "description": "Complete feature development pipeline"
+      },
+      {
+        "name": "security-review",
+        "agents": ["critical-software-agent", "legal-compliance-agent"],
+        "description": "Security and compliance validation"
+      },
+      {
+        "name": "deployment-pipeline", 
+        "agents": ["qa-testing", "devops-infrastructure", "monitoring-observability-agent"],
+        "description": "Testing, deployment, and monitoring setup"
+      }
+    ],
+    "parallel_execution": {
+      "development": ["backend-developer", "frontend-developer", "data-curator-manager"],
+      "quality_assurance": ["qa-testing", "critical-software-agent"],
+      "documentation": ["technical-documenter", "user-assistant"]
+    }
+  },
+  "quality_gates": {
+    "pre_commit": [
+      "dotnet build",
+      "dotnet test",
+      "dotnet format --verify-no-changes"
+    ],
+    "pre_release": [
+      "Security review by critical-software-agent",
+      "Compliance validation by legal-compliance-agent", 
+      "Performance validation by monitoring-observability-agent",
+      "Documentation completeness by technical-documenter"
+    ]
+  }
+}

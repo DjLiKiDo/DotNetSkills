@@ -2,12 +2,13 @@ namespace DotNetSkills.Infrastructure.Repositories.Common;
 
 /// <summary>
 /// Unit of Work implementation that coordinates changes across multiple repositories
-/// and manages database transactions with domain event dispatching.
+/// and manages database transactions.
+/// Domain events are handled by the DomainEventDispatchBehavior in the application layer.
 /// </summary>
 public class UnitOfWork : IUnitOfWork
 {
     private readonly ApplicationDbContext _context;
-    private readonly IDomainEventDispatcher _domainEventDispatcher;
+    private readonly IDomainEventCollectionService _eventCollectionService;
     private readonly ILogger<UnitOfWork> _logger;
 
     // Repository instances (lazy initialization)
@@ -24,15 +25,15 @@ public class UnitOfWork : IUnitOfWork
     /// Initializes a new instance of the UnitOfWork class.
     /// </summary>
     /// <param name="context">The database context.</param>
-    /// <param name="domainEventDispatcher">The domain event dispatcher.</param>
+    /// <param name="eventCollectionService">The domain event collection service.</param>
     /// <param name="logger">The logger instance.</param>
     public UnitOfWork(
         ApplicationDbContext context, 
-        IDomainEventDispatcher domainEventDispatcher,
+        IDomainEventCollectionService eventCollectionService,
         ILogger<UnitOfWork> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _domainEventDispatcher = domainEventDispatcher ?? throw new ArgumentNullException(nameof(domainEventDispatcher));
+        _eventCollectionService = eventCollectionService ?? throw new ArgumentNullException(nameof(eventCollectionService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -43,7 +44,7 @@ public class UnitOfWork : IUnitOfWork
     {
         get
         {
-            _users ??= new UserRepository(_context);
+            _users ??= new UserRepository(_context, _eventCollectionService);
             return _users;
         }
     }
@@ -55,7 +56,7 @@ public class UnitOfWork : IUnitOfWork
     {
         get
         {
-            _teams ??= new TeamRepository(_context);
+            _teams ??= new TeamRepository(_context, _eventCollectionService);
             return _teams;
         }
     }
@@ -67,7 +68,7 @@ public class UnitOfWork : IUnitOfWork
     {
         get
         {
-            _projects ??= new ProjectRepository(_context);
+            _projects ??= new ProjectRepository(_context, _eventCollectionService);
             return _projects;
         }
     }
@@ -79,7 +80,7 @@ public class UnitOfWork : IUnitOfWork
     {
         get
         {
-            _tasks ??= new TaskRepository(_context);
+            _tasks ??= new TaskRepository(_context, _eventCollectionService);
             return _tasks;
         }
     }
@@ -87,6 +88,7 @@ public class UnitOfWork : IUnitOfWork
     /// <summary>
     /// Saves all changes made in this unit of work to the underlying data store asynchronously.
     /// This method commits the current transaction and persists all pending changes.
+    /// Domain events are handled by the DomainEventDispatchBehavior in the application layer.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The number of entities that were affected by the save operation.</returns>
@@ -96,38 +98,10 @@ public class UnitOfWork : IUnitOfWork
         
         try
         {
-            // Collect domain events before saving changes
-            var domainEvents = _context.GetDomainEvents().ToList();
-            
-            if (domainEvents.Any())
-            {
-                _logger.LogDebug("Found {EventCount} domain events to dispatch", domainEvents.Count);
-            }
-
             // Save changes to the database
             var affectedRows = await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             
             _logger.LogDebug("SaveChanges completed successfully, affected {RowCount} rows", affectedRows);
-
-            // Dispatch domain events after successful save
-            if (domainEvents.Any())
-            {
-                _logger.LogDebug("Dispatching {EventCount} domain events", domainEvents.Count);
-                
-                try
-                {
-                    await _domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken);
-                    _logger.LogDebug("Domain events dispatched successfully");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error occurred while dispatching domain events");
-                    
-                    // Note: Domain event dispatch failures don't roll back the transaction
-                    // This is by design - the data changes should persist even if event handlers fail
-                    // Consider implementing a retry mechanism or dead letter queue for failed events
-                }
-            }
 
             return affectedRows;
         }

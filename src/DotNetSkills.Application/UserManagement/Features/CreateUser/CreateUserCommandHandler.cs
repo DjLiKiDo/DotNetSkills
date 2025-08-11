@@ -4,7 +4,7 @@ namespace DotNetSkills.Application.UserManagement.Features.CreateUser;
 /// Handler for CreateUserCommand that orchestrates user creation using domain factory methods.
 /// Implements CQRS pattern with MediatR and follows Clean Architecture principles.
 /// </summary>
-public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Result<UserResponse>>
+public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, UserResponse>
 {
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -35,8 +35,8 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
     /// </summary>
     /// <param name="request">The create user command.</param>
     /// <param name="cancellationToken">Cancellation token for async operations.</param>
-    /// <returns>Result containing UserResponse on success or error details on failure.</returns>
-    public async Task<Result<UserResponse>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
+    /// <returns>UserResponse on success.</returns>
+    public async Task<UserResponse> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -44,17 +44,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
                 request.Email, request.Role);
 
             // Create EmailAddress value object from string input
-            EmailAddress emailAddress;
-            try
-            {
-                emailAddress = new EmailAddress(request.Email);
-            }
-            catch (ArgumentException ex)
-            {
-                _logger.LogWarning("Invalid email address provided: {Email}. Error: {Error}", 
-                    request.Email, ex.Message);
-                return Result<UserResponse>.Failure($"Invalid email address: {ex.Message}");
-            }
+            EmailAddress emailAddress = new EmailAddress(request.Email);
 
             // Get creator user if specified for authorization validation
             User? createdByUser = null;
@@ -66,21 +56,12 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
                 if (createdByUser == null)
                 {
                     _logger.LogWarning("Creator user not found: {CreatedById}", request.CreatedById.Value);
-                    return Result<UserResponse>.Failure("Creator user not found");
+                    throw new DomainException("Creator user not found");
                 }
             }
 
             // Use domain factory method User.Create() with proper creator validation
-            User user;
-            try
-            {
-                user = User.Create(request.Name, emailAddress, request.Role, createdByUser);
-            }
-            catch (DomainException ex)
-            {
-                _logger.LogWarning("Domain validation failed during user creation: {Error}", ex.Message);
-                return Result<UserResponse>.Failure(ex.Message);
-            }
+            User user = User.Create(request.Name, emailAddress, request.Role, createdByUser);
 
             // Check email uniqueness using repository
             var existingUser = await _userRepository.GetByEmailAsync(emailAddress, cancellationToken)
@@ -89,7 +70,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
             if (existingUser != null)
             {
                 _logger.LogWarning("User with email {Email} already exists", request.Email);
-                return Result<UserResponse>.Failure("A user with this email address already exists");
+                throw new DomainException("A user with this email address already exists");
             }
 
             // Add user to repository and save changes with transaction management
@@ -103,13 +84,21 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
                 user.Id.Value, request.Email);
 
             // Domain events are dispatched automatically through DomainEventDispatchBehavior
-            return Result<UserResponse>.Success(userResponse);
+            return userResponse;
+        }
+        catch (DomainException)
+        {
+            throw;
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Invalid argument while creating user {Email}", request.Email);
+            throw new DomainException(ex.Message, ex);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while creating user with email {Email}", 
-                request.Email);
-            return Result<UserResponse>.Failure("An unexpected error occurred while creating the user");
+            _logger.LogError(ex, "Unexpected error occurred while creating user with email {Email}", request.Email);
+            throw new ApplicationException("An unexpected error occurred while creating the user", ex);
         }
     }
 }

@@ -14,7 +14,7 @@ public record GetUsersQuery(
     int PageSize = 20,
     string? SearchTerm = null,
     UserRole? Role = null,
-    UserStatus? Status = null) : IRequest<Result<PagedUserResponse>>
+    UserStatus? Status = null) : IRequest<PagedUserResponse>
 {
     /// <summary>
     /// Gets the number of items to skip for pagination.

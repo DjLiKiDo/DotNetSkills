@@ -7,4 +7,4 @@ namespace DotNetSkills.Application.UserManagement.Features.ValidateUserEmail;
 /// </summary>
 /// <param name="Email">The email address to validate for uniqueness.</param>
 /// <param name="ExcludeUserId">Optional user ID to exclude from the uniqueness check (for updates).</param>
-public record ValidateUserEmailQuery(string Email, UserId? ExcludeUserId = null) : IRequest<Result<bool>>;
+public record ValidateUserEmailQuery(string Email, UserId? ExcludeUserId = null) : IRequest<bool>;

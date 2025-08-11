@@ -12,4 +12,4 @@ public record UpdateUserCommand(
     UserId UserId,
     string Name,
     string Email,
-    UserId? UpdatedById = null) : IRequest<Result<UserResponse>>;
+    UserId? UpdatedById = null) : IRequest<UserResponse>;

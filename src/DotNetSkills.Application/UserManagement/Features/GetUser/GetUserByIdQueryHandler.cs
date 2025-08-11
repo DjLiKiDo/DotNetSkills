@@ -4,7 +4,7 @@ namespace DotNetSkills.Application.UserManagement.Features.GetUser;
 /// Handler for GetUserByIdQuery that retrieves a single user by their unique identifier.
 /// Returns null wrapped in Result pattern when user is not found.
 /// </summary>
-public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Result<UserResponse?>>
+public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, UserResponse?>
 {
     private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
@@ -32,8 +32,8 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Result<
     /// </summary>
     /// <param name="request">The get user by ID query.</param>
     /// <param name="cancellationToken">Cancellation token for async operations.</param>
-    /// <returns>Result containing UserResponse or null if user not found.</returns>
-    public async Task<Result<UserResponse?>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
+    /// <returns>UserResponse or null if user not found.</returns>
+    public async Task<UserResponse?> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
     {
         try
         {
@@ -46,7 +46,7 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Result<
             if (user == null)
             {
                 _logger.LogInformation("User not found: {UserId}", request.UserId.Value);
-                return Result<UserResponse?>.Success(null);
+                return null; // 404 decided at endpoint layer if needed
             }
 
             // Map entity to response DTO using AutoMapper
@@ -54,13 +54,13 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Result<
 
             _logger.LogInformation("Successfully retrieved user: {UserId}", request.UserId.Value);
 
-            return Result<UserResponse?>.Success(userResponse);
+            return userResponse;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error occurred while retrieving user {UserId}", 
                 request.UserId.Value);
-            return Result<UserResponse?>.Failure("An unexpected error occurred while retrieving the user");
+            throw new ApplicationException("An unexpected error occurred while retrieving the user", ex);
         }
     }
 }

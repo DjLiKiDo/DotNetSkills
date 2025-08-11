@@ -4,7 +4,7 @@ namespace DotNetSkills.Application.UserManagement.Features.UpdateUserRole;
 /// Handler for UpdateUserRoleCommand that orchestrates user role changes using domain methods.
 /// Implements CQRS pattern with MediatR and follows Clean Architecture principles.
 /// </summary>
-public class UpdateUserRoleCommandHandler : IRequestHandler<UpdateUserRoleCommand, Result<UserResponse>>
+public class UpdateUserRoleCommandHandler : IRequestHandler<UpdateUserRoleCommand, UserResponse>
 {
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -35,8 +35,8 @@ public class UpdateUserRoleCommandHandler : IRequestHandler<UpdateUserRoleComman
     /// </summary>
     /// <param name="request">The update user role command.</param>
     /// <param name="cancellationToken">Cancellation token for async operations.</param>
-    /// <returns>Result containing UserResponse on success or error details on failure.</returns>
-    public async Task<Result<UserResponse>> Handle(UpdateUserRoleCommand request, CancellationToken cancellationToken)
+    /// <returns>UserResponse on success.</returns>
+    public async Task<UserResponse> Handle(UpdateUserRoleCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -50,7 +50,7 @@ public class UpdateUserRoleCommandHandler : IRequestHandler<UpdateUserRoleComman
             if (user == null)
             {
                 _logger.LogWarning("User not found: {UserId}", request.UserId.Value);
-                return Result<UserResponse>.Failure("User not found");
+                throw new DomainException("User not found");
             }
 
             // Load the user making the change for authorization validation
@@ -59,22 +59,12 @@ public class UpdateUserRoleCommandHandler : IRequestHandler<UpdateUserRoleComman
 
             if (changedByUser == null)
             {
-                _logger.LogWarning("User performing the change not found: {ChangedById}", 
-                    request.ChangedById.Value);
-                return Result<UserResponse>.Failure("User performing the change not found");
+                _logger.LogWarning("User performing the change not found: {ChangedById}", request.ChangedById.Value);
+                throw new DomainException("User performing the change not found");
             }
 
             // Use domain method to change role - domain enforces business rules and authorization
-            try
-            {
-                user.ChangeRole(request.Role, changedByUser);
-            }
-            catch (DomainException ex)
-            {
-                _logger.LogWarning("Domain validation failed during role change for user {UserId}: {Error}", 
-                    request.UserId.Value, ex.Message);
-                return Result<UserResponse>.Failure(ex.Message);
-            }
+            user.ChangeRole(request.Role, changedByUser);
 
             // Update user in repository and save changes with transaction management
             _userRepository.Update(user);
@@ -87,13 +77,16 @@ public class UpdateUserRoleCommandHandler : IRequestHandler<UpdateUserRoleComman
                 request.UserId.Value, request.Role);
 
             // Domain events are dispatched automatically through DomainEventDispatchBehavior
-            return Result<UserResponse>.Success(userResponse);
+            return userResponse;
+        }
+        catch (DomainException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while updating user {UserId} role", 
-                request.UserId.Value);
-            return Result<UserResponse>.Failure("An unexpected error occurred while updating the user role");
+            _logger.LogError(ex, "Unexpected error occurred while updating user {UserId} role", request.UserId.Value);
+            throw new ApplicationException("An unexpected error occurred while updating the user role", ex);
         }
     }
 }

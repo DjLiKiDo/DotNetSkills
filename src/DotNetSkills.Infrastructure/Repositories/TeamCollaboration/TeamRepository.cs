@@ -22,7 +22,8 @@ public class TeamRepository : BaseRepository<Team, TeamId>, ITeamRepository
     /// Initializes a new instance of the TeamRepository class.
     /// </summary>
     /// <param name="context">The database context.</param>
-    public TeamRepository(ApplicationDbContext context) : base(context)
+    public TeamRepository(ApplicationDbContext context, IDomainEventCollectionService eventCollectionService) 
+        : base(context, eventCollectionService)
     {
     }
 

@@ -74,10 +74,8 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
         {
             // Use existing query to check email uniqueness
             var query = new ValidateUserEmailQuery(email);
-            var result = await _mediator.Send(query, cancellationToken).ConfigureAwait(false);
-
-            // Return true if email is available (query returns true for available emails)
-            return result.IsSuccess && result.Value;
+            var isAvailable = await _mediator.Send(query, cancellationToken).ConfigureAwait(false);
+            return isAvailable;
         }
         catch (Exception)
         {

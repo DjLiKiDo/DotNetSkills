@@ -15,19 +15,23 @@ public class DomainEventDispatchBehavior<TRequest, TResponse> : IPipelineBehavio
     where TResponse : class
 {
     private readonly IDomainEventDispatcher _eventDispatcher;
+    private readonly IDomainEventCollectionService _eventCollectionService;
     private readonly ILogger<DomainEventDispatchBehavior<TRequest, TResponse>> _logger;
 
     /// <summary>
     /// Initializes a new instance of the DomainEventDispatchBehavior class.
     /// </summary>
     /// <param name="eventDispatcher">The domain event dispatcher service.</param>
+    /// <param name="eventCollectionService">The domain event collection service.</param>
     /// <param name="logger">The logger instance for event dispatching operations.</param>
     public DomainEventDispatchBehavior(
         IDomainEventDispatcher eventDispatcher,
+        IDomainEventCollectionService eventCollectionService,
         ILogger<DomainEventDispatchBehavior<TRequest, TResponse>> logger)
     {
-        _eventDispatcher = eventDispatcher;
-        _logger = logger;
+        _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
+        _eventCollectionService = eventCollectionService ?? throw new ArgumentNullException(nameof(eventCollectionService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -42,6 +46,8 @@ public class DomainEventDispatchBehavior<TRequest, TResponse> : IPipelineBehavio
     {
         var requestName = typeof(TRequest).Name;
         
+        _logger.LogDebug("Processing {RequestName} in DomainEventDispatchBehavior", requestName);
+        
         // Execute the handler first
         var response = await next().ConfigureAwait(false);
         
@@ -50,26 +56,78 @@ public class DomainEventDispatchBehavior<TRequest, TResponse> : IPipelineBehavio
         {
             try
             {
-                // Note: In a complete implementation, we would need access to the aggregate roots
-                // that were modified during the command execution. This could be done by:
-                // 1. Having a domain event collection service that tracks events during the request
-                // 2. Accessing the UnitOfWork to get modified aggregates
-                // 3. Having the command handlers return aggregates that were modified
+                // Collect domain events from tracked aggregate roots
+                var modifiedAggregates = _eventCollectionService.GetModifiedAggregates();
                 
-                // For now, this is a placeholder that demonstrates the pattern
-                // In a real implementation, you would collect domain events from modified aggregates
-                
-                _logger.LogInformation("Domain event dispatching completed for {RequestName}", requestName);
+                if (modifiedAggregates.Any())
+                {
+                    _logger.LogInformation(
+                        "Found {AggregateCount} modified aggregates with domain events for {RequestName}",
+                        modifiedAggregates.Count,
+                        requestName);
+
+                    // Collect all domain events from all modified aggregates
+                    var allDomainEvents = modifiedAggregates
+                        .SelectMany(aggregate => aggregate.DomainEvents)
+                        .ToList();
+
+                    if (allDomainEvents.Any())
+                    {
+                        _logger.LogInformation(
+                            "Dispatching {EventCount} domain events for {RequestName}",
+                            allDomainEvents.Count,
+                            requestName);
+
+                        // Dispatch all domain events
+                        await _eventDispatcher.DispatchAsync(allDomainEvents, cancellationToken)
+                            .ConfigureAwait(false);
+
+                        // Clear domain events from all aggregates after successful dispatch
+                        foreach (var aggregate in modifiedAggregates)
+                        {
+                            aggregate.ClearDomainEvents();
+                        }
+
+                        // Clear tracked aggregates
+                        _eventCollectionService.ClearTrackedAggregates();
+
+                        _logger.LogInformation(
+                            "Successfully dispatched {EventCount} domain events for {RequestName}",
+                            allDomainEvents.Count,
+                            requestName);
+                    }
+                    else
+                    {
+                        _logger.LogDebug(
+                            "No domain events found in {AggregateCount} tracked aggregates for {RequestName}",
+                            modifiedAggregates.Count,
+                            requestName);
+                    }
+                }
+                else
+                {
+                    _logger.LogDebug("No modified aggregates found for domain event dispatching in {RequestName}", requestName);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to dispatch domain events for {RequestName}: {ErrorMessage}", 
+                _logger.LogError(ex, 
+                    "Failed to dispatch domain events for {RequestName}: {ErrorMessage}", 
                     requestName, ex.Message);
                 
                 // Decision: Should we fail the entire operation if event dispatching fails?
                 // For this implementation, we'll log the error but not fail the operation
                 // This maintains consistency with the primary operation while allowing for event system issues
+                // In production, consider implementing a retry mechanism or dead letter queue
             }
+        }
+        else
+        {
+            _logger.LogDebug(
+                "Skipping domain event dispatch for {RequestName} (IsSuccessful: {IsSuccessful}, IsCommand: {IsCommand})",
+                requestName,
+                IsSuccessfulCommand(response),
+                IsCommand(requestName));
         }
         
         return response;

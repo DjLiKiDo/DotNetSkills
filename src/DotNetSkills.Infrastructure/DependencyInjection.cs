@@ -1,3 +1,6 @@
+using FluentValidation;
+using DotNetSkills.Infrastructure.Security;
+
 namespace DotNetSkills.Infrastructure;
 
 /// <summary>
@@ -103,6 +106,9 @@ public static class DependencyInjection
         // Domain Event Dispatcher (placeholder - needs MediatR integration)
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
+        // Domain Event Collection Service for request-scoped tracking
+        services.AddScoped<IDomainEventCollectionService, DomainEventCollectionService>();
+
         // External services (placeholders for future implementation)
         // services.AddScoped<IEmailService, SmtpEmailService>();
         // services.AddScoped<INotificationService, SignalRNotificationService>();
@@ -147,6 +153,29 @@ public static class DependencyInjection
             .Bind(configuration.GetSection("Database"))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+
+        // Security Services
+        services.AddOptions<SecretsRotationOptions>()
+            .Bind(configuration.GetSection("SecretsRotation"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        // Fluent validation for SecretsRotationOptions (interval bounds etc.)
+        services.AddSingleton<IValidator<SecretsRotationOptions>, SecretsRotationOptionsValidator>();
+
+        // Register secret store only if Key Vault configured
+        var keyVaultUri = configuration["KeyVault:Uri"];
+        if (!string.IsNullOrWhiteSpace(keyVaultUri))
+        {
+            services.AddSingleton<ISecretStore>(sp =>
+            {
+                var client = new Azure.Security.KeyVault.Secrets.SecretClient(new Uri(keyVaultUri), new Azure.Identity.DefaultAzureCredential());
+                return new KeyVaultSecretStore(client);
+            });
+        }
+
+    services.AddScoped<ISecretsRotationService, SecretsRotationService>();
+        services.AddHostedService<SecretsRotationBackgroundService>();
         
         return services;
     }

@@ -10,7 +10,9 @@ public class UserRepository : BaseRepository<User, UserId>, IUserRepository
     /// Initializes a new instance of the UserRepository class.
     /// </summary>
     /// <param name="context">The database context.</param>
-    public UserRepository(ApplicationDbContext context) : base(context)
+    /// <param name="eventCollectionService">The domain event collection service.</param>
+    public UserRepository(ApplicationDbContext context, IDomainEventCollectionService eventCollectionService) 
+        : base(context, eventCollectionService)
     {
     }
 

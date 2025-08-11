@@ -3,6 +3,7 @@ namespace DotNetSkills.Infrastructure.Repositories.Common;
 /// <summary>
 /// Base repository implementation providing common CRUD operations for aggregate roots.
 /// Implements the generic IRepository interface with Entity Framework Core.
+/// Integrates with domain event collection service to track modified aggregates.
 /// </summary>
 /// <typeparam name="TEntity">The entity type that must be an aggregate root.</typeparam>
 /// <typeparam name="TId">The strongly-typed ID type that must implement IStronglyTypedId&lt;Guid&gt;.</typeparam>
@@ -21,13 +22,20 @@ public abstract class BaseRepository<TEntity, TId> : IRepository<TEntity, TId>
     protected readonly DbSet<TEntity> DbSet;
 
     /// <summary>
+    /// The domain event collection service for tracking modified aggregates.
+    /// </summary>
+    protected readonly IDomainEventCollectionService EventCollectionService;
+
+    /// <summary>
     /// Initializes a new instance of the BaseRepository class.
     /// </summary>
     /// <param name="context">The database context.</param>
-    /// <exception cref="ArgumentNullException">Thrown when context is null.</exception>
-    protected BaseRepository(ApplicationDbContext context)
+    /// <param name="eventCollectionService">The domain event collection service.</param>
+    /// <exception cref="ArgumentNullException">Thrown when context or eventCollectionService is null.</exception>
+    protected BaseRepository(ApplicationDbContext context, IDomainEventCollectionService eventCollectionService)
     {
         Context = context ?? throw new ArgumentNullException(nameof(context));
+        EventCollectionService = eventCollectionService ?? throw new ArgumentNullException(nameof(eventCollectionService));
         DbSet = context.Set<TEntity>();
     }
 
@@ -110,6 +118,7 @@ public abstract class BaseRepository<TEntity, TId> : IRepository<TEntity, TId>
 
     /// <summary>
     /// Adds a new entity to the repository.
+    /// Registers the entity for domain event tracking.
     /// Note: Changes are not persisted until UnitOfWork.SaveChangesAsync is called.
     /// </summary>
     /// <param name="entity">The entity to add.</param>
@@ -120,10 +129,14 @@ public abstract class BaseRepository<TEntity, TId> : IRepository<TEntity, TId>
             throw new ArgumentNullException(nameof(entity));
 
         DbSet.Add(entity);
+        
+        // Register the entity for domain event tracking
+        EventCollectionService.RegisterModifiedAggregate(entity);
     }
 
     /// <summary>
     /// Updates an existing entity in the repository.
+    /// Registers the entity for domain event tracking.
     /// Note: Changes are not persisted until UnitOfWork.SaveChangesAsync is called.
     /// </summary>
     /// <param name="entity">The entity to update.</param>
@@ -140,6 +153,9 @@ public abstract class BaseRepository<TEntity, TId> : IRepository<TEntity, TId>
         }
 
         Context.Entry(entity).State = EntityState.Modified;
+        
+        // Register the entity for domain event tracking
+        EventCollectionService.RegisterModifiedAggregate(entity);
     }
 
     /// <summary>

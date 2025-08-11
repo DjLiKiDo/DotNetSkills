@@ -7,7 +7,7 @@ using DotNetSkills.API.Services;
 using DotNetSkills.Application.Common.Abstractions; // Added for ICurrentUserService abstraction
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using DotNetSkills.Infrastructure.Security;
 using System.Text.Json.Serialization;
 
 namespace DotNetSkills.API;
@@ -113,22 +113,14 @@ public static class DependencyInjection
         var jwt = configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
         if (jwt.Enabled)
         {
+            services.AddSingleton<IJwtSigningCredentialsProvider, MultiKeyJwtSigningCredentialsProvider>();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        ValidIssuer = jwt.Issuer,
-                        ValidAudience = jwt.Audience,
-                        IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(jwt.SigningKey))
-                    };
+                    using var scope = services.BuildServiceProvider();
+                    var provider = scope.GetRequiredService<IJwtSigningCredentialsProvider>();
+                    options.TokenValidationParameters = provider.CreateValidationParameters(jwt.Issuer, jwt.Audience);
                 });
-
             services.AddApiAuthorization();
         }
 
@@ -175,6 +167,7 @@ public static class DependencyInjection
         // API Services
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IClaimsPopulationService, ClaimsPopulationService>();
 
         // Health checks
         services.AddHealthChecks();

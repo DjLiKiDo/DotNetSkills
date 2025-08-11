@@ -1,6 +1,6 @@
 namespace DotNetSkills.Domain.Common.Entities;
 
-public abstract class AggregateRoot<TId>(TId id) : BaseEntity<TId>(id) where TId : IStronglyTypedId<Guid>
+public abstract class AggregateRoot<TId>(TId id) : BaseEntity<TId>(id), IAggregateRoot where TId : IStronglyTypedId<Guid>
 {
     private readonly List<IDomainEvent> _domainEvents = [];
 
@@ -29,5 +29,23 @@ public abstract class AggregateRoot<TId>(TId id) : BaseEntity<TId>(id) where TId
         ArgumentNullException.ThrowIfNull(domainEvent);
         
         _domainEvents.Add(domainEvent);
+    }
+
+    /// <summary>
+    /// Gets the unique identifier of this aggregate root as a Guid.
+    /// </summary>
+    /// <returns>The Guid value of the aggregate root's identifier.</returns>
+    public Guid GetId()
+    {
+        return Id.Value;
+    }
+
+    /// <summary>
+    /// Gets the type name of this aggregate root.
+    /// </summary>
+    /// <returns>The simple name of the aggregate root's type.</returns>
+    public string GetTypeName()
+    {
+        return GetType().Name;
     }
 }
