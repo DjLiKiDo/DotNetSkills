@@ -1,5 +1,6 @@
 using MediatR;
 using DotNetSkills.Application.Common.Events;
+using Task = System.Threading.Tasks.Task;
 
 namespace DotNetSkills.Infrastructure.Services.Events;
 
@@ -44,45 +45,50 @@ public class DomainEventDispatcher : IDomainEventDispatcher
     }
 
     /// <summary>
-    /// Dispatches a single domain event to its registered handlers.
+    /// Core dispatch logic for a single domain event with consistent logging and error handling.
     /// </summary>
     /// <param name="domainEvent">The domain event to dispatch</param>
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>Task representing the asynchronous operation</returns>
-    public async System.Threading.Tasks.Task DispatchAsync<TDomainEvent>(TDomainEvent domainEvent, CancellationToken cancellationToken = default) 
-        where TDomainEvent : class, IDomainEvent
+    private async Task DispatchSingleEventAsync(IDomainEvent domainEvent, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(domainEvent);
-
         _logger.LogInformation(
             "Dispatching domain event {EventType} with CorrelationId {CorrelationId} occurred at {OccurredAt}",
-            typeof(TDomainEvent).Name,
+            domainEvent.GetType().Name,
             domainEvent.CorrelationId,
             domainEvent.OccurredAt);
 
         try
         {
-            // Wrap the domain event in a notification wrapper for MediatR
             var wrapper = CreateDomainEventNotificationWrapper(domainEvent);
-            
-            // Publish the wrapped event via MediatR
             await _mediator.Publish(wrapper, cancellationToken);
             
             _logger.LogDebug(
                 "Successfully dispatched domain event {EventType} with CorrelationId {CorrelationId}",
-                typeof(TDomainEvent).Name,
+                domainEvent.GetType().Name,
                 domainEvent.CorrelationId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
                 "Failed to dispatch domain event {EventType} with CorrelationId {CorrelationId}",
-                typeof(TDomainEvent).Name,
+                domainEvent.GetType().Name,
                 domainEvent.CorrelationId);
-            
-            // Re-throw to allow upstream error handling
             throw;
         }
+    }
+
+    /// <summary>
+    /// Dispatches a single domain event to its registered handlers.
+    /// </summary>
+    /// <param name="domainEvent">The domain event to dispatch</param>
+    /// <param name="cancellationToken">Cancellation token for the operation</param>
+    /// <returns>Task representing the asynchronous operation</returns>
+    public async Task DispatchAsync<TDomainEvent>(TDomainEvent domainEvent, CancellationToken cancellationToken = default) 
+        where TDomainEvent : class, IDomainEvent
+    {
+        ArgumentNullException.ThrowIfNull(domainEvent);
+        await DispatchSingleEventAsync(domainEvent, cancellationToken);
     }
 
     /// <summary>
@@ -91,12 +97,12 @@ public class DomainEventDispatcher : IDomainEventDispatcher
     /// <param name="domainEvents">Collection of domain events to dispatch</param>
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>Task representing the asynchronous operation</returns>
-    public async System.Threading.Tasks.Task DispatchManyAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default)
+    public async Task DispatchManyAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(domainEvents);
 
         var eventsList = domainEvents.ToList();
-        if (!eventsList.Any())
+        if (eventsList.Count == 0)
         {
             _logger.LogDebug("No domain events to dispatch");
             return;
@@ -145,7 +151,7 @@ public class DomainEventDispatcher : IDomainEventDispatcher
             }
         }
 
-        if (failedEvents.Any())
+        if (failedEvents.Count > 0)
         {
             _logger.LogWarning(
                 "Successfully dispatched {SuccessCount} out of {TotalCount} domain events. {FailedCount} events failed",
@@ -172,39 +178,10 @@ public class DomainEventDispatcher : IDomainEventDispatcher
     /// <param name="domainEvent">The domain event to dispatch</param>
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>Task representing the asynchronous operation</returns>
-    public async System.Threading.Tasks.Task DispatchAsync(IDomainEvent domainEvent, CancellationToken cancellationToken = default)
+    public async Task DispatchAsync(IDomainEvent domainEvent, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
-
-        _logger.LogInformation(
-            "Dispatching domain event {EventType} with CorrelationId {CorrelationId} occurred at {OccurredAt}",
-            domainEvent.GetType().Name,
-            domainEvent.CorrelationId,
-            domainEvent.OccurredAt);
-
-        try
-        {
-            // Wrap the domain event in a notification wrapper for MediatR
-            var wrapper = CreateDomainEventNotificationWrapper(domainEvent);
-            
-            // Publish the wrapped event via MediatR
-            await _mediator.Publish(wrapper, cancellationToken);
-            
-            _logger.LogDebug(
-                "Successfully dispatched domain event {EventType} with CorrelationId {CorrelationId}",
-                domainEvent.GetType().Name,
-                domainEvent.CorrelationId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex,
-                "Failed to dispatch domain event {EventType} with CorrelationId {CorrelationId}",
-                domainEvent.GetType().Name,
-                domainEvent.CorrelationId);
-            
-            // Re-throw to allow upstream error handling
-            throw;
-        }
+        await DispatchSingleEventAsync(domainEvent, cancellationToken);
     }
 
     /// <summary>
@@ -213,7 +190,7 @@ public class DomainEventDispatcher : IDomainEventDispatcher
     /// <param name="domainEvents">Collection of domain events to dispatch</param>
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>Task representing the asynchronous operation</returns>
-    public async System.Threading.Tasks.Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default)
+    public async Task DispatchAsync(IEnumerable<IDomainEvent> domainEvents, CancellationToken cancellationToken = default)
     {
         await DispatchManyAsync(domainEvents, cancellationToken);
     }
@@ -225,14 +202,14 @@ public class DomainEventDispatcher : IDomainEventDispatcher
     /// <param name="aggregateRoot">The aggregate root containing domain events</param>
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>Task representing the asynchronous operation</returns>
-    public async System.Threading.Tasks.Task DispatchFromAggregateAsync<TId>(AggregateRoot<TId> aggregateRoot, CancellationToken cancellationToken = default)
+    public async Task DispatchFromAggregateAsync<TId>(AggregateRoot<TId> aggregateRoot, CancellationToken cancellationToken = default)
         where TId : IStronglyTypedId<Guid>
     {
         ArgumentNullException.ThrowIfNull(aggregateRoot);
 
         var domainEvents = aggregateRoot.DomainEvents.ToList();
         
-        if (!domainEvents.Any())
+        if (domainEvents.Count == 0)
         {
             _logger.LogDebug("No domain events to dispatch from aggregate {AggregateType} with ID {AggregateId}",
                 aggregateRoot.GetType().Name, aggregateRoot.Id);
@@ -271,12 +248,12 @@ public class DomainEventDispatcher : IDomainEventDispatcher
     /// <param name="aggregateRoots">Collection of aggregate roots containing domain events</param>
     /// <param name="cancellationToken">Cancellation token for the operation</param>
     /// <returns>Task representing the asynchronous operation</returns>
-    public async System.Threading.Tasks.Task DispatchFromAggregatesAsync(IEnumerable<AggregateRoot<IStronglyTypedId<Guid>>> aggregateRoots, CancellationToken cancellationToken = default)
+    public async Task DispatchFromAggregatesAsync(IEnumerable<AggregateRoot<IStronglyTypedId<Guid>>> aggregateRoots, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(aggregateRoots);
 
         var aggregatesList = aggregateRoots.ToList();
-        if (!aggregatesList.Any())
+        if (aggregatesList.Count == 0)
         {
             _logger.LogDebug("No aggregates provided for domain event dispatching");
             return;
@@ -289,14 +266,14 @@ public class DomainEventDispatcher : IDomainEventDispatcher
         foreach (var aggregate in aggregatesList)
         {
             var events = aggregate.DomainEvents.ToList();
-            if (events.Any())
+            if (events.Count > 0)
             {
                 allDomainEvents.AddRange(events);
                 aggregatesWithEvents.Add(aggregate);
             }
         }
 
-        if (!allDomainEvents.Any())
+        if (allDomainEvents.Count == 0)
         {
             _logger.LogDebug("No domain events found in any of the {AggregateCount} aggregates", aggregatesList.Count);
             return;

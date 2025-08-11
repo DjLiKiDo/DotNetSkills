@@ -1,8 +1,8 @@
-using DotNetSkills.Application.Common.Events;
 using DotNetSkills.Domain.UserManagement.Events;
 using DotNetSkills.Infrastructure.Services.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Task = System.Threading.Tasks.Task;
 
 namespace DotNetSkills.Infrastructure.UnitTests.Services.Events;
 

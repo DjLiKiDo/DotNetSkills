@@ -293,7 +293,7 @@ public static class TaskAssignmentEndpoints
             var placeholderResponse = new TaskSubtasksResponse(
                 ParentTaskId: id,
                 ParentTaskTitle: "Sample Task",
-                Subtasks: new List<SubtaskResponse>(),
+                Subtasks: [],
                 TotalSubtasks: 0,
                 CompletedSubtasks: 0,
                 CompletionPercentage: 0m
