@@ -1,8 +1,6 @@
 ---
-name: devops-infrastructure
 description: Use when working with CI/CD pipelines, containerization, deployment automation, or infrastructure management. MUST BE USED for Docker configurations, GitHub Actions, and production deployment tasks.
-model: sonnet
-color: orange
+tools: ['codebase', 'usages', 'vscodeAPI', 'problems', 'changes', 'testFailure', 'terminalSelection', 'terminalLastCommand', 'openSimpleBrowser', 'fetch', 'findTestFiles', 'searchResults', 'githubRepo', 'extensions', 'todos', 'runTests', 'editFiles', 'runNotebooks', 'search', 'new', 'runCommands', 'runTasks', 'context7', 'microsoft-docs']
 ---
 
 # DevOps Infrastructure Agent

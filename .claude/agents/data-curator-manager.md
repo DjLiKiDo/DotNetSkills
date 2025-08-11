@@ -1,7 +1,6 @@
 ---
 name: data-curator-manager
 description: Use when working with data quality, data pipeline management, GDPR compliance, or data transformation tasks. MUST BE USED for database schema design, data migration, and privacy compliance validation.
-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "TodoWrite"]
 model: sonnet
 ---
 

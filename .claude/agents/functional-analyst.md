@@ -1,7 +1,6 @@
 ---
 name: functional-analyst
 description: Use when gathering requirements, creating user stories, or defining system specifications. MUST BE USED for requirements analysis, use case modeling, and business process documentation.
-tools: ["Read", "Write", "Edit", "Grep", "Glob", "TodoWrite", "WebSearch"]
 model: sonnet
 ---
 

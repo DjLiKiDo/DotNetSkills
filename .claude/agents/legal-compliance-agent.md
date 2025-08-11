@@ -1,7 +1,6 @@
 ---
 name: legal-compliance-agent
 description: Use when addressing legal requirements, GDPR compliance, security policies, or regulatory standards. MUST BE USED for privacy impact assessments, data protection validation, and compliance auditing.
-tools: ["Read", "Grep", "Glob", "TodoWrite", "WebSearch"]
 model: sonnet
 ---
 
