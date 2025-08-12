@@ -26,6 +26,11 @@ public class TeamMember : BaseEntity<TeamMemberId>
     /// </summary>
     public DateTime JoinedAt { get; private set; }
 
+    // Dependent navigations for EF Core relationship consolidation
+    // These are internal to the aggregate and not intended for application orchestration
+    public User User { get; private set; } = null!;
+    public Team Team { get; private set; } = null!;
+
     /// <summary>
     /// Private constructor for EF Core.
     /// </summary>
