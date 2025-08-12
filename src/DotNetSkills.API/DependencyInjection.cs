@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using DotNetSkills.Infrastructure.Security;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace DotNetSkills.API;
 
@@ -54,6 +55,12 @@ public static class DependencyInjection
         // Note: Domain services are registered through Application layer
         services.AddApplicationServices();
         services.AddInfrastructureServices(configuration);
+
+        // Persist DataProtection keys so cookies/tokens survive restarts
+        services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(
+            Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true
+                ? "/app/.aspnet/DataProtection-Keys"
+                : Path.Combine(AppContext.BaseDirectory, ".aspnet", "DataProtection-Keys")));
 
         // Configure comprehensive Swagger/OpenAPI documentation
         var swagger = configuration.GetSection("Swagger").Get<SwaggerOptions>() ?? new SwaggerOptions();

@@ -47,14 +47,6 @@ public class TeamConfiguration : BaseEntityConfiguration<Team, TeamId>
     /// <param name="builder">The entity type builder for Team.</param>
     private static void ConfigureNavigationProperties(EntityTypeBuilder<Team> builder)
     {
-        // Configure one-to-many relationship with TeamMember entities
-        // TeamMember is part of the Team aggregate
-        builder.HasMany<TeamMember>()
-            .WithOne()
-            .HasForeignKey(tm => tm.TeamId)
-            .OnDelete(DeleteBehavior.Cascade)
-            .HasConstraintName("FK_TeamMembers_Teams_TeamId");
-        
         // Configure backing field for members collection
         builder.Navigation(t => t.Members)
             .HasField("_members")

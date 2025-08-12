@@ -1,7 +1,9 @@
 using FluentValidation;
+using DotNetSkills.Application.Common.Interfaces;
 using DotNetSkills.Infrastructure.Security;
 using DotNetSkills.Infrastructure.HealthChecks;
 using DotNetSkills.Infrastructure.Common.Performance;
+using DotNetSkills.Infrastructure.Services;
 
 namespace DotNetSkills.Infrastructure;
 
@@ -110,6 +112,9 @@ public static class DependencyInjection
 
         // Domain Event Collection Service for request-scoped tracking
         services.AddScoped<IDomainEventCollectionService, DomainEventCollectionService>();
+
+        // Database Migration Service
+        services.AddScoped<IDatabaseMigrator, DatabaseMigrator>();
 
         // External services (placeholders for future implementation)
         // services.AddScoped<IEmailService, SmtpEmailService>();

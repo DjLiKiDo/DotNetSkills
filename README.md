@@ -134,19 +134,286 @@ tests/
 
 The API will be available at `https://localhost:5001` with Swagger documentation at `https://localhost:5001/swagger`.
 
-### Using Docker
+### Docker Development Environment
 
-For a complete development environment with SQL Server:
+For a complete containerized development environment with automated database migrations:
 
-1. **Start the development stack:**
+#### Quick Start
+
+1. **Copy the environment configuration:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Start the complete stack:**
    ```bash
    docker-compose up -d
    ```
 
-2. **Run migrations:**
+3. **Access the application:**
+   - API: `http://localhost:8080`
+   - Swagger UI: `http://localhost:8080/swagger`
+   - Database: `localhost:1433` (sa/DevPassword123!)
+
+#### Docker Services
+
+The Docker environment includes the following services:
+
+| Service | Description | Port | Health Check |
+|---------|-------------|------|--------------|
+| `api` | .NET 9 API application | 8080 | `/health` endpoint |
+| `db` | SQL Server 2022 Developer | 1433 | SQL connection test |
+| `redis` | Redis cache (optional) | 6379 | Redis ping command |
+
+#### Service Profiles
+
+Use Docker Compose profiles to control which services to start:
+
+```bash
+# Default: API + Database
+docker-compose up -d
+
+# With Redis cache
+docker-compose --profile cache up -d
+
+# All services (including future services)
+docker-compose --profile full up -d
+```
+
+#### Environment Configuration
+
+The application uses environment variables for configuration. Key variables include:
+
+**Database Settings:**
+- `RUN_MIGRATIONS=true` - Automatically run migrations on startup
+- `DB_SA_PASSWORD` - SQL Server SA password
+- `DB_NAME` - Database name (default: DotNetSkills_Dev)
+
+**API Settings:**
+- `ASPNETCORE_ENVIRONMENT` - Environment (Development/Staging/Production)
+- `JWT_ENABLED` - Enable JWT authentication
+- `SWAGGER_ENABLED` - Enable Swagger documentation
+
+**Performance Monitoring:**
+- `PERF_SLOW_THRESHOLD` - Slow request threshold (ms)
+- `PERF_ENABLE_METRICS` - Enable performance metrics
+
+#### Database Migration Automation
+
+The API automatically handles database migrations when `RUN_MIGRATIONS=true`:
+
+1. **Enterprise-Grade Migration System:**
+   - Uses Clean Architecture patterns with `IDatabaseMigrator` interface
+   - Comprehensive logging and error handling
+   - Fail-fast behavior for invalid database states
+   - Graceful cancellation support
+
+2. **Configuration:**
    ```bash
-   dotnet ef database update --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
+   # Enable migrations (default in development)
+   RUN_MIGRATIONS=true
+
+   # Disable migrations (production after initial deployment)
+   RUN_MIGRATIONS=false
    ```
+
+3. **Migration Process:**
+   - Verifies database connection
+   - Applies pending Entity Framework migrations
+   - Logs migration status and timing
+   - Fails startup if migrations fail
+
+#### Docker Commands
+
+**Basic Operations:**
+```bash
+# Start all services in background
+docker-compose up -d
+
+# View logs
+docker-compose logs -f api
+docker-compose logs -f db
+
+# Stop all services
+docker-compose down
+
+# Restart specific service
+docker-compose restart api
+
+# View service status
+docker-compose ps
+```
+
+**Development Operations:**
+```bash
+# Rebuild API image after code changes
+docker-compose build api
+docker-compose up -d api
+
+# Force rebuild (ignore cache)
+docker-compose build --no-cache api
+
+# Pull latest base images
+docker-compose pull
+```
+
+**Database Operations:**
+```bash
+# Connect to SQL Server container
+docker-compose exec db /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P DevPassword123!
+
+# View database logs
+docker-compose logs db
+
+# Reset database (removes all data)
+docker-compose down
+docker volume rm dotnetskills-sqlserver-data
+docker-compose up -d
+```
+
+**Cleanup Operations:**
+```bash
+# Stop and remove containers, networks
+docker-compose down
+
+# Remove containers, networks, and volumes
+docker-compose down -v
+
+# Remove everything including images
+docker-compose down -v --rmi all
+
+# Clean up Docker system
+docker system prune -f
+docker volume prune -f
+```
+
+#### Health Checks and Monitoring
+
+All services include comprehensive health checks:
+
+**API Health Check:**
+- Endpoint: `http://localhost:8080/health`
+- Checks: Database connectivity, application startup
+- Interval: 30 seconds, Start period: 60 seconds
+
+**Database Health Check:**
+- Test: SQL Server connection and query execution
+- Interval: 30 seconds, Start period: 30 seconds
+
+**Redis Health Check (if enabled):**
+- Test: Redis ping command
+- Interval: 30 seconds
+
+**View Health Status:**
+```bash
+# Check all service health
+docker-compose ps
+
+# Test API health endpoint
+curl http://localhost:8080/health
+
+# View detailed container info
+docker inspect dotnetskills-api
+```
+
+#### Multi-Stage Docker Build
+
+The API uses a multi-stage Dockerfile optimized for:
+
+1. **Build Stage:** Uses .NET 9 SDK for compilation
+2. **Publish Stage:** Creates optimized release build
+3. **Runtime Stage:** Uses lightweight ASP.NET runtime
+4. **Security:** Runs as non-root user
+5. **Health Checks:** Built-in container health monitoring
+
+#### Environment-Specific Configuration
+
+**Development (.env file):**
+```bash
+ASPNETCORE_ENVIRONMENT=Development
+RUN_MIGRATIONS=true
+JWT_ENABLED=true
+SWAGGER_ENABLED=true
+DB_ENABLE_DETAILED_ERRORS=true
+```
+
+**Staging/Production:**
+```bash
+ASPNETCORE_ENVIRONMENT=Production
+RUN_MIGRATIONS=false  # Set to true only during deployments
+JWT_ENABLED=true
+SWAGGER_ENABLED=false
+DB_ENABLE_DETAILED_ERRORS=false
+```
+
+#### Troubleshooting
+
+**Common Issues:**
+
+1. **Port Conflicts:**
+   ```bash
+   # Check what's using the port
+   lsof -i :8080
+   
+   # Use different ports
+   API_PORT=8081 docker-compose up -d
+   ```
+
+2. **Database Connection Issues:**
+   ```bash
+   # Check database health
+   docker-compose exec db /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P DevPassword123! -Q "SELECT 1"
+   
+   # Restart database service
+   docker-compose restart db
+   ```
+
+3. **Migration Failures:**
+   ```bash
+   # View API logs for migration details
+   docker-compose logs api
+   
+   # Run migrations manually
+   docker-compose exec api dotnet ef database update
+   ```
+
+4. **Memory Issues:**
+   ```bash
+   # Check Docker resource usage
+   docker stats
+   
+   # Increase Docker memory limits in Docker Desktop
+   ```
+
+5. **Image Build Issues:**
+   ```bash
+   # Clear Docker build cache
+   docker builder prune -f
+   
+   # Rebuild from scratch
+   docker-compose build --no-cache
+   ```
+
+**Log Analysis:**
+```bash
+# Follow all logs
+docker-compose logs -f
+
+# Filter logs by service
+docker-compose logs -f api | grep -i error
+
+# View logs with timestamps
+docker-compose logs -t api
+```
+
+#### Integration with CI/CD
+
+The Docker setup is designed for easy CI/CD integration:
+
+1. **GitHub Actions:** Build and push images to container registry
+2. **Azure Deployment:** Compatible with Azure App Service and Container Instances
+3. **Environment Parity:** Same containers across all environments
+4. **Infrastructure as Code:** Ready for Bicep/ARM templates
 
 ## API Endpoints
 
