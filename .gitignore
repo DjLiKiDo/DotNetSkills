@@ -1,9 +1,12 @@
 # Dotenv
-!.env.example
 .env
 .env.*
 **/*.env
 **/*.env.*
+
+# Allow tracked template only (place exception after broad patterns)
+!/.env.example
+!**/.env.example
 
 # Secrets
 *.secrets.*
