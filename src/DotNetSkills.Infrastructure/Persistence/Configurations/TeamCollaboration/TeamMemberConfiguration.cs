@@ -90,15 +90,15 @@ public class TeamMemberConfiguration : IEntityTypeConfiguration<TeamMember>
     /// <param name="builder">The entity type builder for TeamMember.</param>
     private static void ConfigureRelationships(EntityTypeBuilder<TeamMember> builder)
     {
-        // TeamMember -> User (many-to-one) using User.TeamMemberships navigation
-        builder.HasOne<User>()
+        // TeamMember -> User (many-to-one) using dependent navigation tm.User
+        builder.HasOne(tm => tm.User)
             .WithMany(u => u.TeamMemberships)
             .HasForeignKey(tm => tm.UserId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_TeamMembers_Users_UserId");
 
-        // TeamMember -> Team (many-to-one) using Team.Members navigation
-        builder.HasOne<Team>()
+        // TeamMember -> Team (many-to-one) using dependent navigation tm.Team
+        builder.HasOne(tm => tm.Team)
             .WithMany(t => t.Members)
             .HasForeignKey(tm => tm.TeamId)
             .OnDelete(DeleteBehavior.Cascade)
