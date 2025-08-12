@@ -79,15 +79,7 @@ public class UserConfiguration : BaseEntityConfiguration<User, UserId>
     /// <param name="builder">The entity type builder for User.</param>
     private static void ConfigureNavigationProperties(EntityTypeBuilder<User> builder)
     {
-        // Configure relationship with TeamMember entities
-        // Note: TeamMember is part of the Team aggregate, so this is a cross-aggregate relationship
-        builder.HasMany<TeamMember>()
-            .WithOne()
-            .HasForeignKey(tm => tm.UserId)
-            .OnDelete(DeleteBehavior.Cascade)
-            .HasConstraintName("FK_TeamMembers_Users_UserId");
-        
-        // Configure backing field for team memberships collection
+        // Backing field for team memberships collection
         builder.Navigation(u => u.TeamMemberships)
             .HasField("_teamMemberships")
             .UsePropertyAccessMode(PropertyAccessMode.Field);

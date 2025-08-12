@@ -1,3 +1,18 @@
+# Dotenv
+.env
+.env.*
+**/*.env
+**/*.env.*
+
+# Allow tracked template only (place exception after broad patterns)
+!/.env.example
+!**/.env.example
+
+# Secrets
+*.secrets.*
+secrets/*.json
+secrets/*.yaml
+
 # Created by https://www.toptal.com/developers/gitignore/api/dotnetcore,aspnetcore,visualstudio,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=dotnetcore,aspnetcore,visualstudio,visualstudiocode
 
