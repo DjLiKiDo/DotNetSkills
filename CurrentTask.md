@@ -1,3 +1,30 @@
+<!-- Hotfix completed: .env purge and prevention (2025-08-12) -->
+
+## Urgente: Remediación por commit de .env en rama devops-infra
+
+Fecha: 2025-08-12 · Rama afectada: devops-infra · PR: #10 (Docker)
+
+Contexto: Se detectaron archivos `.env` en historial. No se publicaron con secretos; se requiere purgar del historial y prevenir reintroducción.
+
+Acciones ejecutadas:
+- Inventario: `.env` y `.env.example` identificados en working tree e historial.
+- Respaldo local: copia a `$HOME/DotNetSkills-env-backup-<timestamp>`.
+- Limpieza: `git filter-repo --path .env --path .env.example --invert-paths` (eliminación completa en `devops-infra`).
+- Prevención: reglas añadidas a `.gitignore` para `.env`, `.env.*`, `**/*.env`, `**/*.env.*`, `*.secrets.*`, `secrets/*.json`, `secrets/*.yaml`.
+- Publicación: `git push --force-with-lease origin devops-infra` (PR #10 actualizado).
+
+Verificación:
+- `git ls-files` sin .env.
+- `git log --all --name-only` sin rutas .env.
+
+Checklist:
+- [x] Purgar .env del historial
+- [x] Conservar cambios funcionales
+- [x] Prevenir reintroducción via .gitignore
+- [x] Rama/PR actualizados
+
+Notas: El force-push requiere realinear clones locales: `git fetch` y `git reset --hard origin/devops-infra`.
+
 # Plan: Auditoría y remediación de Shadow FKs en EF Core
 
 Fecha: 2025-08-12 · Rama: devops-infra · PR activo: Docker (#10)
