@@ -51,8 +51,8 @@ public class TeamMemberConfiguration : IEntityTypeConfiguration<TeamMember>
             .HasDefaultValueSql("GETUTCDATE()")
             .HasComment("The date and time when the user joined the team");
         
-        // Configure relationships
-        ConfigureRelationships(builder);
+    // Configure relationships centrally to avoid duplicate mappings
+    ConfigureRelationships(builder);
         
         // Configure indexes and constraints
         ConfigureIndexesAndConstraints(builder);
@@ -85,23 +85,21 @@ public class TeamMemberConfiguration : IEntityTypeConfiguration<TeamMember>
     
     /// <summary>
     /// Configures relationships for the TeamMember entity.
+    /// Defined here to avoid duplicate configuration from principals.
     /// </summary>
     /// <param name="builder">The entity type builder for TeamMember.</param>
     private static void ConfigureRelationships(EntityTypeBuilder<TeamMember> builder)
     {
-    // Optimistic concurrency: TeamMember does not require dedicated rowversion beyond aggregate root; removed per review feedback
-
-        // Configure relationship with User entity
+        // TeamMember -> User (many-to-one) using User.TeamMemberships navigation
         builder.HasOne<User>()
-            .WithMany()
+            .WithMany(u => u.TeamMemberships)
             .HasForeignKey(tm => tm.UserId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_TeamMembers_Users_UserId");
-        
-        // Configure relationship with Team entity (already configured in TeamConfiguration)
-        // This is the owning side of the relationship
+
+        // TeamMember -> Team (many-to-one) using Team.Members navigation
         builder.HasOne<Team>()
-            .WithMany()
+            .WithMany(t => t.Members)
             .HasForeignKey(tm => tm.TeamId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_TeamMembers_Teams_TeamId");

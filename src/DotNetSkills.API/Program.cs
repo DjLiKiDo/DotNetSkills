@@ -1,6 +1,7 @@
 using DotNetSkills.API;
 using DotNetSkills.Infrastructure.Common.Configuration;
 using DotNetSkills.API.Configuration.Options;
+using DotNetSkills.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,10 @@ var app = builder.Build();
 // Validate configuration on startup
 app.Services.ValidateConfiguration();
 
+// Run database migrations if configured to do so
+// Uses RUN_MIGRATIONS environment variable for containerized deployments
+await app.RunDatabaseMigrationsAsync();
+
 // Configure the HTTP request pipeline.
 app.UseCorrelationId();
 app.UsePerformanceLogging();
@@ -38,7 +43,13 @@ if (app.Environment.IsDevelopment() && swaggerOptions.Enabled)
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Disable HTTPS redirection when running inside a Docker container for now
+var runningInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true;
+if (!runningInContainer)
+{
+    app.UseHttpsRedirection();
+}
+
 var corsOptions = app.Services.GetRequiredService<IOptions<CorsOptions>>().Value;
 app.UseCors(corsOptions.PolicyName);
 

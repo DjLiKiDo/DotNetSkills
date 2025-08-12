@@ -1,0 +1,116 @@
+name: dotnetskills
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: dotnetskills-db
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${DB_SA_PASSWORD:-DevPassword123}
+      MSSQL_PID: Developer
+      MSSQL_TCP_PORT: "1433"
+    ports:
+      - "${DB_PORT:-1433}:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      - ./Docker/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - dotnetskills-network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${DB_SA_PASSWORD:-DevPassword123} -C -Q 'SELECT 1' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  api:
+    build:
+      context: .
+      dockerfile: ./src/DotNetSkills.API/Dockerfile
+      target: final
+      args:
+        BUILD_CONFIGURATION: Release
+    container_name: dotnetskills-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_HTTP_PORTS: "8080"
+      TZ: UTC
+      DOTNETSKILLS_Database__ConnectionString: "Server=db,1433;Database=${DB_NAME:-DotNetSkills_Dev};User Id=sa;Password=${DB_SA_PASSWORD:-DevPassword123};TrustServerCertificate=True;MultipleActiveResultSets=true;Connection Timeout=30;"
+      DOTNETSKILLS_Database__CommandTimeout: "30"
+      DOTNETSKILLS_Database__MaxRetryCount: "3"
+      DOTNETSKILLS_Database__MaxRetryDelaySeconds: "5"
+      DOTNETSKILLS_Database__EnableSensitiveDataLogging: ${DB_ENABLE_SENSITIVE_LOGGING:-false}
+      DOTNETSKILLS_Database__EnableDetailedErrors: ${DB_ENABLE_DETAILED_ERRORS:-false}
+      DOTNETSKILLS_Database__EnableQueryLogging: ${DB_ENABLE_QUERY_LOGGING:-false}
+      DOTNETSKILLS_Database__MigrationsAssembly: DotNetSkills.Infrastructure
+      DOTNETSKILLS_Jwt__Enabled: ${JWT_ENABLED:-true}
+      DOTNETSKILLS_Jwt__Issuer: ${JWT_ISSUER:-https://localhost:8080}
+      DOTNETSKILLS_Jwt__Audience: ${JWT_AUDIENCE:-dotnetskills-api}
+      DOTNETSKILLS_Jwt__SigningKey: ${JWT_SIGNING_KEY:-ThisIsATemporaryDevelopmentKeyForJWTSigningThatIsAtLeast256BitsLongForHS256AlgorithmSecurityRequirements}
+      DOTNETSKILLS_Jwt__TokenLifetimeMinutes: "60"
+      DOTNETSKILLS_Cors__PolicyName: ${CORS_POLICY_NAME:-AllowAll}
+      DOTNETSKILLS_Cors__AllowCredentials: ${CORS_ALLOW_CREDENTIALS:-false}
+      DOTNETSKILLS_Swagger__Enabled: ${SWAGGER_ENABLED:-true}
+      DOTNETSKILLS_Swagger__Title: ${SWAGGER_TITLE:-DotNetSkills API}
+      DOTNETSKILLS_Swagger__Version: ${SWAGGER_VERSION:-v1}
+      DOTNETSKILLS_Performance__SlowRequestThresholdMs: ${PERF_SLOW_THRESHOLD:-500}
+      DOTNETSKILLS_Performance__VerySlowRequestThresholdMs: ${PERF_VERY_SLOW_THRESHOLD:-2000}
+      DOTNETSKILLS_Performance__EnableMetrics: ${PERF_ENABLE_METRICS:-true}
+      DOTNETSKILLS_Performance__LogOperationStart: ${PERF_LOG_OPERATION_START:-false}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+      SEED_DATA: ${SEED_DATA:-true}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - dotnetskills-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - ./logs:/app/logs
+      - dp_keys:/app/.aspnet/DataProtection-Keys
+
+  redis:
+    image: redis:7-alpine
+    container_name: dotnetskills-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-DevRedisPassword123!}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-DevRedisPassword123!}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - dotnetskills-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles: [cache, full]
+
+networks:
+  dotnetskills-network:
+    driver: bridge
+    name: dotnetskills-network
+
+volumes:
+  sqlserver_data:
+    driver: local
+    name: dotnetskills-sqlserver-data
+  redis_data:
+    driver: local
+    name: dotnetskills-redis-data
+  dp_keys:
+    driver: local
+    name: dotnetskills-dp-keys
