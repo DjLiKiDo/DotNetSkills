@@ -1,1 +1,19 @@
-We want to work on @CurrentPlan.md so you are goin to read that document an pick the next task and complete it. Track task progress and context in @CurrentTask.md and when you complete the task, update the progress in @CurrentPlan.md so we can tackle the next pending task in other conversation
+Process and execute tasks from @CurrentPlan.md according to the following workflow:
+
+1. Read @CurrentPlan.md to identify the next pending task.
+2. Select the highest priority or next sequential task.
+3. Document the selected task and maintain context in @CurrentTask.md including:
+   - Task description
+   - Start time
+   - Current progress
+   - Dependencies
+   - Blockers
+
+4. Upon task completion:
+   - Mark task as complete in @CurrentTask.md
+   - Update progress status in @CurrentPlan.md
+   - Document completion time and outcomes
+
+Please present the next pending task from @CurrentPlan.md to proceed with the workflow.
+
+Note: Start a new conversation for each subsequent task to maintain clear context boundaries.
