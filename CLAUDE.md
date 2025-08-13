@@ -2,189 +2,205 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Development Commands
+## Essential Commands
 
 ### Build & Test
 ```bash
-dotnet restore && dotnet build
-dotnet test
-dotnet test --collect:"XPlat Code Coverage"
+# Primary development workflow
+make build && make test
+dotnet restore                    # Restore packages
+dotnet build                     # Build solution
+dotnet test                      # Run all tests
+dotnet test --collect:"XPlat Code Coverage"  # With coverage
+
+# Individual test projects
+dotnet test tests/DotNetSkills.Domain.UnitTests
+dotnet test tests/DotNetSkills.Application.UnitTests
+dotnet test tests/DotNetSkills.Infrastructure.UnitTests
+dotnet test tests/DotNetSkills.API.UnitTests
+```
+
+### Local Development
+```bash
+# Run API locally with hot reload
+dotnet run --project src/DotNetSkills.API
+# Available at: https://localhost:5001
+
+# Watch mode for continuous building
+dotnet watch run --project src/DotNetSkills.API
+```
+
+### Docker Environment
+```bash
+# Environment management
+make up                          # Start API + Database
+make down                        # Stop everything
+make status                      # Check health of all services
+make health                      # Quick health check (returns 200)
+make logs                        # Follow API logs
+
+# For development with caching
+make full                        # Start API + Database + Redis
+make cache                       # Start only Redis
 ```
 
 ### Database Operations
 ```bash
-# Update database with migrations
+# Entity Framework migrations
 dotnet ef database update --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
 
 # Create new migration
-dotnet ef migrations add <MigrationName> --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
-```
+dotnet ef migrations add MigrationName --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
 
-### Running the API
-```bash
-dotnet run --project src/DotNetSkills.API
-```
-
-### Docker Development
-```bash
-docker-compose up -d  # Start SQL Server
+# Remove last migration (if not applied)
+dotnet ef migrations remove --project src/DotNetSkills.Infrastructure --startup-project src/DotNetSkills.API
 ```
 
 ## Architecture Overview
 
-This is a Clean Architecture .NET 9 project implementing Domain-Driven Design with these layers:
-
-```
-API → Application → Domain
-Infrastructure → Application → Domain  
-```
-
-### Key Architectural Patterns
-- **Clean Architecture**: Dependency rule - inner layers never reference outer layers
-- **Domain-Driven Design**: Rich domain models with business logic in entities
-- **CQRS with MediatR**: Commands/Queries for all use cases
-- **Repository Pattern**: With caching decorators in Infrastructure
-- **Domain Events**: Decoupled communication between aggregates
-- **Strongly-Typed IDs**: `record UserId(Guid Value)` pattern throughout
+DotNetSkills follows **Clean Architecture** with **Domain-Driven Design** patterns. The solution is organized into 4 main bounded contexts:
 
 ### Project Structure
-- `DotNetSkills.Domain`: Entities, value objects, domain events, business rules
-- `DotNetSkills.Application`: Use cases (commands/queries), DTOs, validation, mapping
-- `DotNetSkills.Infrastructure`: EF Core repositories, database context, external services
-- `DotNetSkills.API`: Minimal APIs, middleware, authentication, endpoint routing
+```
+src/
+├── DotNetSkills.API/              # Minimal APIs, middleware, authentication
+├── DotNetSkills.Application/      # CQRS handlers, DTOs, validation
+├── DotNetSkills.Domain/           # Entities, value objects, domain events
+└── DotNetSkills.Infrastructure/   # EF Core, repositories, external services
 
-### Bounded Contexts
-The domain is organized into four bounded contexts:
-- `UserManagement`: User entities, roles, authentication
-- `TeamCollaboration`: Teams, team members, roles  
-- `ProjectManagement`: Projects, project lifecycle
-- `TaskExecution`: Tasks, assignments, status management
-
-## Error Handling Contract (ADR-0001)
-
-**CRITICAL**: The Application layer uses an exception-only contract. Never return `Result<T>` wrappers.
-
-### Handler Pattern
-```csharp
-// Correct
-public async Task<UserResponse> Handle(CreateUserCommand request, CancellationToken ct)
-{
-    // Throw exceptions for failures
-    if (!emailIsUnique)
-        throw new DomainException("Email already exists");
-    
-    return new UserResponse(...); // Direct return for success
-}
+tests/
+├── DotNetSkills.API.UnitTests/
+├── DotNetSkills.Application.UnitTests/
+├── DotNetSkills.Domain.UnitTests/
+└── DotNetSkills.Infrastructure.UnitTests/
 ```
 
-### Exception Types
-- `ValidationException` (FluentValidation): Request validation failures
-- `DomainException`: Business rule violations
-- `NotFoundException`: Resource not found
-- `BusinessRuleViolationException`: Domain invariant violations
+### Bounded Contexts
+1. **UserManagement** - User accounts, authentication, roles
+2. **TeamCollaboration** - Teams and member management
+3. **ProjectManagement** - Project lifecycle and organization
+4. **TaskExecution** - Task assignment and tracking
+
+### Key Patterns
+- **CQRS with MediatR**: Commands for writes, Queries for reads
+- **Repository Pattern**: Data access with caching decorators
+- **Domain Events**: Decoupled communication between aggregates
+- **Exception-Only Contract**: Uses exceptions for control flow (no Result<T> wrappers)
+- **Strongly-Typed IDs**: Type-safe identifiers throughout
 
 ## Development Patterns
 
 ### Adding New Features
-1. Define domain changes in `Domain/<Context>/`
-2. Add repository interface method in `Application/<Context>/Contracts/`  
-3. Create Command/Query + Validator + Handler + Mapping in `Application`
-4. Implement repository method + caching decorator in `Infrastructure`
-5. Add endpoint in `API/Endpoints/<Context>/` calling MediatR
-6. Add tests in appropriate test projects
+When adding features, follow the architectural layers:
 
-### Domain Modeling Rules
-- Rich entities with business logic in domain methods, not services
-- Private setters, public methods for state changes
-- Strongly-typed IDs: `record ProjectId(Guid Value)`  
-- Value objects for constrained primitives: `record EmailAddress`
-- Domain events raised in aggregate methods, dispatched post-handler
+1. **Domain Layer** (`src/DotNetSkills.Domain/[Context]/`):
+   - Create entities, value objects, and domain events
+   - Implement business logic in entities
+   - Add domain services for complex rules
 
-### Repository Pattern
-- Application defines interfaces, Infrastructure implements
-- Use caching decorators: `CachedUserRepository` wraps `UserRepository`
-- Never expose `IQueryable` - provide specific query methods
-- Repository methods should be async and return domain entities
+2. **Application Layer** (`src/DotNetSkills.Application/[Context]/`):
+   - Create command/query classes with MediatR
+   - Implement handlers that orchestrate domain operations
+   - Add validation using FluentValidation
+   - Create DTOs and mapping profiles
 
-### Validation & Mapping
-- FluentValidation validators beside commands in `Application`
-- AutoMapper profiles per bounded context
-- ValidationBehavior ensures handlers receive valid input
+3. **Infrastructure Layer** (`src/DotNetSkills.Infrastructure/`):
+   - Implement repository interfaces
+   - Add EF Core entity configurations
+   - Register dependencies in DependencyInjection.cs
 
-### Endpoint Conventions
-```csharp
-var group = app.MapGroup("/api/v1/users")
-    .WithTags("Users")
-    .RequireAuthorization();
+4. **API Layer** (`src/DotNetSkills.API/Endpoints/[Context]/`):
+   - Create minimal API endpoints
+   - Group endpoints by bounded context
+   - Apply authorization policies
 
-// Handler pattern
-group.MapPost("/", async (CreateUserCommand command, IMediator mediator) =>
-    await mediator.Send(command));
-```
+### Entity Framework Patterns
+- Use strongly-typed IDs converted to GUIDs
+- Configure entities in separate configuration files
+- Avoid shadow foreign keys (explicit FK properties)
+- Use value converters for domain value objects
+
+### Testing Strategy
+- **Domain Tests**: Focus on business logic and entity behavior
+- **Application Tests**: Test handlers, validation, and mapping
+- **Infrastructure Tests**: Repository logic and data access
+- **API Tests**: Endpoint behavior and middleware
+
+## Key Files and Locations
+
+### Configuration
+- `src/DotNetSkills.API/appsettings.json` - Base configuration
+- `src/DotNetSkills.API/appsettings.Development.json` - Development settings
+- `docker-compose.yml` - Container orchestration
+- `Makefile` - Development commands
+
+### Core Architecture Files
+- `src/DotNetSkills.Domain/Common/` - Base domain abstractions
+- `src/DotNetSkills.Application/Common/` - Application abstractions and behaviors
+- `src/DotNetSkills.Infrastructure/Persistence/` - EF Core configuration
+
+### Important Conventions
+- Use `BaseEntity<TId>` for all entities
+- Implement `IStronglyTypedId` for all ID value objects
+- Follow naming pattern: `[Entity][Action]Command/Query`
+- Place validation in `[Command/Query]Validator` classes
+- Use `[Entity]Response` DTOs for API responses
+
+### MediatR Pipeline Behaviors (execution order)
+1. LoggingBehavior - Captures all operations
+2. ValidationBehavior - Short-circuits invalid requests
+3. PerformanceBehavior - Measures execution time
+4. DomainEventDispatchBehavior - Dispatches events after success
 
 ## Technology Stack
+- **.NET 9** with nullable reference types
+- **Entity Framework Core** with SQL Server
+- **MediatR** for CQRS implementation
+- **JWT Authentication** with role-based authorization
+- **AutoMapper** for entity-DTO mapping
+- **FluentValidation** for input validation
+- **xUnit + FluentAssertions** for testing
+- **Docker** for containerization
 
-- **.NET 9**: Latest framework with nullable reference types enabled
-- **Entity Framework Core**: SQL Server with retry policies
-- **Minimal APIs**: Lightweight endpoint definitions
-- **JWT Authentication**: Role-based authorization (Admin, ProjectManager, Developer, Viewer)
-- **MediatR**: CQRS implementation with pipeline behaviors
-- **FluentValidation**: Input validation
-- **AutoMapper**: Entity ↔ DTO mapping
-- **xUnit + FluentAssertions**: Testing framework
-- **Testcontainers**: Integration tests with real databases
-- **Serilog**: Structured logging
+## Development Workflow
 
-## Key Conventions
+### Daily Development
+1. Start environment: `make up`
+2. Verify health: `make health`
+3. Make changes following architectural patterns
+4. Run tests: `make test`
+5. For database changes: Create migrations with EF commands
 
-### Naming Patterns
-- Commands: `CreateUserCommand`, `UpdateTaskStatusCommand`
-- Queries: `GetUserByIdQuery`, `GetProjectTasksQuery`
-- Handlers: `CreateUserCommandHandler`, `GetUserByIdQueryHandler`
-- Validators: `CreateUserCommandValidator`
-- DTOs: `UserResponse`, `CreateUserRequest`
+### Before Committing
+1. Build and test: `make build && make test`
+2. Ensure migrations are created for schema changes
+3. Follow existing patterns and naming conventions
+4. Verify no hardcoded secrets or connection strings
 
-### Pipeline Behaviors (Order Matters)
-1. LoggingBehavior
-2. ValidationBehavior (throws ValidationException)
-3. PerformanceBehavior  
-4. DomainEventDispatchBehavior
+### Common Issues
+- Port conflicts: Use `API_PORT=8081 make up`
+- Database issues: Check with `make status`
+- Build errors after git pull: `dotnet clean && dotnet restore && dotnet build`
+- Failed tests: Ensure Docker containers are running
 
-### Authentication & Authorization
-- JWT optional via `JwtOptions.Enabled`
-- Use `ICurrentUserService` in handlers, not HttpContext
-- Role-based policies: `Policies.AdminOnly`, `Policies.ProjectManager`
+## Quick Reference
 
-## Common Anti-Patterns to Avoid
+### Health Checks
+- API: http://localhost:8080/health
+- Swagger: http://localhost:8080/swagger
+- Database: SQL Server on localhost:1433
 
-- ❌ Business logic in Application handlers instead of Domain entities
-- ❌ Returning `Result<T>` wrappers (use exceptions per ADR-0001)
-- ❌ Exposing `IQueryable` from repositories
-- ❌ Accessing `ApplicationDbContext` outside Infrastructure layer
-- ❌ Using primitive IDs instead of strongly-typed ones
-- ❌ Bypassing MediatR in endpoints
-- ❌ Catching and swallowing exceptions in endpoints
+### Test Filters
+```bash
+dotnet test --filter "Category=Unit"
+dotnet test --filter "TestMethod=CreateUser*"
+dotnet test --filter "FullyQualifiedName~UserTests"
+```
 
-## Testing Approach
-
-- **Unit Tests**: Fast tests for domain logic and business rules
-- **Integration Tests**: Repository tests with Testcontainers
-- **API Tests**: Full HTTP request/response with WebApplicationFactory
-- **Test Builders**: Builder pattern for maintainable test data
-- Run specific test project: `dotnet test tests/DotNetSkills.Domain.UnitTests`
-
-## Security Notes
-
-- JWT authentication with role-based authorization
-- Input validation at multiple layers (domain, application, API)
-- Password hashing with BCrypt
-- Secrets stored in User Secrets (dev) or Azure Key Vault (prod)
-- Never commit secrets to repository
-
-## Performance Considerations
-
-- Use projection queries (`Select`) for read-only scenarios
-- Strategic `Include` for related data, consider `AsSplitQuery()` for multiple collections
-- Caching decorators with 5-10 minute expiration
-- Async/await throughout, never use `.Result` or `.Wait()`
-- Pagination for large result sets
+### Debugging
+```bash
+make logs                        # View API logs
+make status                      # Check all services
+docker compose logs db           # Database logs
+docker compose restart api      # Restart API only
+```
